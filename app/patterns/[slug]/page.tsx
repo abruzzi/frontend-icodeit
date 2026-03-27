@@ -30,27 +30,29 @@ export default async function PatternDetailPage({ params }: Props) {
   const related = resolveRelatedContent(current, patterns, caseStudies);
 
   return (
-    <main>
+    <>
       <article className={ui.panel}>
-        <h1 className="mt-0 text-3xl font-bold tracking-tight text-neutral-900">
-          {entry.frontmatter.title}
-        </h1>
+        <h1 className={ui.pageTitle}>{entry.frontmatter.title}</h1>
         <p>{entry.frontmatter.summary}</p>
         <p>
-          <strong>Pattern level:</strong> {entry.frontmatter.level}
+          <strong className="text-slate-900 dark:text-slate-100">
+            Pattern level:
+          </strong>{" "}
+          {entry.frontmatter.level}
         </p>
       </article>
 
       <article className={`${ui.panel} ${ui.panelProse}`}>{mdx}</article>
 
       <section className={ui.panel}>
-        <h2 className="mt-0 text-xl font-semibold text-neutral-900">
-          Used In Case Studies
-        </h2>
-        <ul>
+        <h2 className={ui.sectionTitle}>Used In Case Studies</h2>
+        <ul className="space-y-2">
           {related.caseStudies.map((ref) => (
             <li key={ref.slug}>
-              <Link href={`/case-studies/${ref.slug}`}>
+              <Link
+                className={ui.relatedListLink}
+                href={`/case-studies/${ref.slug}`}
+              >
                 {ref.title ?? ref.slug}
               </Link>
             </li>
@@ -59,15 +61,17 @@ export default async function PatternDetailPage({ params }: Props) {
       </section>
 
       <section className={ui.panel}>
-        <h2 className="mt-0 text-xl font-semibold text-neutral-900">Related Patterns</h2>
-        <ul>
+        <h2 className={ui.sectionTitle}>Related Patterns</h2>
+        <ul className="space-y-2">
           {related.patterns.map((ref) => (
             <li key={ref.slug}>
-              <Link href={`/patterns/${ref.slug}`}>{ref.title ?? ref.slug}</Link>
+              <Link className={ui.relatedListLink} href={`/patterns/${ref.slug}`}>
+                {ref.title ?? ref.slug}
+              </Link>
             </li>
           ))}
         </ul>
       </section>
-    </main>
+    </>
   );
 }

@@ -20,7 +20,9 @@ export function TestingA11yRubric({
 
   return (
     <section aria-label={title}>
-      <h3 className="text-base font-semibold text-neutral-900">{title}</h3>
+      <h3 className="text-base font-semibold text-slate-900 dark:text-slate-50">
+        {title}
+      </h3>
       <div className="overflow-x-auto">
         <table className={ui.table}>
           <thead>

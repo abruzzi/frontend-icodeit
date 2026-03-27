@@ -1,9 +1,13 @@
 import type { Metadata } from "next";
-import Link from "next/link";
+import { Inter } from "next/font/google";
 
+import { SiteHeader } from "@/components/design-system/site-header";
 import { ui } from "@/lib/ui";
 
+import { Providers } from "./providers";
 import "./globals.css";
+
+const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
   title: "Frontend at scale — patterns & case studies",
@@ -17,25 +21,14 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en">
-      <body>
-        <div className={ui.shell}>
-          <nav className={ui.nav} aria-label="Primary">
-            <Link className={ui.navLink} href="/">
-              Home
-            </Link>
-            <Link className={ui.navLink} href="/case-studies">
-              Case Studies
-            </Link>
-            <Link className={ui.navLink} href="/patterns">
-              Patterns
-            </Link>
-            <Link className={ui.navLink} href="/learning-paths">
-              Learning Paths
-            </Link>
-          </nav>
-          {children}
-        </div>
+    <html lang="en" suppressHydrationWarning>
+      <body
+        className={`min-h-screen bg-gradient-to-br from-slate-50 to-slate-150 bg-no-repeat text-slate-900 subpixel-antialiased dark:bg-gradient-to-tl dark:from-slate-950 dark:to-slate-800 dark:text-slate-50 ${inter.className}`}
+      >
+        <Providers>
+          <SiteHeader />
+          <main className={ui.mainShell}>{children}</main>
+        </Providers>
       </body>
     </html>
   );

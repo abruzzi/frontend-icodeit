@@ -4,7 +4,7 @@ import { ui } from "@/lib/ui";
 
 export default function LearningPathsPage() {
   return (
-    <main>
+    <>
       <section className={ui.panel}>
         <h1 className={ui.pageTitle}>Learning paths</h1>
         <p className={ui.comingSoon}>Coming soon</p>
@@ -15,6 +15,6 @@ export default function LearningPathsPage() {
           <Link href="/patterns">patterns</Link> directly.
         </p>
       </section>
-    </main>
+    </>
   );
 }

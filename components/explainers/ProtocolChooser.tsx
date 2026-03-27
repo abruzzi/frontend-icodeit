@@ -51,13 +51,13 @@ export function ProtocolChooser() {
 
   return (
     <div className={ui.explainerCard}>
-      <h3 className="mt-0 text-base font-semibold text-neutral-900">
+      <h3 className="mt-0 text-base font-semibold text-slate-900 dark:text-slate-50">
         Protocol Chooser
       </h3>
-      <label className="mb-3 block text-sm text-neutral-700">
+      <label className="mb-3 block text-sm text-slate-700">
         <span className="mr-2 font-medium">Prioritize:</span>
         <select
-          className="ml-1 rounded-md border border-slate-300 bg-white px-2 py-1.5 text-sm text-neutral-900 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+          className="ml-1 rounded-lg bg-slate-100 px-2 py-1.5 text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-brand/60 dark:bg-slate-800 dark:text-slate-100"
           value={priority}
           onChange={(event) =>
             setPriority(event.target.value as "latency" | "infraComplexity")
@@ -67,7 +67,7 @@ export function ProtocolChooser() {
           <option value="infraComplexity">Lower implementation complexity</option>
         </select>
       </label>
-      <ol className="list-decimal space-y-2 pl-5 text-sm text-neutral-800">
+      <ol className="list-decimal space-y-2 pl-5 text-sm text-slate-800">
         {ranked.map((item) => (
           <li key={item.name}>
             <strong>{item.name}</strong>: {item.bestFor}

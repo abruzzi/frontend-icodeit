@@ -7,14 +7,12 @@ export default function CaseStudiesIndexPage() {
   const entries = getCaseStudies();
 
   return (
-    <main>
+    <>
       <h1 className={ui.pageTitle}>Case Studies</h1>
       <div className={ui.grid}>
         {entries.map((entry) => (
           <article className={ui.panel} key={entry.slug}>
-            <h2 className="mt-0 text-lg font-semibold text-neutral-900">
-              {entry.frontmatter.title}
-            </h2>
+            <h2 className={ui.cardTitle}>{entry.frontmatter.title}</h2>
             <p>{entry.frontmatter.summary}</p>
             <p>
               <strong>Scenario:</strong> {entry.frontmatter.scenario}
@@ -25,6 +23,6 @@ export default function CaseStudiesIndexPage() {
           </article>
         ))}
       </div>
-    </main>
+    </>
   );
 }

@@ -17,10 +17,10 @@ export function TradeoffMatrix({ rows = [] }: TradeoffMatrixProps) {
   if (rows.length === 0) {
     return (
       <div className={ui.explainerCard}>
-        <h3 className="mt-0 text-base font-semibold text-neutral-900">
+        <h3 className="mt-0 text-base font-semibold text-slate-900 dark:text-slate-50">
           Trade-off Matrix
         </h3>
-        <p className="mb-0 text-sm text-neutral-600">
+        <p className="mb-0 text-sm text-slate-600">
           Add trade-off rows in this section to compare options.
         </p>
       </div>
@@ -29,7 +29,7 @@ export function TradeoffMatrix({ rows = [] }: TradeoffMatrixProps) {
 
   return (
     <div className={ui.explainerCard}>
-      <h3 className="mt-0 text-base font-semibold text-neutral-900">
+      <h3 className="mt-0 text-base font-semibold text-slate-900 dark:text-slate-50">
         Trade-off Matrix
       </h3>
       <div className="overflow-x-auto">

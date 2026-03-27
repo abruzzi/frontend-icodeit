@@ -28,7 +28,7 @@ export function FailureModeStepper({ items = DEFAULT_ITEMS }: FailureModeStepper
 
   return (
     <div className={ui.explainerCard}>
-      <h3 className="mt-0 text-base font-semibold text-neutral-900">
+      <h3 className="mt-0 text-base font-semibold text-slate-900 dark:text-slate-50">
         Failure Mode Walkthrough
       </h3>
       <div className="mb-3 flex flex-wrap gap-2">
@@ -36,10 +36,10 @@ export function FailureModeStepper({ items = DEFAULT_ITEMS }: FailureModeStepper
           <button
             key={item.title}
             type="button"
-            className={`rounded-full border px-3 py-1 text-sm font-medium transition-colors ${
+            className={`rounded-full px-3 py-1.5 text-sm font-medium transition-colors ${
               index === activeIndex
-                ? "border-blue-600 bg-blue-600 text-white"
-                : "border-slate-300 bg-white text-neutral-700 hover:border-slate-400"
+                ? "bg-brand text-white shadow-sm"
+                : "bg-slate-200/80 text-slate-800 hover:bg-slate-300/80 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700"
             }`}
             onClick={() => setActiveIndex(index)}
           >

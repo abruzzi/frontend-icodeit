@@ -45,11 +45,9 @@ export default function ComparePage({ params }: Props) {
   }
 
   return (
-    <main>
+    <>
       <article className={ui.panel}>
-        <h1 className="mt-0 text-3xl font-bold tracking-tight text-neutral-900">
-          {doc.title}
-        </h1>
+        <h1 className={ui.pageTitle}>{doc.title}</h1>
         <p>
           Use this page as a quick decision aid, then jump into related case
           studies and patterns for implementation details.
@@ -57,6 +55,6 @@ export default function ComparePage({ params }: Props) {
       </article>
       <TradeoffMatrix rows={doc.rows} />
       <ProtocolChooser />
-    </main>
+    </>
   );
 }

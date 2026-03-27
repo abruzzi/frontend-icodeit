@@ -31,18 +31,18 @@ export default async function CaseStudyDetailPage({ params }: Props) {
   const related = resolveRelatedContent(current, patterns, caseStudies);
 
   return (
-    <main>
+    <>
       <article className={ui.panel}>
-        <h1 className="mt-0 text-3xl font-bold tracking-tight text-neutral-900">
-          {entry.frontmatter.title}
-        </h1>
+        <h1 className={ui.pageTitle}>{entry.frontmatter.title}</h1>
         <p>{entry.frontmatter.summary}</p>
         <p>
-          <strong>Quick take:</strong>{" "}
+          <strong className="text-slate-900 dark:text-slate-100">Quick take:</strong>{" "}
           {entry.frontmatter.quickTake.join(" / ")}
         </p>
         <p>
-          <strong>Production notes:</strong>{" "}
+          <strong className="text-slate-900 dark:text-slate-100">
+            Production notes:
+          </strong>{" "}
           {entry.frontmatter.productionNotes.join(" / ")}
         </p>
       </article>
@@ -50,15 +50,17 @@ export default async function CaseStudyDetailPage({ params }: Props) {
       <article className={`${ui.panel} ${ui.panelProse}`}>{mdx}</article>
 
       <section className={ui.panel}>
-        <h2 className="mt-0 text-xl font-semibold text-neutral-900">Related Patterns</h2>
-        <ul>
+        <h2 className={ui.sectionTitle}>Related Patterns</h2>
+        <ul className="space-y-2">
           {related.patterns.map((ref) => (
             <li key={ref.slug}>
-              <Link href={`/patterns/${ref.slug}`}>{ref.title ?? ref.slug}</Link>
+              <Link className={ui.relatedListLink} href={`/patterns/${ref.slug}`}>
+                {ref.title ?? ref.slug}
+              </Link>
             </li>
           ))}
         </ul>
       </section>
-    </main>
+    </>
   );
 }

@@ -6,8 +6,12 @@ For the first release, navigation focuses on **case studies** and **patterns**. 
 
 ## Prerequisites
 
-- Node.js (v18+ recommended)
+- **Node.js `18.17.0`** (same as the main site in `../icodeit-next`; use `nvm use` with the repo `.nvmrc`)
 - npm
+
+Tooling and UI tokens are aligned with **`icodeit-next`**: Next **14.0.x**, React **18.2**, TypeScript **5.0.4**, Tailwind **3.3.2**, PostCSS **8.4.23**, Autoprefixer **10.4.14**, Typography **0.5.9**, brand **`#e23e57`**, **Inter** via `next/font`, **light/dark** gradients on `body` (same classes as the main layout), **`py-20`** content padding, header bar (**sticky**, **backdrop-blur**, border), **centered nav with `gap-6`**, **no-underline** links with **hover → brand**, and **theme toggle** (`next-themes` + icons, same idea as the main site).
+
+The main site’s **logo images** (`logo-brand.png` / `logo-dark.png`) are not in this repo; `SiteLogo` is a text mark until you copy those files into `public/` and swap the component to match `icodeit-next/components/design-system/logo.tsx`.
 
 ## Setup
 
@@ -46,6 +50,9 @@ The app uses **Tailwind CSS** (with **@tailwindcss/typography** for MDX article 
 
 - `tailwind.config.js` — content paths and theme extensions
 - `postcss.config.js` — Tailwind + Autoprefixer
+- **React Flow** (`@xyflow/react`) — flow diagrams in MDX (`CcdaoFlowDiagram`); styles imported in `app/globals.css`
+- **Framer Motion** — interactive demos (e.g. `PaginationMotionDemo` for pagination-style motion)
+- **Lucide React** — icons in the shell (nav menu, theme toggle) and explainer UIs
 
 ## Where the content lives
 

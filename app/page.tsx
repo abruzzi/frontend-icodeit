@@ -4,11 +4,9 @@ import { ui } from "@/lib/ui";
 
 export default function HomePage() {
   return (
-    <main>
+    <>
       <section className={ui.panel}>
-        <h1 className="mt-0 text-3xl font-bold tracking-tight text-neutral-900">
-          Frontend at scale
-        </h1>
+        <h1 className={ui.pageTitle}>Frontend at scale</h1>
         <p>
           This site is for practicing frontend engineers who want to level up on
           real product-shaped problems: boards, feeds, chat, search, media-heavy
@@ -23,7 +21,7 @@ export default function HomePage() {
 
       <section className={ui.grid}>
         <article className={ui.panel}>
-          <h2 className="mt-0 text-xl font-semibold text-neutral-900">Case studies</h2>
+          <h2 className={ui.sectionTitle}>Case studies</h2>
           <p>
             End-to-end scenarios with the same CCDAO lens you would use in design
             reviews: collect constraints, structure the UI, model data, shape APIs,
@@ -34,7 +32,7 @@ export default function HomePage() {
           </Link>
         </article>
         <article className={ui.panel}>
-          <h2 className="mt-0 text-xl font-semibold text-neutral-900">Patterns</h2>
+          <h2 className={ui.sectionTitle}>Patterns</h2>
           <p>
             Reusable building blocks with decision criteria, failure modes, and
             testing ideas so you can adopt or adapt them in your own codebase.
@@ -44,6 +42,6 @@ export default function HomePage() {
           </Link>
         </article>
       </section>
-    </main>
+    </>
   );
 }

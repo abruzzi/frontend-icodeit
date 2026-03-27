@@ -10,7 +10,7 @@ export function TestingRubric({ rubricId }: TestingRubricProps) {
 
   if (rubric.length === 0) {
     return (
-      <p className="text-sm text-neutral-600">
+      <p className="text-sm text-slate-600">
         No rubric is configured for `{rubricId}`.
       </p>
     );
@@ -18,7 +18,7 @@ export function TestingRubric({ rubricId }: TestingRubricProps) {
 
   return (
     <div className={ui.explainerCard}>
-      <h3 className="mt-0 text-base font-semibold text-neutral-900">
+      <h3 className="mt-0 text-base font-semibold text-slate-900 dark:text-slate-50">
         Testing + Accessibility Rubric
       </h3>
       <div className="overflow-x-auto">
