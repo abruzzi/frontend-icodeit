@@ -1,0 +1,88 @@
+---
+title: "Board Application Architecture"
+summary: "Design a kanban-style board with fast drag interactions and reliable updates."
+kind: "case-study"
+scenario: "board-app"
+tags: ["performance", "reliability", "testing", "state-management", "a11y"]
+patternRefs:
+  - slug: "optimistic-ui-rollback"
+    title: "Optimistic UI and rollback"
+    reason: "Instant card movement while preserving consistency."
+  - slug: "realtime-transport-sse-websocket-long-poll"
+    title: "Realtime transport strategy"
+    reason: "Board updates from teammates should appear quickly."
+  - slug: "a11y-testing-strategy-dynamic-uis"
+    title: "A11y testing for dynamic UIs"
+    reason: "Keyboard drag interactions need explicit guarantees."
+quickTake:
+  - "Model board state with stable IDs and optimistic move mutations."
+  - "Use event sequencing and rollback on conflict."
+productionNotes:
+  - "Use operation IDs for idempotent move updates."
+  - "Provide keyboard-first move commands as a fallback to drag-and-drop."
+testingRubricId: "realtime-collaboration-core"
+---
+
+## TL;DR
+
+Treat card movement as ordered operations, update UI optimistically, then reconcile with authoritative server order.
+
+## Steel thread
+
+Create board, move one card between columns, persist, and sync the result to a second viewer.
+
+## C - Collect
+
+- Are cross-column move permissions role-based?
+- How quickly must collaborators see changes?
+- Must keyboard users perform all drag actions without pointer input?
+
+## C - Component structure
+
+- `BoardPage` loads board metadata and permission context.
+- `ColumnList` manages ordered column rendering.
+- `CardDraggable` contains only gesture state and command dispatch.
+
+## D - Data modeling
+
+- `Board`, `Column`, `Card`, and `MoveOperation` entities.
+- Maintain ordered `cardIds` per column.
+- Track `lastAppliedOperationId` to guard duplicate events.
+
+## A - API design
+
+- `GET /boards/:id` returns snapshot and version token.
+- `POST /boards/:id/moves` accepts `{operationId, cardId, from, to, index}`.
+- Subscription channel streams accepted move operations in sequence order.
+
+## O - Optimization
+
+- Use transform-based drag visuals to avoid layout trashing.
+- Batch collaborator updates when many moves arrive in one frame.
+- Keep focus on moved card for keyboard users and announce new position.
+
+## Pattern links
+
+- `optimistic-ui-rollback` for immediate drag response with conflict recovery.
+- `realtime-transport-sse-websocket-long-poll` for teammate update delivery.
+- `a11y-testing-strategy-dynamic-uis` for robust keyboard and screen-reader behavior.
+
+## Failure modes
+
+- Two users move the same card and one client shows stale final order.
+- Slow network causes delayed acknowledgements and duplicate move retries.
+- Drag-only interaction blocks assistive technology users.
+
+## Testing checklist
+
+<TestingRubric rubricId="realtime-collaboration-core" />
+
+## Explain it clearly
+
+- Short version: snapshot + operation log + optimistic UI + conflict resolution.
+- Longer version: sequencing guarantees, rollback behavior, and keyboard interaction model.
+
+## Production hardening notes
+
+- Alert on operation retry spikes and sequence-gap events.
+- Roll out collaborative updates behind feature flags by workspace tier.

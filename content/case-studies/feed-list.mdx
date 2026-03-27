@@ -1,0 +1,109 @@
+---
+title: "Feed List Architecture"
+summary: "Design an infinitely scrolling feed with ranking freshness and resilient UX."
+kind: "case-study"
+scenario: "feed-list"
+tags: ["performance", "reliability", "testing", "a11y"]
+patternRefs:
+  - slug: "virtualization-strategies"
+    title: "Virtualization strategies"
+    reason: "Limit DOM cost for large lists."
+  - slug: "pagination-cursor-offset-infinite"
+    title: "Pagination choices"
+    reason: "Ensure deterministic loading under writes."
+  - slug: "optimistic-ui-rollback"
+    title: "Optimistic UI and rollback"
+    reason: "Support reactions and fast affordances."
+quickTake:
+  - "Use cursor pagination and virtualization first."
+  - "Split canonical server cache from view model."
+productionNotes:
+  - "Use stale-while-revalidate for freshness."
+  - "Enforce live region announcements for appended content."
+testingRubricId: "dynamic-list-core"
+---
+
+## TL;DR
+
+Start with cursor pagination plus virtualization, then layer ranking updates and resilient loading states.
+
+## Steel thread
+
+Render first page, append older items via cursor, and preserve scroll anchor.
+
+## C - Collect
+
+- Do we require ranking freshness every few seconds?
+- What is acceptable feed staleness for users on slow networks?
+- Must keyboard users access new items without losing focus?
+
+<Callout tone="required">
+Define explicit feed freshness and tail-latency targets before choosing transport.
+</Callout>
+
+## C - Component structure
+
+- `FeedPage` orchestrates query state and route filters.
+- `FeedList` owns virtualization window.
+- `FeedItem` handles local interaction state only.
+
+## D - Data modeling
+
+- Canonical entity map keyed by `postId`.
+- Ordered `postIds` list per filter for rendering.
+- Cursor checkpoints stored by filter key.
+
+## A - API design
+
+- `GET /feed?cursor=...&limit=...&filter=...`
+- `POST /reactions` with idempotency key.
+- Optional SSE channel for lightweight ranking refresh events.
+
+## O - Optimization
+
+- Virtualize beyond 40 visible cards.
+- Keep image placeholders fixed-size to avoid layout shift.
+- Batch feed update announcements in one polite live region message.
+
+## Pattern links
+
+- `virtualization-strategies`: keeps render cost stable as items grow.
+- `pagination-offset-cursor-infinite`: protects ordering consistency during inserts.
+- `optimistic-ui-rollback`: keeps reaction latency low without data corruption.
+
+## Failure modes
+
+- Stale response applies after a newer cursor request and reorders visible items.
+- Personalization timeout returns sparse data and causes sudden content gaps.
+- Dynamic append announces every item and overwhelms screen-reader users.
+
+## Testing checklist
+
+<TestingRubric rubricId="dynamic-list-core" />
+
+## Explain it clearly
+
+- Short version: cursor + virtualization + stale response guard + a11y live region.
+- Longer version: entity cache shape, pagination contract, and resilience fallback.
+
+## Production hardening notes
+
+- Track stale-response discard rate and p95 first-scroll hitch in telemetry.
+- Circuit-break personalization dependencies and degrade to deterministic ordering.
+
+<TradeoffMatrix
+  rows={[
+    {
+      topic: "Pagination",
+      optionA: "Offset",
+      optionB: "Cursor",
+      whenBWins: "Frequent inserts and deterministic resume are required.",
+    },
+    {
+      topic: "Rendering",
+      optionA: "Render all",
+      optionB: "Virtualized list",
+      whenBWins: "List exceeds a few hundred nodes on mid-tier devices.",
+    },
+  ]}
+/>

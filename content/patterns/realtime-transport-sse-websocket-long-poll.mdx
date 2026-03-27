@@ -1,0 +1,71 @@
+---
+title: "Realtime Transport: SSE vs WebSocket vs Long Poll"
+summary: "Select the right transport based on interaction model, reliability needs, and infra constraints."
+kind: "pattern"
+level: "macro"
+tags: ["real-time", "reliability", "performance", "testing"]
+usedIn:
+  - slug: "chat-application"
+    title: "Chat Application Architecture"
+    reason: "Bidirectional events and low latency are core requirements."
+  - slug: "whiteboard-collaboration"
+    title: "Whiteboard Collaboration Architecture"
+    reason: "High-frequency updates require efficient streaming transport."
+  - slug: "board-application"
+    title: "Board Application Architecture"
+    reason: "Team updates need near real-time propagation."
+comparePages:
+  - "sse-vs-websocket-vs-long-poll"
+testingRubricId: "realtime-collaboration-core"
+---
+
+## TL;DR
+
+Choose WebSocket for frequent bidirectional interaction, SSE for simpler server-to-client streams, and long poll as compatibility fallback.
+
+## Problem this solves
+
+- Defines latency, ordering, and reconnect behavior for live updates.
+- Shapes infra complexity and cost for persistent connections.
+
+## Decision criteria
+
+- WebSocket: best for high-frequency duplex traffic.
+- SSE: best for one-way updates with simpler infra.
+- Long poll: best for environments with strict proxy/network constraints.
+
+## Layered depth
+
+### Intro
+
+Transport choice is a product decision: latency profile, scale model, and developer ergonomics change together.
+
+### Decision criteria
+
+Start with required interaction directionality and update frequency, then evaluate reconnect/replay needs.
+
+### Implementation detail
+
+- Define heartbeat and timeout policy per transport.
+- Standardize event envelope with sequence IDs across all transports.
+- Implement replay from snapshot + cursor to recover after disconnect.
+
+## Failure modes
+
+- Silent disconnects create stale UI with no reconnect attempt.
+- Sequence gaps after reconnect cause duplicate or missing state.
+- Proxy buffering breaks SSE freshness assumptions.
+
+## Pitfalls
+
+- Coupling domain events directly to transport protocol frames.
+- Ignoring fallback behavior for captive portals and constrained networks.
+
+## Testing and accessibility
+
+<TestingRubric rubricId="realtime-collaboration-core" />
+
+## Production trade-offs
+
+- WebSocket improves interaction quality but requires stronger connection lifecycle handling.
+- SSE simplifies operations but is limited for duplex workloads.

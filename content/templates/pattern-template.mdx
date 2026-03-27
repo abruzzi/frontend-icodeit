@@ -1,0 +1,75 @@
+---
+title: "Pattern Title"
+summary: "When and why to use this pattern."
+kind: "pattern"
+level: "micro | meso | macro"
+tags: ["performance", "testing", "a11y"]
+usedIn:
+  - slug: "feed-list"
+    title: "Feed List"
+comparePages:
+  - "transport-protocols"
+testingRubricId: "dynamic-list-core | realtime-collaboration-core | typeahead-core"
+---
+
+## TL;DR
+
+2-4 lines defining what this pattern solves and its first trade-off.
+
+<Callout tone="essentials">
+Include one sentence for when to use it and one for when to avoid it.
+</Callout>
+
+## Problem this solves
+
+- User-facing problem.
+- Engineering/system problem.
+
+## Decision criteria
+
+- When to use
+- When not to use
+- Preconditions and constraints
+
+<Callout tone="required">
+Document at least one anti-pattern and one migration path.
+</Callout>
+
+## Layered depth
+
+### Intro
+
+- Mental model and baseline architecture.
+
+### Decision criteria
+
+- Operational signals for choosing this pattern.
+
+### Implementation detail
+
+- Data flow, edge cases, and rollout order.
+
+## Failure modes
+
+<FailureModeStepper
+  items={[
+    {
+      title: "Failure mode",
+      symptom: "What users see",
+      mitigation: "How to fix",
+    },
+  ]}
+/>
+
+## Pitfalls
+
+- Subtle failure points teams often miss.
+- How to detect regressions early.
+
+## Testing and accessibility
+
+<TestingRubric rubricId="dynamic-list-core" />
+
+## Production trade-offs
+
+- Cost/complexity trade-offs and fallback options.

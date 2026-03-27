@@ -1,0 +1,49 @@
+---
+title: "Typeahead Search"
+summary: "Design low-latency search suggestions with cancellation and accessible keyboard flow."
+kind: "case-study"
+scenario: "typeahead"
+tags: ["performance", "a11y", "testing"]
+patternRefs:
+  - slug: "debounce-vs-throttle"
+    title: "Debounce vs throttle"
+    reason: "Balance responsiveness and API load."
+  - slug: "request-cancellation-stale-protection"
+    title: "Cancellation and stale protection"
+    reason: "Prevent old responses from flashing."
+quickTake:
+  - "Use debounce + abort + stale guards."
+productionNotes:
+  - "Implement ARIA combobox roles and active descendant."
+testingRubricId: "typeahead-core"
+---
+
+## TL;DR
+
+Minimize perceived latency with prefetch + debounce while preserving correct result ordering.
+
+## C - Collect
+
+- Max query length? multi-language tokenization?
+- Is keyboard-only flow a hard requirement?
+
+## C - Component structure
+
+- Input controller, suggestion list, result preview.
+
+## D - Data modeling
+
+- Cache by normalized query.
+- Store query token to reject stale response payloads.
+
+## A - API design
+
+- `GET /search/suggest?q=...` with server-side rank.
+- Return request token to aid stale checks.
+
+## O - Optimization
+
+- Prefetch common prefixes.
+- Keep SR announcements concise for result count changes.
+
+<TestingRubric rubricId="typeahead-core" />

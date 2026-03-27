@@ -1,0 +1,106 @@
+---
+title: "Virtualization Strategies"
+summary: "Reduce rendering overhead for long lists, feeds, and comment timelines."
+kind: "pattern"
+level: "meso"
+tags: ["performance", "reliability", "testing"]
+usedIn:
+  - slug: "feed-list"
+    title: "Feed List Architecture"
+  - slug: "youtube-like-page"
+    title: "YouTube-like Video Page"
+comparePages: []
+testingRubricId: "dynamic-list-core"
+---
+
+## TL;DR
+
+Render only what the viewport needs, while preserving navigation and measurement stability.
+
+## Decision criteria
+
+- Fixed height lists are easiest and fastest.
+- Variable heights need measurement caches and correction.
+
+## Trade-offs
+
+<TradeoffMatrix
+  rows={[
+    {
+      topic: "Complexity",
+      optionA: "Fixed size virtualization",
+      optionB: "Dynamic size virtualization",
+      whenBWins: "Card sizes vary significantly and clipping is unacceptable.",
+    },
+  ]}
+/>
+
+<TestingRubric rubricId="dynamic-list-core" />
+---
+title: Virtualization Strategies
+summary: Compare fixed-size and dynamic-size virtualization for large lists.
+kind: pattern
+level: meso
+tags:
+  - performance
+  - testing
+  - a11y
+usedIn:
+  - slug: feed-list
+    title: Feed List
+    reason: Supports long, personalized feeds with stable FPS.
+comparePages:
+  - fixed-vs-variable-virtualization
+testingRubricId: dynamic-list-core
+---
+
+## TL;DR
+
+Use fixed-size virtualization when row heights are predictable; use dynamic-size only when content variability is required and measured.
+
+## Problem this solves
+
+- Prevents render and memory cost from scaling linearly with list size.
+- Keeps interaction latency predictable on mid-tier devices.
+
+## Decision criteria
+
+- Prefer fixed-size rows for fastest scroll math and simpler caching.
+- Prefer dynamic-size rows when content variability is unavoidable.
+- Avoid virtualization when item counts are low and SEO/static rendering dominates.
+
+## Layered depth
+
+### Intro
+
+Render only visible rows plus overscan while preserving a stable scroll anchor.
+
+### Decision criteria
+
+Balance CPU cost, memory pressure, and implementation complexity against list size volatility.
+
+### Implementation detail
+
+- Keep keys stable across pagination pages.
+- Use anchored re-measure strategy for dynamic heights.
+- Tune overscan separately for touch and desktop profiles.
+
+## Failure modes
+
+- Re-measure storms trigger frame drops after image load.
+- Key instability causes list jump and lost focus.
+- Overscan too low causes blank gaps during fast flings.
+
+## Pitfalls
+
+- Coupling virtualization state to network pagination state.
+- Ignoring keyboard traversal and focus restoration after window changes.
+
+## Testing + accessibility rubric
+
+<TestingRubric rubricId="dynamic-list-core" />
+
+## Production trade-offs
+
+- Dynamic-size virtualization improves fidelity but increases implementation and test complexity.
+- Higher overscan smooths scroll but raises memory and CPU usage.

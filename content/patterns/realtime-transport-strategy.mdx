@@ -1,0 +1,42 @@
+---
+title: "Realtime Transport Strategy"
+summary: "Choose between Long Poll, SSE, and WebSocket using product interaction needs."
+kind: "pattern"
+level: "macro"
+tags: ["real-time", "reliability", "performance", "testing"]
+usedIn:
+  - slug: "chat-application"
+    title: "Chat Application"
+  - slug: "board-application"
+    title: "Board Application (Kanban)"
+  - slug: "whiteboard-collaboration"
+    title: "Whiteboard Collaboration"
+comparePages:
+  - "transport-protocols"
+testingRubricId: "realtime-collaboration-core"
+---
+
+## TL;DR
+
+Default to SSE for server-push only and WebSocket for full duplex collaboration.
+
+<ProtocolChooser />
+
+## Failure modes
+
+<FailureModeStepper
+  items={[
+    {
+      title: "Reconnect storm",
+      symptom: "Clients repeatedly disconnect and duplicate events.",
+      mitigation: "Use exponential backoff and resume token checkpoints.",
+    },
+    {
+      title: "Ordering drift",
+      symptom: "Messages appear out of sequence.",
+      mitigation: "Server sequence IDs plus client dedupe window.",
+    },
+  ]}
+/>
+
+<TestingRubric rubricId="realtime-collaboration-core" />

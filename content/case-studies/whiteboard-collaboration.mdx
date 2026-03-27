@@ -1,0 +1,88 @@
+---
+title: "Whiteboard Collaboration Architecture"
+summary: "Build a collaborative whiteboard with low-latency drawing sync and conflict-resilient state."
+kind: "case-study"
+scenario: "whiteboard"
+tags: ["real-time", "reliability", "performance", "testing", "a11y"]
+patternRefs:
+  - slug: "realtime-transport-sse-websocket-long-poll"
+    title: "Realtime transport strategy"
+    reason: "High-frequency drawing events need efficient transport."
+  - slug: "optimistic-ui-rollback"
+    title: "Optimistic UI and rollback"
+    reason: "Local drawing must feel instant before remote acknowledgement."
+  - slug: "a11y-testing-strategy-dynamic-uis"
+    title: "A11y testing for dynamic UIs"
+    reason: "Live updates and controls need non-visual alternatives."
+quickTake:
+  - "Use local-first drawing with server reconciliation."
+  - "Model stroke stream with snapshot + delta recovery."
+productionNotes:
+  - "Persist periodic snapshots for fast room hydration."
+  - "Backpressure high-frequency events on constrained networks."
+testingRubricId: "realtime-collaboration-core"
+---
+
+## TL;DR
+
+Render strokes locally first, sync deltas over low-latency transport, and recover state from snapshot plus operation log.
+
+## Steel thread
+
+Draw one stroke, broadcast to collaborator, undo action, and recover identical canvas after reconnect.
+
+## C - Collect
+
+- What maximum collaboration room size should V1 support?
+- Is strict ordering needed across all tool types?
+- Which non-pointer interactions are required for accessibility?
+
+## C - Component structure
+
+- `WhiteboardPage` coordinates room and connection state.
+- `CanvasStage` renders local and remote strokes.
+- `ToolPanel` manages drawing mode and undo/redo commands.
+
+## D - Data modeling
+
+- `Stroke`, `Layer`, `Operation`, and `Snapshot` entities.
+- Keep append-only operation log with sequence numbers.
+- Maintain per-user cursors/presence metadata separately from drawing model.
+
+## A - API design
+
+- `GET /boards/:id/snapshot` and `GET /boards/:id/ops?since=...`
+- WebSocket event channels for `stroke.create`, `operation.undo`, `presence.update`
+- `POST /boards/:id/snapshot` for periodic compaction.
+
+## O - Optimization
+
+- Batch points into stroke segments to reduce network overhead.
+- Use dirty-rectangle rendering for large canvases.
+- Provide keyboard shortcuts and text alternatives for tool changes.
+
+## Pattern links
+
+- `realtime-transport-sse-websocket-long-poll` for event delivery trade-offs.
+- `optimistic-ui-rollback` for local-first drawing and conflict handling.
+- `a11y-testing-strategy-dynamic-uis` for non-visual collaboration support.
+
+## Failure modes
+
+- Network jitter reorders operations and distorts final stroke shape.
+- Snapshot compaction drops undo history unexpectedly.
+- Presence and update announcements overwhelm assistive technologies.
+
+## Testing checklist
+
+<TestingRubric rubricId="realtime-collaboration-core" />
+
+## Explain it clearly
+
+- Short version: local-first canvas, sequenced ops, reconnect via snapshot + delta.
+- Longer version: conflict strategy, compaction policy, and collaboration a11y flow.
+
+## Production hardening notes
+
+- Track op delivery latency, sequence-gap events, and reconnect time-to-consistency.
+- Gate high-frequency collaboration features for low-end devices.

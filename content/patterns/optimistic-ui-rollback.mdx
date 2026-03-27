@@ -1,0 +1,98 @@
+---
+title: "Optimistic UI and Rollback"
+summary: "Provide instant user feedback while preserving correctness under server rejection or conflicts."
+kind: "pattern"
+level: "meso"
+tags: ["reliability", "performance", "state-management", "testing", "a11y"]
+usedIn:
+  - slug: "board-application"
+    title: "Board Application Architecture"
+    reason: "Card movement should feel immediate while remaining conflict-safe."
+  - slug: "chat-application"
+    title: "Chat Application Architecture"
+    reason: "Outgoing messages should appear immediately."
+  - slug: "feed-list"
+    title: "Feed List Architecture"
+    reason: "Reactions should respond instantly with safe rollback."
+comparePages:
+  - "optimistic-vs-confirmed-interactions"
+testingRubricId: "realtime-collaboration-core"
+---
+
+## TL;DR
+
+Optimistically apply local state for perceived speed, then confirm or rollback using server acknowledgements and idempotent operation IDs.
+
+## Problem this solves
+
+- Reduces perceived latency for common write interactions.
+- Preserves data integrity during partial failure or conflict.
+
+## Decision criteria
+
+- Use when user-visible latency matters and conflict rates are manageable.
+- Avoid for irreversible high-risk actions without confirmation gates.
+- Require clear error recovery UX before rollout.
+
+## Layered depth
+
+### Intro
+
+Separate pending local state from confirmed canonical state to keep reconciliation predictable.
+
+### Decision criteria
+
+Choose optimistic updates when server success probability is high and rollback semantics are understandable.
+
+### Implementation detail
+
+- Attach client operation ID to every mutation.
+- Keep per-entity pending patch list and inverse operations.
+- Reconcile in arrival order; ignore duplicate acknowledgements.
+
+## Failure modes
+
+- Server reject path does not fully reverse nested UI state.
+- Duplicate retries apply the same mutation twice.
+- Pending state is not announced and confuses assistive-technology users.
+
+## Pitfalls
+
+- Mutating canonical cache directly without a pending layer.
+- Missing observability for rollback rate and reject reason distribution.
+
+## Testing and accessibility
+
+<TestingRubric rubricId="realtime-collaboration-core" />
+
+## Production trade-offs
+
+- Better responsiveness increases implementation complexity for reconciliation.
+- Strong rollback UX lowers trust risk but requires careful product copy and state design.
+---
+title: "Optimistic UI and Rollback"
+summary: "Deliver responsive interactions while preserving eventual consistency."
+kind: "pattern"
+level: "meso"
+tags: ["reliability", "state-management", "testing"]
+usedIn:
+  - slug: "board-application"
+    title: "Board Application (Kanban)"
+  - slug: "feed-list"
+    title: "Feed List Architecture"
+  - slug: "whiteboard-collaboration"
+    title: "Whiteboard Collaboration"
+comparePages: []
+testingRubricId: "realtime-collaboration-core"
+---
+
+## TL;DR
+
+Apply updates immediately with temporary IDs or pending flags, then reconcile on server confirmation.
+
+## Design notes
+
+- Keep optimistic and confirmed state distinguishable.
+- Roll back with user-visible cues when writes fail.
+
+<TestingRubric rubricId="realtime-collaboration-core" />

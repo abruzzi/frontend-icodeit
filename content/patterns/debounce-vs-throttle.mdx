@@ -1,0 +1,108 @@
+---
+title: "Debounce vs Throttle"
+summary: "Choose between debounce and throttle for high-frequency user input events."
+kind: "pattern"
+level: "micro"
+tags: ["performance", "testing", "a11y", "reliability"]
+usedIn:
+  - slug: "typeahead-search-experience"
+    title: "Typeahead Search Experience"
+    reason: "Controls query volume while preserving responsiveness."
+comparePages:
+  - "debounce-vs-throttle"
+testingRubricId: "typeahead-core"
+---
+
+## TL;DR
+
+Use debounce for final-intent actions like search requests, and throttle for continuous feedback like scroll and resize.
+
+## Problem this solves
+
+- Prevents event storms from overwhelming network and rendering layers.
+- Improves perceived responsiveness by pacing expensive work.
+
+## Decision criteria
+
+- Use debounce when only the latest value matters.
+- Use throttle when periodic intermediate updates are useful.
+- Avoid either when updates must be truly real-time and lightweight.
+
+## Layered depth
+
+### Intro
+
+Both techniques bound invocation rate; they differ in whether intermediate events are intentionally dropped.
+
+### Decision criteria
+
+Pick based on user intent timing, side-effect cost, and tolerance for delayed updates.
+
+### Implementation detail
+
+- Couple debounce with cancellation tokens for async requests.
+- Use leading/trailing throttle options intentionally, not by default.
+- Keep timer state outside render loops.
+
+## Failure modes
+
+- Debounce delay feels laggy on short queries.
+- Throttle interval too high skips important interaction states.
+- Timer cleanup bug leaks work after component unmount.
+
+## Pitfalls
+
+- Mixing debounce and throttle in the same interaction path without clear ownership.
+- Forgetting stale-response guards for async debounced requests.
+
+## Testing and accessibility
+
+<TestingRubric rubricId="typeahead-core" />
+
+## Production trade-offs
+
+- Aggressive debounce reduces backend load but can hurt responsiveness.
+- Tight throttle improves feedback but increases CPU/network usage.
+---
+title: "Debounce vs Throttle"
+summary: "Choose the right input pacing strategy for search, resize, and scroll interactions."
+kind: "pattern"
+level: "micro"
+tags: ["performance", "testing", "a11y"]
+usedIn:
+  - slug: "typeahead-search"
+    title: "Typeahead Search"
+comparePages: []
+testingRubricId: "typeahead-core"
+---
+
+## TL;DR
+
+Debounce delays execution until input settles, throttle guarantees a maximum update cadence.
+
+## Decision criteria
+
+- Use debounce for search queries and autosave.
+- Use throttle for scroll and pointer updates.
+
+## Pitfalls
+
+- Debounce can feel laggy if timeout is too high.
+- Throttle can miss the final state unless trailing call is enabled.
+
+<FailureModeStepper
+  items={[
+    {
+      title: "Stale UI while typing",
+      symptom: "Suggestions appear too late.",
+      mitigation: "Lower debounce delay and prefetch likely prefixes.",
+    },
+    {
+      title: "API flood",
+      symptom: "Backend sees bursts of nearly identical queries.",
+      mitigation: "Add cancellation plus debounce token bucketing.",
+    },
+  ]}
+/>
+
+<TestingRubric rubricId="typeahead-core" />

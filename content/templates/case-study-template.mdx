@@ -1,0 +1,105 @@
+---
+title: "Case Study Name"
+summary: "One-line summary of user problem and constraints."
+kind: "case-study"
+scenario: "feed-list | board-app | chat-app | typeahead | video-page | whiteboard"
+tags: ["performance", "testing", "a11y"]
+patternRefs:
+  - slug: "pattern-slug"
+    title: "Pattern title"
+    reason: "Why this pattern matters in this scenario"
+quickTake:
+  - "Two sentences a teammate could reuse in a standup or design review"
+productionNotes:
+  - "Production hardening note"
+testingRubricId: "dynamic-list-core | realtime-collaboration-core | typeahead-core"
+---
+
+## TL;DR
+
+2-4 lines covering baseline architecture, first trade-off, and fallback plan.
+
+<Callout tone="essentials">
+Keep this tight: one user outcome, one key trade-off, and one mitigation you would actually ship.
+</Callout>
+
+## Steel thread
+
+Smallest end-to-end slice that provides user value.
+
+<Callout tone="required">
+Must include one read path and one write/interaction path.
+</Callout>
+
+## C - Collect
+
+- Clarifying questions with expected answers.
+- Functional requirements.
+- Non-functional constraints (latency, reliability, accessibility, compliance).
+
+<Callout tone="required">
+Explicitly list hard constraints and what is out of scope for V1.
+</Callout>
+
+## C - Component structure
+
+- UI decomposition.
+- State ownership and boundaries.
+- Data flow and synchronization points.
+
+<Callout tone="pitfall">
+Avoid mixing server state cache and ephemeral UI state in the same object.
+</Callout>
+
+## D - Data modeling
+
+- Entities and relationships.
+- Cache shape and derivations.
+- Ordering, dedupe, and conflict-handling strategy.
+
+<Callout tone="required">
+Show how the model handles stale updates, retries, and idempotency.
+</Callout>
+
+## A - API design
+
+- Read contracts.
+- Write contracts.
+- Pagination/subscription strategy and failure contracts.
+
+<Callout tone="production">
+Call out timeout, retry, and backoff behavior for every critical endpoint.
+</Callout>
+
+## O - Optimization
+
+- Performance strategy (render, network, memory).
+- Reliability strategy (degrade/fallback/recovery).
+- Accessibility and test strategy (unit/integration/e2e + SR checks).
+
+<Callout tone="required">
+Include at least two measurable SLO-style targets and how to instrument them.
+</Callout>
+
+## Pattern links
+
+- Explain why each `patternRefs` entry is used in this scenario.
+
+## Failure modes
+
+- Name 3 likely failures.
+- Add symptom, root cause, and mitigation for each.
+
+## Testing checklist
+
+<TestingRubric rubricId="dynamic-list-core" />
+
+## Explain it clearly
+
+- Short version (chat with PM or EM).
+- Longer version (design doc, RFC, or onboarding for a new teammate).
+
+## Production hardening notes
+
+- Rollout guardrails.
+- Observability and alert thresholds.

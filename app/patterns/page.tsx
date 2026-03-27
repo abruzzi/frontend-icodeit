@@ -1,0 +1,30 @@
+import Link from "next/link";
+
+import { getPatterns } from "@/lib/content";
+import { ui } from "@/lib/ui";
+
+export default function PatternsIndexPage() {
+  const entries = getPatterns();
+
+  return (
+    <main>
+      <h1 className={ui.pageTitle}>Patterns</h1>
+      <div className={ui.grid}>
+        {entries.map((entry) => (
+          <article className={ui.panel} key={entry.slug}>
+            <h2 className="mt-0 text-lg font-semibold text-neutral-900">
+              {entry.frontmatter.title}
+            </h2>
+            <p>{entry.frontmatter.summary}</p>
+            <p>
+              <strong>Level:</strong> {entry.frontmatter.level}
+            </p>
+            <Link className={ui.ctaLink} href={`/patterns/${entry.slug}`}>
+              Read pattern
+            </Link>
+          </article>
+        ))}
+      </div>
+    </main>
+  );
+}
