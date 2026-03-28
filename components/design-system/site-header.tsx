@@ -83,7 +83,7 @@ export function SiteHeader() {
       ) : null}
 
       {/* Desktop — same column as article body */}
-      <div className="hidden items-start gap-6 sm:flex sm:justify-between">
+      <div className="hidden items-center gap-6 sm:flex sm:justify-between">
         <SiteLogo />
         <div className="flex min-w-0 flex-1 items-center justify-end gap-1 md:gap-2">
           <nav

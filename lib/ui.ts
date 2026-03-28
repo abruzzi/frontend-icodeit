@@ -1,6 +1,6 @@
 /** Subtle surfaces — for home marketing cards only. */
 const PANEL_SURFACE =
-  "rounded-2xl border border-slate-200/90 bg-white/80 p-6 text-slate-800 shadow-sm shadow-slate-900/[0.04] dark:border-slate-700/45 dark:bg-slate-800/35 dark:shadow-none sm:p-7 leading-relaxed transition-[box-shadow,border-color,background-color] duration-200 hover:border-slate-300 dark:hover:border-slate-600/55 dark:hover:bg-slate-800/50 hover:shadow-md hover:shadow-slate-900/[0.07] dark:hover:shadow-black/25";
+  "rounded-2xl border border-slate-200/90 bg-white/80 p-6 text-slate-800 shadow-sm shadow-slate-900/[0.04] sm:p-7 leading-relaxed transition-[box-shadow,border-color,background-color] duration-200 hover:border-slate-300 hover:shadow-md hover:shadow-slate-900/[0.07] dark:border-slate-600/50 dark:bg-slate-800/60 dark:text-slate-200 dark:shadow-none dark:hover:border-slate-500/80 dark:hover:bg-slate-800/90 dark:hover:shadow-lg dark:hover:shadow-black/35";
 
 /** Shared typography for MDX (no card wrapper). */
 const PROSE_ARTICLE =
@@ -10,6 +10,12 @@ const PROSE_ARTICLE =
 export const ui = {
   mainShell:
     "mx-auto flex w-full min-w-0 max-w-[720px] flex-col gap-16 px-4 pb-28 pt-6 font-sans text-lg leading-relaxed text-slate-800 sm:gap-20 sm:px-6 sm:pt-8 md:gap-24 dark:text-slate-50",
+  /**
+   * Vertical rhythm between top-level page blocks (hero vs cards, title vs grid, etc.).
+   * Applied on `app/template.tsx` because fragments collapse into one flex child under `main`.
+   */
+  pageStack:
+    "flex min-w-0 flex-col gap-12 sm:gap-16 md:gap-20",
   /** Intro / hero copy on the page canvas — not a card. */
   hero: "space-y-6 text-pretty",
   panel: `${PANEL_SURFACE} space-y-5`,

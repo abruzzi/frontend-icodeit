@@ -9,10 +9,11 @@ module.exports = {
   theme: {
     extend: {
       colors: {
-        /** Primary brand — cyan-400 (Midnight & Neon spec). */
-        brand: "#22D3EE",
+        /** Primary brand — I Code It red (links, nav active, highlights). */
+        brand: "#e23e57",
         brandSecondary: "#C084FC",
-        brandDanger: "#F43F5E",
+        /** Darker than brand so errors/danger read distinct from links. */
+        brandDanger: "#b91c1c",
         slate: {
           150: "#e8edf3",
         },

@@ -116,7 +116,7 @@ function CcdaoFlowInner({
           zoomOnScroll
           proOptions={{ hideAttribution: true }}
           defaultEdgeOptions={{
-            style: { strokeWidth: 2, stroke: "#22D3EE" },
+            style: { strokeWidth: 2, stroke: "#e23e57" },
             animated: true,
           }}
         >

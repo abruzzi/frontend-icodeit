@@ -11,7 +11,7 @@ export default function PatternsIndexPage() {
       <h1 className={ui.pageTitle}>Patterns</h1>
       <div className={ui.indexGrid}>
         {entries.map((entry) => (
-          <article className={ui.section} key={entry.slug}>
+          <article className={ui.panel} key={entry.slug}>
             <h2 className={ui.cardTitle}>{entry.frontmatter.title}</h2>
             <p>{entry.frontmatter.summary}</p>
             <p>
