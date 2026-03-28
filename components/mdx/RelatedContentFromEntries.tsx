@@ -1,9 +1,9 @@
-import { resolveRelatedContent } from "../../lib/content/related";
+import { resolveRelatedContent } from "@/lib/content/related";
 import type {
   CaseStudyFrontmatter,
   ContentEntry,
   PatternFrontmatter,
-} from "../../lib/content/types";
+} from "@/lib/content/types";
 import { RelatedContent } from "./RelatedContent";
 
 type RelatedContentFromEntriesProps = {

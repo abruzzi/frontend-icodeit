@@ -21,6 +21,8 @@ export const ui = {
   panel: `${PANEL_SURFACE} space-y-5`,
   /** MDX article body without panel chrome. */
   proseArticle: PROSE_ARTICLE,
+  /** Detail page: MDX block after intro — top rule + spacing so prose reads as a distinct section. */
+  proseArticleBody: `${PROSE_ARTICLE} mt-2 border-t border-slate-200/80 pt-10 dark:border-slate-600/40 sm:pt-12 [&_h2:first-of-type]:mt-8`,
   /** Panel + prose — use only when content should read as a card. */
   panelProse: `${PANEL_SURFACE} ${PROSE_ARTICLE}`,
   /** Flat block: title stack, related links, list entries (no border/shadow). */
@@ -32,16 +34,20 @@ export const ui = {
     "font-heading text-3xl font-extrabold tracking-tighter text-slate-900 dark:text-slate-50 sm:text-4xl",
   sectionTitle:
     "font-heading text-xl font-extrabold tracking-tighter text-slate-900 dark:text-slate-50",
+  /** Inline labels next to body copy (detail intros, index meta lines). */
+  inlineLabel:
+    "font-semibold text-slate-900 dark:text-slate-100",
   cardTitle:
     "font-heading text-lg font-bold tracking-tight text-slate-900 dark:text-slate-50",
   comingSoon: "text-lg font-semibold text-slate-500 dark:text-slate-400",
   explainerCard:
-    "my-6 rounded-2xl border border-slate-200/80 bg-slate-100/50 p-5 dark:border-slate-700/45 dark:bg-slate-800/35 sm:p-6",
+    "my-6 rounded-2xl border border-slate-200/80 bg-slate-100/50 p-5 text-slate-800 sm:p-6 dark:border-slate-600/50 dark:bg-slate-900/55 dark:text-slate-200",
   table: "w-full border-collapse text-left text-sm",
-  th: "border-b border-slate-200/90 px-3 py-2.5 font-semibold text-slate-800 dark:border-slate-600/80 dark:text-slate-100",
-  td: "border-b border-slate-100/90 px-3 py-2.5 align-top text-slate-700 dark:border-slate-700/80 dark:text-slate-300",
+  th: "border-b border-slate-200/90 bg-slate-100/80 px-3 py-2.5 font-semibold text-slate-800 dark:border-slate-500/50 dark:bg-slate-800/90 dark:text-slate-100",
+  td: "border-b border-slate-200/70 px-3 py-2.5 align-top text-slate-700 dark:border-slate-600/50 dark:text-slate-200",
   ctaLink:
     "inline-block text-base font-medium text-brand no-underline transition-opacity duration-200 hover:opacity-80",
+  /** Internal nav links in related lists — brand + dotted underline + icon in markup. */
   relatedListLink:
-    "text-base font-medium text-slate-700 no-underline transition-colors duration-200 hover:text-brand dark:text-slate-300 dark:hover:text-brand",
+    "group inline-flex max-w-full items-center gap-1.5 text-base font-medium text-brand underline decoration-dotted decoration-brand/50 underline-offset-[5px] transition-colors hover:decoration-brand dark:text-brand dark:decoration-brand/60 dark:hover:decoration-brand",
 } as const;

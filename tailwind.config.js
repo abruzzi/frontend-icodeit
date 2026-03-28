@@ -1,4 +1,6 @@
 /** @type {import('tailwindcss').Config} */
+const siteColors = require("./site-colors.json");
+
 module.exports = {
   darkMode: ["class"],
   content: [
@@ -9,11 +11,10 @@ module.exports = {
   theme: {
     extend: {
       colors: {
-        /** Primary brand — I Code It red (links, nav active, highlights). */
-        brand: "#e23e57",
-        brandSecondary: "#C084FC",
-        /** Darker than brand so errors/danger read distinct from links. */
-        brandDanger: "#b91c1c",
+        /** Hex values: `site-colors.json` (also imported in TS for SVG/canvas). */
+        brand: siteColors.brand,
+        brandSecondary: siteColors.brandSecondary,
+        brandDanger: siteColors.brandDanger,
         slate: {
           150: "#e8edf3",
         },

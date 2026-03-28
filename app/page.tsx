@@ -1,5 +1,6 @@
 import Link from "next/link";
 
+import { routes } from "@/lib/routes";
 import { ui } from "@/lib/ui";
 
 export default function HomePage() {
@@ -29,7 +30,7 @@ export default function HomePage() {
             reviews: collect constraints, structure the UI, model data, shape APIs,
             and optimize for scale, reliability, and accessibility.
           </p>
-          <Link className={ui.ctaLink} href="/case-studies">
+          <Link className={ui.ctaLink} href={routes.caseStudiesIndex}>
             Explore case studies
           </Link>
         </article>
@@ -39,7 +40,7 @@ export default function HomePage() {
             Reusable building blocks with decision criteria, failure modes, and
             testing ideas so you can adopt or adapt them in your own codebase.
           </p>
-          <Link className={ui.ctaLink} href="/patterns">
+          <Link className={ui.ctaLink} href={routes.patternsIndex}>
             Explore patterns
           </Link>
         </article>

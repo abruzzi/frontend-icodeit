@@ -1,9 +1,10 @@
-import Link from "next/link";
 import { notFound } from "next/navigation";
 
+import { RelatedLinksSection } from "@/components/content/related-links-section";
 import { getCaseStudies, getEntrySource, getPatterns } from "@/lib/content";
 import { renderMdx } from "@/lib/content/mdx";
 import { resolveRelatedContent } from "@/lib/content/related";
+import { routes } from "@/lib/routes";
 import { ui } from "@/lib/ui";
 
 type Props = {
@@ -36,31 +37,22 @@ export default async function CaseStudyDetailPage({ params }: Props) {
         <h1 className={ui.pageTitle}>{entry.frontmatter.title}</h1>
         <p>{entry.frontmatter.summary}</p>
         <p>
-          <strong className="text-slate-900 dark:text-slate-100">Quick take:</strong>{" "}
+          <strong className={ui.inlineLabel}>Quick take:</strong>{" "}
           {entry.frontmatter.quickTake.join(" / ")}
         </p>
         <p>
-          <strong className="text-slate-900 dark:text-slate-100">
-            Production notes:
-          </strong>{" "}
+          <strong className={ui.inlineLabel}>Production notes:</strong>{" "}
           {entry.frontmatter.productionNotes.join(" / ")}
         </p>
       </article>
 
-      <article className={ui.proseArticle}>{mdx}</article>
+      <article className={ui.proseArticleBody}>{mdx}</article>
 
-      <section className={ui.section}>
-        <h2 className={ui.sectionTitle}>Related Patterns</h2>
-        <ul className="space-y-2">
-          {related.patterns.map((ref) => (
-            <li key={ref.slug}>
-              <Link className={ui.relatedListLink} href={`/patterns/${ref.slug}`}>
-                {ref.title ?? ref.slug}
-              </Link>
-            </li>
-          ))}
-        </ul>
-      </section>
+      <RelatedLinksSection
+        title="Related Patterns"
+        items={related.patterns}
+        hrefForSlug={routes.pattern}
+      />
     </>
   );
 }

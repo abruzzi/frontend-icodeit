@@ -1,4 +1,5 @@
-import type { RelatedContent as RelatedContentModel } from "../../lib/content/related";
+import type { RelatedContent as RelatedContentModel } from "@/lib/content/related";
+import { routes } from "@/lib/routes";
 
 type RelatedContentProps = {
   data: RelatedContentModel;
@@ -36,7 +37,10 @@ function Section({
 
 export function RelatedContent({
   data,
-  basePath = { patterns: "/patterns", caseStudies: "/case-studies" },
+  basePath = {
+    patterns: routes.patternsIndex,
+    caseStudies: routes.caseStudiesIndex,
+  },
 }: RelatedContentProps) {
   return (
     <aside aria-label="Related content">

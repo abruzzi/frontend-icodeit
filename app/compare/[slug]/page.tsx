@@ -2,44 +2,24 @@ import { notFound } from "next/navigation";
 
 import { ProtocolChooser } from "@/components/explainers/ProtocolChooser";
 import { TradeoffMatrix } from "@/components/explainers/TradeoffMatrix";
+import {
+  COMPARE_DOCS,
+  type CompareSlug,
+} from "@/lib/compare/docs";
 import { ui } from "@/lib/ui";
-
-const COMPARE_DOCS = {
-  "transport-protocols": {
-    title: "SSE vs WebSocket vs Long Poll",
-    rows: [
-      {
-        topic: "Directionality",
-        optionA: "SSE (server -> client)",
-        optionB: "WebSocket (bi-directional)",
-        whenBWins: "Needed for chat input, presence, and collaborative editing.",
-      },
-      {
-        topic: "Operational Simplicity",
-        optionA: "Long Poll",
-        optionB: "SSE",
-        whenBWins: "Need lower-latency push while keeping backend simpler than sockets.",
-      },
-      {
-        topic: "Burst Throughput",
-        optionA: "SSE",
-        optionB: "WebSocket",
-        whenBWins: "High-frequency two-way events and acknowledgement loops.",
-      },
-    ],
-  },
-} as const;
 
 type Props = {
   params: { slug: string };
 };
 
 export function generateStaticParams() {
-  return Object.keys(COMPARE_DOCS).map((slug) => ({ slug }));
+  return (Object.keys(COMPARE_DOCS) as CompareSlug[]).map((slug) => ({
+    slug,
+  }));
 }
 
 export default function ComparePage({ params }: Props) {
-  const doc = COMPARE_DOCS[params.slug as keyof typeof COMPARE_DOCS];
+  const doc = COMPARE_DOCS[params.slug as CompareSlug];
   if (!doc) {
     notFound();
   }

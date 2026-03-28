@@ -6,18 +6,13 @@ import { useState } from "react";
 import { Menu, X } from "lucide-react";
 
 import { ModeToggle } from "@/components/supporting/mode-toggle";
+import { PRIMARY_NAV } from "@/lib/nav";
+import { routes } from "@/lib/routes";
 
 import { SiteLogo } from "./site-logo";
 
-const NAV_ITEMS: { label: string; href: string }[] = [
-  { label: "Home", href: "/" },
-  { label: "Case Studies", href: "/case-studies" },
-  { label: "Patterns", href: "/patterns" },
-  { label: "Learning Paths", href: "/learning-paths" },
-];
-
 function isNavActive(href: string, pathname: string | null) {
-  if (href === "/") return pathname === "/";
+  if (href === routes.home) return pathname === routes.home;
   return pathname === href || pathname?.startsWith(`${href}/`) === true;
 }
 
@@ -69,7 +64,7 @@ export function SiteHeader() {
 
       {menuOpen ? (
         <nav className="mt-3 border-t border-slate-200/50 pt-3 dark:border-slate-700/40 sm:hidden" aria-label="Primary mobile">
-          {NAV_ITEMS.map(({ label, href }) => (
+          {PRIMARY_NAV.map(({ label, href }) => (
             <Link
               key={href}
               href={href}
@@ -90,7 +85,7 @@ export function SiteHeader() {
             className="flex min-w-0 flex-wrap items-center justify-end gap-x-5 gap-y-1 md:gap-x-6"
             aria-label="Primary"
           >
-            {NAV_ITEMS.map(({ label, href }) => (
+            {PRIMARY_NAV.map(({ label, href }) => (
               <Link
                 key={href}
                 href={href}

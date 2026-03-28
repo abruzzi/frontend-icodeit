@@ -1,5 +1,6 @@
 import Link from "next/link";
 
+import { routes } from "@/lib/routes";
 import { ui } from "@/lib/ui";
 
 export default function LearningPathsPage() {
@@ -12,11 +13,11 @@ export default function LearningPathsPage() {
       <p>
         Planned: guided paths for topics like data-heavy UIs, realtime, and
         accessibility at scale. For now, browse{" "}
-        <Link className={ui.ctaLink} href="/case-studies">
+        <Link className={ui.ctaLink} href={routes.caseStudiesIndex}>
           case studies
         </Link>{" "}
         and{" "}
-        <Link className={ui.ctaLink} href="/patterns">
+        <Link className={ui.ctaLink} href={routes.patternsIndex}>
           patterns
         </Link>{" "}
         directly.

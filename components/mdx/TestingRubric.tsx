@@ -10,7 +10,7 @@ export function TestingRubric({ rubricId }: TestingRubricProps) {
 
   if (rubric.length === 0) {
     return (
-      <p className="text-sm text-slate-600">
+      <p className="text-sm text-slate-600 dark:text-slate-400">
         No rubric is configured for `{rubricId}`.
       </p>
     );

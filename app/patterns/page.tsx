@@ -1,6 +1,6 @@
-import Link from "next/link";
-
+import { ContentEntryCard } from "@/components/content/content-entry-card";
 import { getPatterns } from "@/lib/content";
+import { routes } from "@/lib/routes";
 import { ui } from "@/lib/ui";
 
 export default function PatternsIndexPage() {
@@ -11,16 +11,19 @@ export default function PatternsIndexPage() {
       <h1 className={ui.pageTitle}>Patterns</h1>
       <div className={ui.indexGrid}>
         {entries.map((entry) => (
-          <article className={ui.panel} key={entry.slug}>
-            <h2 className={ui.cardTitle}>{entry.frontmatter.title}</h2>
-            <p>{entry.frontmatter.summary}</p>
-            <p>
-              <strong>Level:</strong> {entry.frontmatter.level}
-            </p>
-            <Link className={ui.ctaLink} href={`/patterns/${entry.slug}`}>
-              Read pattern
-            </Link>
-          </article>
+          <ContentEntryCard
+            key={entry.slug}
+            title={entry.frontmatter.title}
+            summary={entry.frontmatter.summary}
+            meta={
+              <>
+                <strong className={ui.inlineLabel}>Level:</strong>{" "}
+                {entry.frontmatter.level}
+              </>
+            }
+            href={routes.pattern(entry.slug)}
+            ctaLabel="Read pattern"
+          />
         ))}
       </div>
     </>

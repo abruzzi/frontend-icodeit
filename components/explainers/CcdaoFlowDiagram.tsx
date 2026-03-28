@@ -13,6 +13,8 @@ import {
 import { useTheme } from "next-themes";
 import { useEffect, useMemo, useState } from "react";
 
+import { siteColors } from "@/lib/site-colors";
+
 const NODE_IDS = [
   { id: "collect", x: 0, label: "C — Collect" },
   { id: "structure", x: 200, label: "C — Component structure" },
@@ -116,7 +118,7 @@ function CcdaoFlowInner({
           zoomOnScroll
           proOptions={{ hideAttribution: true }}
           defaultEdgeOptions={{
-            style: { strokeWidth: 2, stroke: "#e23e57" },
+            style: { strokeWidth: 2, stroke: siteColors.brand },
             animated: true,
           }}
         >

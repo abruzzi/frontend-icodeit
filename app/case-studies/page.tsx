@@ -1,6 +1,6 @@
-import Link from "next/link";
-
+import { ContentEntryCard } from "@/components/content/content-entry-card";
 import { getCaseStudies } from "@/lib/content";
+import { routes } from "@/lib/routes";
 import { ui } from "@/lib/ui";
 
 export default function CaseStudiesIndexPage() {
@@ -11,16 +11,19 @@ export default function CaseStudiesIndexPage() {
       <h1 className={ui.pageTitle}>Case Studies</h1>
       <div className={ui.indexGrid}>
         {entries.map((entry) => (
-          <article className={ui.panel} key={entry.slug}>
-            <h2 className={ui.cardTitle}>{entry.frontmatter.title}</h2>
-            <p>{entry.frontmatter.summary}</p>
-            <p>
-              <strong>Scenario:</strong> {entry.frontmatter.scenario}
-            </p>
-            <Link className={ui.ctaLink} href={`/case-studies/${entry.slug}`}>
-              Read case study
-            </Link>
-          </article>
+          <ContentEntryCard
+            key={entry.slug}
+            title={entry.frontmatter.title}
+            summary={entry.frontmatter.summary}
+            meta={
+              <>
+                <strong className={ui.inlineLabel}>Scenario:</strong>{" "}
+                {entry.frontmatter.scenario}
+              </>
+            }
+            href={routes.caseStudy(entry.slug)}
+            ctaLabel="Read case study"
+          />
         ))}
       </div>
     </>
