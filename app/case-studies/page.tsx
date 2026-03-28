@@ -9,9 +9,9 @@ export default function CaseStudiesIndexPage() {
   return (
     <>
       <h1 className={ui.pageTitle}>Case Studies</h1>
-      <div className={ui.grid}>
+      <div className={ui.indexGrid}>
         {entries.map((entry) => (
-          <article className={ui.panel} key={entry.slug}>
+          <article className={ui.section} key={entry.slug}>
             <h2 className={ui.cardTitle}>{entry.frontmatter.title}</h2>
             <p>{entry.frontmatter.summary}</p>
             <p>

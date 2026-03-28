@@ -96,7 +96,7 @@ function CcdaoFlowInner({
 
   return (
     <figure
-      className={`not-prose my-6 overflow-hidden rounded-2xl bg-slate-100/70 shadow-sm dark:bg-slate-900/50 ${className}`}
+      className={`not-prose my-6 overflow-hidden rounded-2xl border border-slate-200/80 bg-slate-100/60 shadow-sm dark:border-slate-700/45 dark:bg-slate-800/40 dark:shadow-none ${className}`}
       aria-label={title}
     >
       <figcaption className="px-4 py-3 text-sm font-medium text-slate-700 dark:text-slate-200">
@@ -116,7 +116,7 @@ function CcdaoFlowInner({
           zoomOnScroll
           proOptions={{ hideAttribution: true }}
           defaultEdgeOptions={{
-            style: { strokeWidth: 2, stroke: "#e23e57" },
+            style: { strokeWidth: 2, stroke: "#22D3EE" },
             animated: true,
           }}
         >

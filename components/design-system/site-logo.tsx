@@ -7,7 +7,7 @@ export function SiteLogo() {
   return (
     <Link
       href="/"
-      className="whitespace-nowrap text-lg font-bold tracking-tight text-brand no-underline transition-opacity duration-200 hover:opacity-80"
+      className="font-heading whitespace-nowrap text-base font-extrabold tracking-tighter text-brand no-underline transition-opacity duration-200 hover:opacity-80 sm:text-lg"
     >
       I Code It
     </Link>

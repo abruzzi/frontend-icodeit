@@ -5,17 +5,41 @@
 @tailwind components;
 @tailwind utilities;
 
-html {
-  scroll-behavior: smooth;
-}
-
 @layer base {
   :root {
-    color-scheme: light;
+    color-scheme: light dark;
+  }
+
+  html {
+    scroll-behavior: smooth;
   }
 
   main {
     @apply min-w-0;
+  }
+
+  * {
+    scrollbar-width: thin;
+    scrollbar-color: rgb(51 65 85 / 0.85) transparent;
+  }
+
+  *::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+
+  *::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  *::-webkit-scrollbar-thumb {
+    @apply rounded-full bg-slate-700/90;
+  }
+
+  pre,
+  code {
+    font-family: var(--font-jetbrains-mono), ui-monospace, monospace;
+    font-feature-settings: "liga" 1, "calt" 1;
   }
 }
 

@@ -44,7 +44,7 @@ export function PaginationMotionDemo({ className = "" }: PaginationMotionDemoPro
 
   return (
     <div
-      className={`not-prose my-6 rounded-2xl bg-slate-100/80 p-4 dark:bg-slate-900/50 ${className}`}
+      className={`not-prose my-6 rounded-2xl border border-slate-200/80 bg-slate-100/60 p-4 shadow-sm dark:border-slate-700/45 dark:bg-slate-800/40 dark:shadow-none ${className}`}
     >
       <p className="mb-3 text-sm font-medium text-slate-700 dark:text-slate-200">
         Pagination motion (Framer Motion + spring)

@@ -85,6 +85,6 @@ code[data-theme*=" "] span {
 }
 
 mark[data-highlighted-chars] {
-  background-color: #e23e5750;
+  background-color: rgb(34 211 238 / 0.22);
   border-radius: 0.25rem;
 }

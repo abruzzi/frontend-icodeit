@@ -28,7 +28,7 @@ export function Callout({ children, tone = "note", title }: CalloutProps) {
   const heading = title ?? toneLabel[tone];
   return (
     <aside
-      className={`my-4 rounded-xl px-4 py-3 text-sm leading-relaxed text-slate-800 dark:text-slate-200 ${toneClass[tone]}`}
+      className={`my-5 rounded-2xl px-4 py-3 text-sm leading-relaxed text-slate-800 dark:text-slate-200 ${toneClass[tone]}`}
     >
       <strong className="font-semibold text-slate-900 dark:text-slate-50">
         {heading}:

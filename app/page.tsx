@@ -5,8 +5,10 @@ import { ui } from "@/lib/ui";
 export default function HomePage() {
   return (
     <>
-      <section className={ui.panel}>
-        <h1 className={ui.pageTitle}>Frontend at scale</h1>
+      <section className={ui.hero} aria-labelledby="home-hero-heading">
+        <h1 id="home-hero-heading" className={ui.pageTitle}>
+          Frontend at scale
+        </h1>
         <p>
           This site is for practicing frontend engineers who want to level up on
           real product-shaped problems: boards, feeds, chat, search, media-heavy

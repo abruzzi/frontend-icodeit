@@ -38,7 +38,7 @@ export function FailureModeStepper({ items = DEFAULT_ITEMS }: FailureModeStepper
             type="button"
             className={`rounded-full px-3 py-1.5 text-sm font-medium transition-colors ${
               index === activeIndex
-                ? "bg-brand text-white shadow-sm"
+                ? "bg-cyan-600 text-white shadow-sm dark:bg-cyan-500 dark:text-slate-950"
                 : "bg-slate-200/80 text-slate-800 hover:bg-slate-300/80 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700"
             }`}
             onClick={() => setActiveIndex(index)}

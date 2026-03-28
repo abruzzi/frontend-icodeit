@@ -31,7 +31,7 @@ export default async function PatternDetailPage({ params }: Props) {
 
   return (
     <>
-      <article className={ui.panel}>
+      <article className={ui.section}>
         <h1 className={ui.pageTitle}>{entry.frontmatter.title}</h1>
         <p>{entry.frontmatter.summary}</p>
         <p>
@@ -42,9 +42,9 @@ export default async function PatternDetailPage({ params }: Props) {
         </p>
       </article>
 
-      <article className={`${ui.panel} ${ui.panelProse}`}>{mdx}</article>
+      <article className={ui.proseArticle}>{mdx}</article>
 
-      <section className={ui.panel}>
+      <section className={ui.section}>
         <h2 className={ui.sectionTitle}>Used In Case Studies</h2>
         <ul className="space-y-2">
           {related.caseStudies.map((ref) => (
@@ -60,7 +60,7 @@ export default async function PatternDetailPage({ params }: Props) {
         </ul>
       </section>
 
-      <section className={ui.panel}>
+      <section className={ui.section}>
         <h2 className={ui.sectionTitle}>Related Patterns</h2>
         <ul className="space-y-2">
           {related.patterns.map((ref) => (
