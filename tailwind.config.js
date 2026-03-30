@@ -1,4 +1,5 @@
 /** @type {import('tailwindcss').Config} */
+const plugin = require("tailwindcss/plugin");
 const siteColors = require("./site-colors.json");
 
 module.exports = {
@@ -15,6 +16,8 @@ module.exports = {
         brand: siteColors.brand,
         brandSecondary: siteColors.brandSecondary,
         brandDanger: siteColors.brandDanger,
+        /** Named palette: `text-palette-magenta`, `bg-palette-azure`, etc. */
+        palette: siteColors.palette,
         slate: {
           150: "#e8edf3",
         },
@@ -39,5 +42,20 @@ module.exports = {
       },
     },
   },
-  plugins: [require("@tailwindcss/typography")],
+  plugins: [
+    require("@tailwindcss/typography"),
+    plugin(({ addBase, theme }) => {
+      const palette = theme("colors.palette");
+      if (!palette || typeof palette !== "object") return;
+      const root = {};
+      for (const [name, value] of Object.entries(palette)) {
+        if (typeof value === "string") {
+          root[`--palette-${name}`] = value;
+        }
+      }
+      if (Object.keys(root).length > 0) {
+        addBase({ ":root": root });
+      }
+    }),
+  ],
 };

@@ -9,7 +9,7 @@ const PROSE_ARTICLE =
 /** Layout + surfaces. */
 export const ui = {
   mainShell:
-    "mx-auto flex w-full min-w-0 max-w-[720px] flex-col gap-16 px-4 pb-28 pt-6 font-sans text-lg leading-relaxed text-slate-800 sm:gap-20 sm:px-6 sm:pt-8 md:gap-24 dark:text-slate-50",
+    "mx-auto flex w-full min-w-0 max-w-4xl flex-col gap-16 px-4 pb-28 pt-6 font-sans text-lg leading-relaxed text-slate-800 sm:gap-20 sm:px-6 sm:pt-8 md:gap-24 dark:text-slate-50",
   /**
    * Vertical rhythm between top-level page blocks (hero vs cards, title vs grid, etc.).
    * Applied on `app/template.tsx` because fragments collapse into one flex child under `main`.
@@ -21,8 +21,9 @@ export const ui = {
   panel: `${PANEL_SURFACE} space-y-5`,
   /** MDX article body without panel chrome. */
   proseArticle: PROSE_ARTICLE,
-  /** Detail page: MDX block after intro — top rule + spacing so prose reads as a distinct section. */
-  proseArticleBody: `${PROSE_ARTICLE} mt-2 border-t border-slate-200/80 pt-10 dark:border-slate-600/40 sm:pt-12 [&_h2:first-of-type]:mt-8`,
+  /** Detail page: MDX block after intro — top rule + spacing so prose reads as a distinct section.
+   *  Do not use `[&_h2:first-of-type]` — it hits nested `h2`s (e.g. demos in MDX), not just the first section heading. */
+  proseArticleBody: `${PROSE_ARTICLE} mt-2 border-t border-slate-200/80 pt-10 dark:border-slate-600/40 sm:pt-12`,
   /** Panel + prose — use only when content should read as a card. */
   panelProse: `${PANEL_SURFACE} ${PROSE_ARTICLE}`,
   /** Flat block: title stack, related links, list entries (no border/shadow). */

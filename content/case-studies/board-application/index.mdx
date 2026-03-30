@@ -7,17 +7,31 @@ scenario: "board-app"
 tags: ["performance", "reliability", "testing", "state-management", "a11y"]
 patternRefs: []
 quickTake:
-  - "A board is mostly: ordered lists of card ids per column, plus a normalized map of card records, plus a clear story for move operations (idempotent) and ordering under concurrency."
-  - "If you only nail one path first: load board → move one card → persist → see the same result after refresh and (if applicable) on another client."
+  - "Steel thread: fixture JSON → correct UI → moves in client state → then persist for one user before realtime and conflicts."
+  - "A board is still: ordered card ids per column + normalized records + idempotent move operations when the server is involved."
 productionNotes:
   - "In production, treat duplicate move delivery, sequence gaps, and rollback rate as first-class metrics—they tell you if your operation or realtime contract is wrong."
   - "Plan keyboard and screen-reader flows before drag-and-drop polish; pointer-only boards are a common accessibility dead end."
 testingRubricId: "realtime-collaboration-core"
 ---
 
-This guide walks through a **kanban-style board** (think columns like *To do* / *In progress* / *Done*) the way you would **design and implement** it in a real product: what to store, how the client should shape that data, how HTTP (and optional realtime) contracts look, and where things usually break.
+This guide walks through a **kanban-style board** (columns like *Backlog* / *In progress* / *Done*, as in Trello or Jira) the way you would **design and implement** it in a real product: what to store, how the client should shape that data, how HTTP (and optional realtime) contracts look, and where things usually break.
 
 It uses the **CCDAO** mental model—**C**ollect constraints, **C**omponent structure, **D**ata, **A**PI, **O**ptimization—but the goal here is **depth for builders and learners**, not a timed interview script.
+
+## The method: steel thread
+
+Complicated systems are easier if you never start from “the whole system at once.” This article follows a **steel thread**: a **small end-to-end slice that works**, then you iterate outward with confidence.
+
+**1. Fixtures first, render correctly.** Start from **fixture data**—for example a JSON object in the frontend (or assume you can always fetch that snapshot successfully)—and render it **faithfully**: columns, card order, and whatever fields the UI needs.
+
+**2. Interaction before the network.** Add behavior on top: **moving cards** and **keeping order in client state only**. You nail the data shape, drag/drop boundaries, and state updates without distributed-system noise.
+
+**3. Persistence, single-player.** Save to the server next, but **one user at a time**: a move persists and reloads correctly. You can **defer** notifications, realtime fanout, and multi-writer conflict UX until that baseline is boring.
+
+**Milestones after that** (when you need them): server **ack / rollback** for moves, **idempotent** operations, **reload matches server**, then **two clients** (or tabs) converging without duplicates or “disappearing” cards, plus automation, WIP limits, and everything else the product asks for.
+
+The **Try it** widget below covers **steps 1 and 2** (fixture snapshot + local moves). **Data modeling** and **API design** deepen **step 3** and beyond.
 
 ## What you are building
 
@@ -28,19 +42,17 @@ Your implementation should stay **correct** when:
 - the network is slow or flaky;
 - the same move is **retried**;
 - **two people** move cards close together in time;
-- users rely on **keyboard** (not only drag-and-drop).
+- users might rely on **keyboard** for some interactions like drag-and-drop.
 
-## A minimal slice to get right first
+### Try it first: a tiny board you can drag
 
-Land this path before layering automation, swimlanes, or offline queues:
+Below is **steps 1–2** of the steel thread—**columns** and **ordered cards** from a JSON-shaped fixture—in a live widget. Drag cards between *Backlog*, *In progress*, and *Done*. It uses [Pragmatic drag and drop](https://atlassian.design/components/pragmatic-drag-and-drop/) and **local state only** (no server), so you can feel the interaction before **step 3** (APIs and persistence).
 
-1. Open a board and render every column with **stable order** of cards.
-2. **Move one card** to another column (or index) in the UI.
-3. **Persist** that move to the server and get an **acknowledgement** that matches what you showed (or a **clear rejection** you can roll back).
-4. **Reload** the page: the board matches the server.
-5. If collaboration is in scope: a **second client** eventually shows the same order without duplicate or “disappearing” cards.
+<BoardDndDemo />
 
-Everything below supports making that slice **solid**.
+<Callout tone="note">
+This demo does not call an API. **Step 3** of the steel thread is idempotent **move** operations + reconcile on ack or rollback—see **API design** and **Data modeling** below.
+</Callout>
 
 ## Product and engineering constraints
 
@@ -69,6 +81,8 @@ Typical regions:
 - **Drag / drop or keyboard layer**: keeps **ephemeral** state (what is being dragged, hover targets) **separate** from the **server-backed** board model. Mixing them in one object is a common source of impossible-to-replay bugs.
 
 **Rule of thumb:** the **canonical board order** lives in one place (normalized store + ordered id lists). Gestures **propose** updates; the store **applies** confirmed or optimistic patches.
+
+The **Try it first** board above is the same pattern at the leaf: columns own drop targets; cards are **presentational** and read from that shared column data; drag-and-drop **proposes** a new column assignment (there, only client state; in production, an operation + ack).
 
 ## Data modeling (deep dive)
 

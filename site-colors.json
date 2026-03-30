@@ -1,5 +1,12 @@
 {
   "brand": "#e23e57",
   "brandSecondary": "#C084FC",
-  "brandDanger": "#b91c1c"
+  "brandDanger": "#b91c1c",
+  "palette": {
+    "magenta": "#ff0855",
+    "azure": "#0090ff",
+    "tangerine": "#ff8000",
+    "gold": "#f4c70f",
+    "jade": "#00b209"
+  }
 }

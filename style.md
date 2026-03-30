@@ -42,7 +42,7 @@ To match the "Josh/Kent" vibe, the navigation must feel "ambient."
 ---
 
 ## 5. Spacing & Layout (The "Josh Comeau" Ratio)
-- **Single Column Flow:** Content width max `720px`. 
+- **Single Column Flow:** Content width `max-w-4xl` (56rem / 896px) via `ui.mainShell`. 
 - **The "Breathing" Room:** - Top padding for content: `pt-24` to `pt-32` (8rem+).
   - Vertical Rhythm: `mb-8` for paragraphs; `mt-16` for H2s.
 - **Symmetry:** Ensure the main site (`icodeit.com.au`) uses the same margins to allow for seamless cross-linking.

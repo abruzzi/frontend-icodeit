@@ -45,9 +45,9 @@ npm run lint
 | -------- | -------- |
 | **Routes** (single source for `href`s) | `lib/routes.ts` |
 | **Header nav labels + hrefs** | `lib/nav.ts` (uses `routes`) |
-| **Brand hex** (Tailwind + SVG/Canvas) | `site-colors.json` → `tailwind.config.js` + `lib/site-colors.ts` |
+| **Brand + palette hex** (Tailwind + SVG/Canvas + `:root` vars) | `site-colors.json` → `tailwind.config.js` + `lib/site-colors.ts` |
 | **Layout / spacing tokens** | `lib/ui.ts` |
-| **Case study & pattern content** | `content/case-studies/*.mdx`, `content/patterns/*.mdx` |
+| **Case study & pattern content** | `content/case-studies/<slug>/index.mdx`, `content/patterns/*.mdx` |
 | **Compare pages (structured data)** | `lib/compare/docs.ts` — see *Intentional choices* below |
 | **MDX → HTML** | `lib/content/mdx.tsx`, `components/mdx/mdx-components.tsx` |
 | **Related pattern ↔ case study links** | `lib/content/related.ts` + frontmatter |
@@ -76,6 +76,7 @@ npm run lint
 | `framer-motion` | Page transition wrapper (`app/template.tsx`) |
 | `next-themes` | Light/dark class on `<html>` |
 | `lucide-react` | Icons |
+| `@atlaskit/pragmatic-drag-and-drop` | Board case study drag-and-drop demo |
 | `geist` + `next/font` (Google) | Typography |
 
 We avoid unmaintained forks; `gray-matter` and the unified/remark ecosystem are the standard path for file-based MDX + frontmatter. If you move content to a CMS, replace `lib/content/index.ts` + `renderMdx` behind the same helpers.
@@ -101,7 +102,8 @@ We avoid unmaintained forks; `gray-matter` and the unified/remark ecosystem are 
 
 ## Where the content lives
 
-- Case studies: `content/case-studies/*.mdx` → `/case-studies`, `/case-studies/[slug]`
+- Case studies: `content/case-studies/<slug>/index.mdx` (folder per slug; optional `snippets/`, `assets/`) → `/case-studies/[slug]`
+- Interactive widgets for a case live under `components/case-studies/<slug>/` (client components used from MDX).
 - Patterns: `content/patterns/*.mdx` → `/patterns`, `/patterns/[slug]`
 
 ### CCDAO templates
