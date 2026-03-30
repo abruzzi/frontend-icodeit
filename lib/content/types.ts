@@ -1,7 +1,11 @@
 export type ContentKind = "case-study" | "pattern";
 
 /** `published` = full article and routable URL; others are roadmap cards only. */
-export type ContentStatus = "published" | "in-progress" | "coming-next";
+export type ContentStatus =
+  | "published"
+  | "coming-next"
+  | "in-progress"
+  | "planning";
 
 export function isPublishedContent(fm: { status?: ContentStatus }): boolean {
   return fm.status === undefined || fm.status === "published";

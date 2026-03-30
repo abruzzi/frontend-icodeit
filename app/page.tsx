@@ -11,14 +11,19 @@ export default function HomePage() {
           Frontend at scale
         </h1>
         <p>
-          This site is for practicing frontend engineers who want to level up on
-          real product-shaped problems: boards, feeds, chat, search, media-heavy
-          pages, and collaboration surfaces.
+          For practicing frontend engineers leveling up on real product-shaped
+          problems—boards, feeds, chat, search, media-heavy pages, and collaboration
+          surfaces.
         </p>
         <p>
-          Case studies walk through requirements, structure, data, APIs, and
-          trade-offs the way you would on a growing team. Patterns spell out what
-          often breaks in production and how to harden it.
+          Case studies walk the full path from requirements to trade-offs;
+          patterns spell out what breaks in production and how to harden it.
+        </p>
+        <p>
+          Where it helps, topics use interactive pages you can explore—not only
+          prose—and stay practical for your own projects. The same ideas show up
+          often: pagination, normalized caches, optimistic updates, debouncing,
+          virtualization, and more.
         </p>
       </section>
 
@@ -26,9 +31,8 @@ export default function HomePage() {
         <article className={ui.panel}>
           <h2 className={ui.sectionTitle}>Case studies</h2>
           <p>
-            End-to-end scenarios with the same CCDAO lens you would use in design
-            reviews: collect constraints, structure the UI, model data, shape APIs,
-            and optimize for scale, reliability, and accessibility.
+            End-to-end scenarios with a CCDAO-style lens: constraints, UI structure,
+            data, APIs, and optimization for scale, reliability, and accessibility.
           </p>
           <Link className={ui.ctaLink} href={routes.caseStudiesIndex}>
             Explore case studies
@@ -37,8 +41,8 @@ export default function HomePage() {
         <article className={ui.panel}>
           <h2 className={ui.sectionTitle}>Patterns</h2>
           <p>
-            Reusable building blocks with decision criteria, failure modes, and
-            testing ideas so you can adopt or adapt them in your own codebase.
+            Reusable blocks—criteria, failure modes, testing hooks—for needs that
+            show up in many apps (pagination, normalization, optimistic UI, etc.).
           </p>
           <Link className={ui.ctaLink} href={routes.patternsIndex}>
             Explore patterns

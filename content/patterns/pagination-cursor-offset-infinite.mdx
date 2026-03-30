@@ -1,30 +1,13 @@
 ---
 title: "Pagination: Offset vs Cursor vs Infinite"
-summary: "Pick list retrieval strategy based on consistency, UX, and backend behavior."
+summary: "How to page through large lists without breaking order when data changes underneath the user."
 kind: "pattern"
-status: "published"
+status: "planning"
 level: "meso"
 tags: ["performance", "reliability", "testing"]
-usedIn:
-  - slug: "feed-list"
-    title: "Feed List Architecture"
-  - slug: "chat-application"
-    title: "Chat Application"
-  - slug: "youtube-like-page"
-    title: "YouTube-like Video Page"
-comparePages:
-  - "transport-protocols"
+usedIn: []
+comparePages: []
 testingRubricId: "dynamic-list-core"
 ---
 
-## TL;DR
-
-Use cursor pagination when ordering is mutable and correctness across writes matters.
-
-## Decision criteria
-
-- Offset is simple and cache-friendly for static lists.
-- Cursor is resilient to inserts and deletes.
-- Infinite scroll is a presentation choice on top of either API.
-
-<TestingRubric rubricId="dynamic-list-core" />
+To be written in depth alongside the board application case study.

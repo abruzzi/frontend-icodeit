@@ -17,12 +17,14 @@ function statusBadgeClass(status: ContentStatus | undefined): string | null {
   if (!status || status === "published") return null;
   const base = ui.statusBadge;
   if (status === "coming-next") return `${base} ${ui.statusBadgeComingNext}`;
+  if (status === "planning") return `${base} ${ui.statusBadgePlanning}`;
   return `${base} ${ui.statusBadgeInProgress}`;
 }
 
 function statusBadgeLabel(status: ContentStatus | undefined): string | null {
   if (!status || status === "published") return null;
-  if (status === "coming-next") return "Coming next";
+  if (status === "coming-next") return "Coming soon";
+  if (status === "planning") return "Planning";
   return "In progress";
 }
 

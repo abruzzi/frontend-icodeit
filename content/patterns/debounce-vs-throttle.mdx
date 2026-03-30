@@ -1,66 +1,13 @@
 ---
 title: "Debounce vs Throttle"
-summary: "Choose between debounce and throttle for high-frequency user input events."
+summary: "Pace high-frequency events (typing, scroll, resize) so work stays responsive without overloading the network or main thread."
 kind: "pattern"
-status: "published"
+status: "planning"
 level: "micro"
-tags: ["performance", "testing", "a11y", "reliability"]
-usedIn:
-  - slug: "typeahead-search"
-    title: "Typeahead Search"
-    reason: "Controls query volume while preserving responsiveness."
-comparePages:
-  - "debounce-vs-throttle"
+tags: ["performance", "testing", "a11y"]
+usedIn: []
+comparePages: []
 testingRubricId: "typeahead-core"
 ---
 
-## TL;DR
-
-Use debounce for final-intent actions like search requests, and throttle for continuous feedback like scroll and resize.
-
-## Problem this solves
-
-- Prevents event storms from overwhelming network and rendering layers.
-- Improves perceived responsiveness by pacing expensive work.
-
-## Decision criteria
-
-- Use debounce when only the latest value matters.
-- Use throttle when periodic intermediate updates are useful.
-- Avoid either when updates must be truly real-time and lightweight.
-
-## Layered depth
-
-### Intro
-
-Both techniques bound invocation rate; they differ in whether intermediate events are intentionally dropped.
-
-### Decision criteria
-
-Pick based on user intent timing, side-effect cost, and tolerance for delayed updates.
-
-### Implementation detail
-
-- Couple debounce with cancellation tokens for async requests.
-- Use leading/trailing throttle options intentionally, not by default.
-- Keep timer state outside render loops.
-
-## Failure modes
-
-- Debounce delay feels laggy on short queries.
-- Throttle interval too high skips important interaction states.
-- Timer cleanup bug leaks work after component unmount.
-
-## Pitfalls
-
-- Mixing debounce and throttle in the same interaction path without clear ownership.
-- Forgetting stale-response guards for async debounced requests.
-
-## Testing and accessibility
-
-<TestingRubric rubricId="typeahead-core" />
-
-## Production trade-offs
-
-- Aggressive debounce reduces backend load but can hurt responsiveness.
-- Tight throttle improves feedback but increases CPU/network usage.
+To be written in depth alongside the board application case study.

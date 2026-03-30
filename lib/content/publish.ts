@@ -35,6 +35,7 @@ const STATUS_ORDER: Record<ContentStatus, number> = {
   published: 0,
   "coming-next": 1,
   "in-progress": 2,
+  planning: 3,
 };
 
 export function sortByPublishStatusThenTitle<

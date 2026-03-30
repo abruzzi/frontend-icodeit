@@ -111,21 +111,13 @@ We avoid unmaintained forks; `gray-matter` and the unified/remark ecosystem are 
 
 ## Quick links (published articles only)
 
-Case studies:
+**Current focus:** one full case study — **board application**. Everything else is a **Planning** card until `status: published`.
 
-- `/case-studies/feed-list`
 - `/case-studies/board-application`
-- `/case-studies/typeahead-search`
 
-Patterns:
+Patterns are stubbed (`status: planning`) until each is written against the board track; no pattern detail URLs are built until then.
 
-- `/patterns/virtualization-strategies`
-- `/patterns/debounce-vs-throttle`
-- `/patterns/pagination-cursor-offset-infinite`
-- `/patterns/request-cancellation-stale-protection`
-- `/patterns/optimistic-ui-rollback`
-
-Additional case studies and patterns appear on the index with **Coming next** / **In progress** badges until `status: published` is set in frontmatter.
+Index cards use **Planning**, **Coming soon** (`coming-next`), or **In progress** for non-published content. Set `status: published` when an article is ready to ship.
 
 Compare:
 

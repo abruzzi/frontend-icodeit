@@ -1,113 +1,59 @@
 ---
 title: "Case Study Name"
-summary: "One-line summary of user problem and constraints."
+summary: "One-line pitch: what the reader will learn and for which product shape."
 kind: "case-study"
-status: "published | in-progress | coming-next"
+status: "published | planning | coming-next | in-progress"
 scenario: "feed-list | board-app | chat-app | typeahead | video-page | whiteboard"
 tags: ["performance", "testing", "a11y"]
-patternRefs:
-  - slug: "pattern-slug"
-    title: "Pattern title"
-    reason: "Why this pattern matters in this scenario"
+patternRefs: []
 quickTake:
-  - "Two sentences a teammate could reuse in a standup or design review"
+  - "The main technical idea in one sentence (e.g. normalized cache + cursor + virtualization)."
+  - "The second idea: hardest constraint (latency, a11y, realtime, consistency)."
 productionNotes:
-  - "Production hardening note"
+  - "What you would measure or alert on in production."
+  - "Non-negotiable rollout or accessibility guardrail."
 testingRubricId: "dynamic-list-core | realtime-collaboration-core | typeahead-core"
 ---
 
-## TL;DR
+<!--
+  **Learning guide** (not an interview timer): explain the system so a motivated engineer
+  can implement or teach it. Use CCDAO as sections only where they help readability.
 
-2-4 lines covering baseline architecture, first trade-off, and fallback plan.
+  Suggested flow for a *full* article:
+  - Opening: what you are building and who it is for
+  - Minimal slice / “get this path working first”
+  - Product & engineering constraints (requirements without mock-interview framing)
+  - Why it is hard (failure modes that drive design)
+  - UI regions and state ownership
+  - **Data modeling** (entities, client shape, ordering, idempotency, concurrency) — go deep
+  - **API design** (reads, writes, errors, optional realtime, auth) — concrete shapes
+  - Performance, reliability, accessibility
+  - Trade-offs (short table or prose, no “pick 2–4 in session”)
+  - Common bugs / debugging lens
+  - <TestingRubric rubricId="..." />
+  - Further reading
 
-<Callout tone="essentials">
-Keep this tight: one user outcome, one key trade-off, and one mitigation you would actually ship.
-</Callout>
+  Use `status: planning` (or `coming-next`) plus a single body sentence until the topic is ready.
 
-## Steel thread
+  Optional MDX: <Callout />, <CcdaoFlowDiagram />, <PaginationMotionDemo />, <TradeoffMatrix />
+-->
 
-Smallest end-to-end slice that provides user value.
+## Opening
 
-<Callout tone="required">
-Must include one read path and one write/interaction path.
-</Callout>
+[What the reader will build and learn.]
 
-## C - Collect
+## Minimal slice
 
-- Clarifying questions with expected answers.
-- Functional requirements.
-- Non-functional constraints (latency, reliability, accessibility, compliance).
+[First end-to-end path that must work.]
 
-<Callout tone="required">
-Explicitly list hard constraints and what is out of scope for V1.
-</Callout>
+## Data modeling
 
-## C - Component structure
+[Deep dive: entities, client cache, ordering, operations, concurrency.]
 
-- UI decomposition.
-- State ownership and boundaries.
-- Data flow and synchronization points.
+## API design
 
-<Callout tone="pitfall">
-Avoid mixing server state cache and ephemeral UI state in the same object.
-</Callout>
-
-## D - Data modeling
-
-- Entities and relationships.
-- Cache shape and derivations.
-- Ordering, dedupe, and conflict-handling strategy.
-
-<Callout tone="required">
-Show how the model handles stale updates, retries, and idempotency.
-</Callout>
-
-## A - API design
-
-- Read contracts.
-- Write contracts.
-- Pagination/subscription strategy and failure contracts.
-
-<Callout tone="production">
-Call out timeout, retry, and backoff behavior for every critical endpoint.
-</Callout>
-
-## O - Optimization
-
-- Performance strategy (render, network, memory).
-- Reliability strategy (degrade/fallback/recovery).
-- Accessibility and test strategy (unit/integration/e2e + SR checks).
-
-<Callout tone="required">
-Include at least two measurable SLO-style targets and how to instrument them.
-</Callout>
-
-## Optional interactive explainer blocks
-
-Use these when a diagram or motion helps (see `feed-list` for a live example):
-
-- `<CcdaoFlowDiagram title="Your title" />` — **React Flow** (`@xyflow/react`): CCDAO pipeline, data flow, or API architecture.
-- `<PaginationMotionDemo />` — **Framer Motion**: directional “page” transitions (e.g. cursor pagination).
-
-## Pattern links
-
-- Explain why each `patternRefs` entry is used in this scenario.
-
-## Failure modes
-
-- Name 3 likely failures.
-- Add symptom, root cause, and mitigation for each.
+[Reads, writes, idempotency, errors, optional realtime.]
 
 ## Testing checklist
 
 <TestingRubric rubricId="dynamic-list-core" />
-
-## Explain it clearly
-
-- Short version (chat with PM or EM).
-- Longer version (design doc, RFC, or onboarding for a new teammate).
-
-## Production hardening notes
-
-- Rollout guardrails.
-- Observability and alert thresholds.

@@ -1,24 +1,13 @@
 ---
 title: "Request Cancellation and Stale Protection"
-summary: "Prevent stale responses from overriding newer intent in search and filters."
+summary: "Abort or ignore out-of-date async results so slower responses never overwrite newer user intent."
 kind: "pattern"
-status: "published"
+status: "planning"
 level: "micro"
 tags: ["performance", "reliability", "testing"]
-usedIn:
-  - slug: "typeahead-search"
-    title: "Typeahead Search"
+usedIn: []
 comparePages: []
 testingRubricId: "typeahead-core"
 ---
 
-## TL;DR
-
-Abort in-flight requests when user intent changes, and guard render path with latest token.
-
-## Implementation hints
-
-- Store an incrementing request token in state.
-- Ignore responses that do not match the latest token.
-
-<TestingRubric rubricId="typeahead-core" />
+To be written in depth alongside the board application case study.

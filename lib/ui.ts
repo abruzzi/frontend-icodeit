@@ -46,6 +46,8 @@ export const ui = {
     "bg-amber-100 text-amber-950 dark:bg-amber-950/70 dark:text-amber-100",
   statusBadgeInProgress:
     "bg-slate-200 text-slate-800 dark:bg-slate-600/80 dark:text-slate-100",
+  statusBadgePlanning:
+    "bg-violet-100 text-violet-950 dark:bg-violet-950/60 dark:text-violet-100",
   comingSoon: "text-lg font-semibold text-slate-500 dark:text-slate-400",
   explainerCard:
     "my-6 rounded-2xl border border-slate-200/80 bg-slate-100/50 p-5 text-slate-800 sm:p-6 dark:border-slate-600/50 dark:bg-slate-900/55 dark:text-slate-200",

@@ -1,93 +1,250 @@
 ---
 title: "Board Application Architecture"
-summary: "Design a kanban-style board with fast drag interactions and reliable updates."
+summary: "How to model, API-shape, and harden a kanban-style board: columns, ordered cards, moves, and multi-user sync."
 kind: "case-study"
 status: "published"
 scenario: "board-app"
 tags: ["performance", "reliability", "testing", "state-management", "a11y"]
-patternRefs:
-  - slug: "optimistic-ui-rollback"
-    title: "Optimistic UI and rollback"
-    reason: "Instant card movement while preserving consistency."
+patternRefs: []
 quickTake:
-  - "Model board state with stable IDs and optimistic move mutations."
-  - "Use event sequencing and rollback on conflict."
+  - "A board is mostly: ordered lists of card ids per column, plus a normalized map of card records, plus a clear story for move operations (idempotent) and ordering under concurrency."
+  - "If you only nail one path first: load board → move one card → persist → see the same result after refresh and (if applicable) on another client."
 productionNotes:
-  - "Use operation IDs for idempotent move updates."
-  - "Provide keyboard-first move commands as a fallback to drag-and-drop."
+  - "In production, treat duplicate move delivery, sequence gaps, and rollback rate as first-class metrics—they tell you if your operation or realtime contract is wrong."
+  - "Plan keyboard and screen-reader flows before drag-and-drop polish; pointer-only boards are a common accessibility dead end."
 testingRubricId: "realtime-collaboration-core"
 ---
 
-## TL;DR
+This guide walks through a **kanban-style board** (think columns like *To do* / *In progress* / *Done*) the way you would **design and implement** it in a real product: what to store, how the client should shape that data, how HTTP (and optional realtime) contracts look, and where things usually break.
 
-A board application like Jira or Trello is useful for tracking work items. A trello project can be useful for personal project like content creators for tracking items from scripting, filming, editing, publishing, etc. And Jira board is more for collabrative work that many people work on them semotinously.
+It uses the **CCDAO** mental model—**C**ollect constraints, **C**omponent structure, **D**ata, **A**PI, **O**ptimization—but the goal here is **depth for builders and learners**, not a timed interview script.
 
-The simplest form is that you have a few columns, like To do, In progress, Done. Or more detailed like, Backlog, Ready for dev, In progress, In Review, Rolling out, and Done.
+## What you are building
 
-On the surface, a board application is quite simple, you can move card into next stage as you go, and when it's finished you can achieve it either manually or using the concept like Sprint in agile to achieve them automatically.
+Teams use a **shared surface** where work items are **cards** grouped into **columns**. The main interaction is **moving a card** (reorder within a column or move across columns). Often, **several people** use the same board; sometimes columns are **huge** or **customized**.
 
-However, if we consider a real-world constraints and usage, there are a lot of design decisions can make many differences in terms of frontend user experience. Things like handling pagination when there are too many items, or update users action in real time to support collabration, or even make the drag-and-drop accessible for non-mouse users, etc.
+Your implementation should stay **correct** when:
 
+- the network is slow or flaky;
+- the same move is **retried**;
+- **two people** move cards close together in time;
+- users rely on **keyboard** (not only drag-and-drop).
 
+## A minimal slice to get right first
 
-Treat card movement as ordered operations, update UI optimistically, then reconcile with authoritative server order.
+Land this path before layering automation, swimlanes, or offline queues:
 
-## Steel thread
+1. Open a board and render every column with **stable order** of cards.
+2. **Move one card** to another column (or index) in the UI.
+3. **Persist** that move to the server and get an **acknowledgement** that matches what you showed (or a **clear rejection** you can roll back).
+4. **Reload** the page: the board matches the server.
+5. If collaboration is in scope: a **second client** eventually shows the same order without duplicate or “disappearing” cards.
 
-Create board, move one card between columns, persist, and sync the result to a second viewer.
+Everything below supports making that slice **solid**.
 
-## C - Collect
+## Product and engineering constraints
 
-- Are cross-column move permissions role-based?
-- How quickly must collaborators see changes?
-- Must keyboard users perform all drag actions without pointer input?
+These decisions change your data model and API more than any library choice:
 
-## C - Component structure
+- **Columns**: fixed workflow vs user-defined; max count; WIP limits; “done” / archive rules.
+- **Scale**: rough upper bound for cards per column (dozens vs thousands)—drives **pagination** inside a column vs load-all.
+- **Permissions**: who may move which cards; read-only viewers.
+- **Collaboration**: must moves appear for others within ~100ms, ~1s, or is **refresh** enough?
+- **Accessibility**: is **full parity** without a pointer required?
+- **Offline**: if moves queue locally, you need an explicit **merge** story when the client comes back.
 
-- `BoardPage` loads board metadata and permission context.
-- `ColumnList` manages ordered column rendering.
-- `CardDraggable` contains only gesture state and command dispatch.
+## Why boards are tricky
 
-## D - Data modeling
+- **Order is state.** Unlike a simple CRUD form, the product *is* the ordering of ids inside each column. Small bugs look like “my card jumped” or “it duplicated.”
+- **Moves are concurrent.** Two users can target the **same index** or the **same card**; the server must be the **authority** on the final order (or you expose conflicts explicitly).
+- **Optimistic UI is the default expectation.** Drag-and-drop feels broken if every move waits for the network; that means **pending state**, **rollback**, and **idempotent** server handling.
 
-- `Board`, `Column`, `Card`, and `MoveOperation` entities.
-- Maintain ordered `cardIds` per column.
-- Track `lastAppliedOperationId` to guard duplicate events.
+## UI structure and where state should live
 
-## A - API design
+Typical regions:
 
-- `GET /boards/:id` returns snapshot and version token.
-- `POST /boards/:id/moves` accepts `{operationId, cardId, from, to, index}`.
-- Subscription channel streams accepted move operations in sequence order.
+- **Board shell**: loads board metadata, permissions, and the **initial snapshot** (or starts subscriptions).
+- **Column list**: renders columns in order; each column owns **only presentation** for that lane (title, WIP badge, drop target).
+- **Cards**: mostly **presentational**; read from shared data; emit **intent** (“move card X after Y in column Z”) rather than mutating a global blob from deep inside a leaf component.
+- **Drag / drop or keyboard layer**: keeps **ephemeral** state (what is being dragged, hover targets) **separate** from the **server-backed** board model. Mixing them in one object is a common source of impossible-to-replay bugs.
 
-## O - Optimization
+**Rule of thumb:** the **canonical board order** lives in one place (normalized store + ordered id lists). Gestures **propose** updates; the store **applies** confirmed or optimistic patches.
 
-- Use transform-based drag visuals to avoid layout trashing.
-- Batch collaborator updates when many moves arrive in one frame.
-- Keep focus on moved card for keyboard users and announce new position.
+## Data modeling (deep dive)
 
-## Pattern links
+### Entities and relationships
 
-- `optimistic-ui-rollback` for immediate drag response with conflict recovery.
-- `realtime-transport-sse-websocket-long-poll` for teammate update delivery.
-- `a11y-testing-strategy-dynamic-uis` for robust keyboard and screen-reader behavior.
+At minimum:
 
-## Failure modes
+| Entity   | Role |
+| -------- | ---- |
+| `Board`  | Id, title, workspace, settings (e.g. column ids in order). |
+| `Column` | Id, board id, title, **order** among columns. |
+| `Card`   | Id, board id, **column id**, **position** (index or sort key), title and other fields. |
 
-- Two users move the same card and one client shows stale final order.
-- Slow network causes delayed acknowledgements and duplicate move retries.
-- Drag-only interaction blocks assistive technology users.
+Cardinality: a board has **many** columns; a column has **many** cards. Cards belong to **one** column at a time in the classic model.
 
-## Testing checklist
+### Server canonical model vs client view
+
+The **server** stores the **source of truth** for column order and each card’s `(columnId, position)` (or equivalent). The **client** usually mirrors that in a shape optimized for rendering:
+
+- **`cardsById: Record<CardId, Card>`** — full card records.
+- **`columnId → orderedCardIds: CardId[]`** — render order per column.
+
+Why both? The list gives you **order** in O(n) render without scanning all cards; the map gives you **O(1)** lookup when a realtime event references `cardId` only.
+
+### Ordering: index vs sort key
+
+Two common patterns:
+
+1. **Integer index** per column (`position: 0..n-1`). Simple to reason about; **every insert in the middle** can force **many rows** to update on the server unless you use fractional indexing or another trick.
+2. **Lexicographic / fractional rank** string between neighbors (`rank` between `"a"` and `"b"`). Fewer row updates on insert; slightly more complexity in the client when computing “between.”
+
+For learning, **explicit index + server normalizes** is enough; optimize when profiling shows write amplification.
+
+### Moves as operations (recommended mental model)
+
+Treat a move not as “set these three fields” but as an **operation** the server can **validate**, **order**, and **dedupe**:
+
+```text
+{
+  "operationId": "uuid-client-generated",
+  "type": "move_card",
+  "cardId": "c_1",
+  "fromColumnId": "col_a",
+  "toColumnId": "col_b",
+  "afterCardId": "c_9"   // or toIndex: 3 — pick one convention and stick to it
+}
+```
+
+- **`operationId`**: same id on **retries** so the server does not apply the same move twice.
+- **`afterCardId` (or index)** defines **intent**; the server may **adjust** if the neighbor moved (return final state).
+
+The client keeps a **pending operations** list or marks cards as **pending** until ack.
+
+### Concurrency: version or sequence
+
+Every board snapshot should carry something the client can compare:
+
+- **`version`** (monotonic integer) on the board or per column, or
+- a **`seq`** stream for **applied operations** (see API below).
+
+On conflict, either:
+
+- **Server wins**: respond with **409** + **latest snapshot** or delta, client rolls back optimistic UI; or
+- **Merge**: rare for whole-card moves; more relevant if multiple fields edit the same card simultaneously.
+
+Clients should track **`lastSeenVersion`** or **`lastAppliedSeq`** and ignore **stale** events.
+
+### Hot paths
+
+- **Initial load**: one round-trip for board + columns + cards (or paginated per column).
+- **Move**: one mutation + optional **broadcast** to other tabs/users.
+- **Search within board** (if any): usually a **separate** read model or query, not a full scan of the client cache.
+
+## API design (deep dive)
+
+### Transports
+
+- **HTTP** for **snapshot load** and **mutations** is standard.
+- **WebSocket** (or **SSE**) when others must see moves **without** polling: server pushes **operation applied** or **patched state** after each accepted move.
+
+You can ship v1 with **HTTP only** and periodic refresh; collaboration then adds the second channel.
+
+### Read: board snapshot
+
+A practical first contract:
+
+`GET /boards/:boardId`
+
+Response sketch:
+
+```json
+{
+  "board": { "id": "b1", "title": "Sprint 12", "version": 42 },
+  "columns": [
+    { "id": "c_todo", "title": "To do", "order": 0 },
+    { "id": "c_doing", "title": "In progress", "order": 1 }
+  ],
+  "cards": [
+    { "id": "card_1", "columnId": "c_todo", "position": 0, "title": "…" }
+  ]
+}
+```
+
+If a column can hold **thousands** of cards, split:
+
+`GET /boards/:boardId/columns/:columnId/cards?cursor=&limit=`
+
+and document **how cursor behaves** when new cards are inserted at the top.
+
+### Write: submit move (idempotent)
+
+`POST /boards/:boardId/operations`
+
+Headers: `Idempotency-Key: <operationId>` (or put `operationId` in the body and enforce uniqueness server-side).
+
+**Success** returns:
+
+- updated **`version`** (or next **`seq`**), and either
+- **full snapshot** (simplest for small boards), or
+- **minimal patch** (`{ affectedColumnIds, cards, order }`) to merge client-side.
+
+**Reject** (validation, permission) returns **4xx** with a body the UI can show; client **rolls back** optimistic state.
+
+**Conflict** (`409`): body includes **server truth** (snapshot fragment or “reapply from version 43”) so the client can reconcile without a full mystery refresh.
+
+### Realtime: event stream (optional)
+
+After collaboration ships, a minimal event shape:
+
+```json
+{
+  "seq": 1001,
+  "type": "move_applied",
+  "payload": { "operationId": "…", "…final positions…" }
+}
+```
+
+Rules that save you later:
+
+- Events are **strictly ordered** by `seq`.
+- On reconnect: **`GET …?afterSeq=lastSeen`** or **resync snapshot** if gap detected.
+- **Ignore** unknown `operationId` duplicates—idempotency applies on the client too.
+
+### Auth
+
+- Attach **workspace / user** context on every call.
+- Prefer **403** for “no permission” vs **404** for “board does not exist” based on your privacy product policy—be consistent.
+
+## Performance, reliability, and accessibility
+
+- **Drag performance**: prefer **transform**-based dragging and avoid **layout thrash**; virtualize columns only when profiling proves you need it.
+- **Realtime bursts**: **batch** UI updates per animation frame; dedupe by `operationId`.
+- **Keyboard**: explicit **move to column** / **move up-down** commands; **roving tabindex** inside the board; **announce** column changes for screen readers.
+- **Retries**: exponential backoff on **5xx** / network; never assign a **new** `operationId` for the **same user gesture**.
+
+## Trade-offs (when you evolve past the first slice)
+
+| Tension | One side | Other side | When the “other” wins |
+| ------- | -------- | ---------- | --------------------- |
+| Conflict handling | Server-normalized order after each move | Operational transform on shared fields | Multiple users edit **the same card body** concurrently |
+| Transport | Poll + refetch | WebSocket push | Sub-second multi-user updates |
+| Optimism | Wait for server | Optimistic + rollback | Drag-and-drop UX expectations |
+| Column size | Load all cards | Paginate in column | Very large backlogs |
+
+## Common failure modes
+
+- **Duplicate cards** after a retry → **idempotency** on `operationId` + server dedupe.
+- **Corrupt order** after tab sleep → **resync** from `version` / `seq`, not patch stacking forever.
+- **Ghost moves** (UI shows move, server never got it) → **pending** timeout + user-visible retry or revert.
+- **Accessibility gaps** → treat keyboard and SR as **v1**, not a later pass.
+
+## Testing
 
 <TestingRubric rubricId="realtime-collaboration-core" />
 
-## Explain it clearly
+## Further reading
 
-- Short version: snapshot + operation log + optimistic UI + conflict resolution.
-- Longer version: sequencing guarantees, rollback behavior, and keyboard interaction model.
-
-## Production hardening notes
-
-- Alert on operation retry spikes and sequence-gap events.
-- Roll out collaborative updates behind feature flags by workspace tier.
+- CCDAO framing and more scenarios: [juntao.substack.com](https://juntao.substack.com).
+- As this series grows, **optimistic UI**, **realtime transport**, and **a11y for dynamic UIs** will get dedicated pattern pages tied back to this board walkthrough.
