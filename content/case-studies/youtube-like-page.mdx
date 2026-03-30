@@ -2,6 +2,7 @@
 title: "YouTube-like Video Page"
 summary: "Design video playback page with recommendations, comments, and continuity features."
 kind: "case-study"
+status: "coming-next"
 scenario: "video-page"
 tags: ["performance", "reliability", "testing", "a11y"]
 patternRefs:
@@ -12,36 +13,12 @@ patternRefs:
     title: "Virtualization strategies"
     reason: "Long comment lists and side feeds."
 quickTake:
-  - "Prioritize playback continuity and layout stability."
+  - "Case study draft — will align with the YouTube walkthrough."
 productionNotes:
-  - "Hydrate comments and recommendations progressively."
+  - "—"
 testingRubricId: "dynamic-list-core"
 ---
 
-## TL;DR
+## Roadmap
 
-Keep the player stable first, then progressively enhance recommendations and comments.
-
-## C - Collect
-
-- Need resume position across devices?
-- What is acceptable first interaction delay?
-
-## C - Component structure
-
-- Player shell, recommendation rail, comments panel.
-
-## D - Data modeling
-
-- Viewer state (resume, quality prefs), comment entities, recommendation entities.
-
-## A - API design
-
-- Independent APIs for player metadata, comments, and recommendation slices.
-
-## O - Optimization
-
-- Lazy load heavy sidebar modules.
-- Provide a keyboard navigable chapter and caption controls.
-
-<TestingRubric rubricId="dynamic-list-core" />
+Planned as a follow-on to the video feed case study.

@@ -2,6 +2,7 @@
 title: "Chat Application Architecture"
 summary: "Build room-based messaging with ordering guarantees and reconnect resilience."
 kind: "case-study"
+status: "in-progress"
 scenario: "chat-app"
 tags: ["real-time", "reliability", "testing", "a11y", "state-management"]
 patternRefs:
@@ -11,78 +12,16 @@ patternRefs:
   - slug: "optimistic-ui-rollback"
     title: "Optimistic UI and rollback"
     reason: "Outgoing messages should feel instant."
-  - slug: "pagination-offset-cursor-infinite"
+  - slug: "pagination-cursor-offset-infinite"
     title: "Pagination choices"
     reason: "History loading must preserve stable message order."
 quickTake:
-  - "Use WebSocket for active rooms and recover from snapshot + cursor on reconnect."
-  - "Sequence IDs prevent out-of-order rendering."
+  - "Case study draft — will align with the YouTube walkthrough."
 productionNotes:
-  - "Persist send queue locally during transient disconnect."
-  - "Throttle typing indicators and presence fanout."
+  - "—"
 testingRubricId: "realtime-collaboration-core"
 ---
 
-## TL;DR
+## Roadmap
 
-Use sequenced events over WebSocket for active rooms, plus cursor-based history and deterministic reconnect.
-
-## Steel thread
-
-Open room, send one message, receive echo and teammate reply, then reload and replay latest history window.
-
-## C - Collect
-
-- What ordering guarantees are required per room?
-- Is message edit/delete in scope for V1?
-- Which accessibility requirements apply for live announcements?
-
-## C - Component structure
-
-- `RoomPage` coordinates connection lifecycle.
-- `MessageList` handles virtualization and anchor positioning.
-- `Composer` owns input and optimistic send queue.
-
-## D - Data modeling
-
-- Message entities keyed by `messageId`.
-- Per-room ordered index keyed by monotonic `sequence`.
-- Pending outbound map keyed by client-generated IDs.
-
-## A - API design
-
-- `GET /rooms/:id/messages?cursor=...` for history slices.
-- WebSocket `message.send`, `message.ack`, `message.event`.
-- Reconnect endpoint returns snapshot and latest sequence token.
-
-## O - Optimization
-
-- Coalesce typing and presence events to reduce chatter.
-- Virtualize long histories after the latest 100 messages.
-- Announce only high-signal live updates for screen-reader users.
-
-## Pattern links
-
-- `realtime-transport-sse-websocket-long-poll` to select active transport.
-- `optimistic-ui-rollback` for pending sends and retry/failed states.
-- `pagination-offset-cursor-infinite` for deterministic history retrieval.
-
-## Failure modes
-
-- Sequence gaps appear after reconnect and messages render out of order.
-- Duplicate outbound sends after retry produce repeated bubbles.
-- Aggressive live-region updates interrupt screen-reader workflow.
-
-## Testing checklist
-
-<TestingRubric rubricId="realtime-collaboration-core" />
-
-## Explain it clearly
-
-- Short version: room connection, sequence ordering, reconnect from snapshot.
-- Longer version: transport fallback, pending queue semantics, and a11y announcements.
-
-## Production hardening notes
-
-- Track reconnect success rate and sequence-gap recovery latency.
-- Canary new transport behaviors by region before global rollout.
+This scenario is on the backlog. The long-form write-up will ship after the video series covers it.

@@ -57,6 +57,13 @@ export function getPatterns(): ContentEntry<PatternFrontmatter>[] {
   );
 }
 
+export {
+  filterPublishedCaseStudyRefs,
+  filterPublishedPatternRefs,
+  sortByPublishStatusThenTitle,
+} from "./publish";
+export { isPublishedContent, type ContentStatus } from "./types";
+
 export function getEntrySource(
   collection: Collection,
   slug: string,

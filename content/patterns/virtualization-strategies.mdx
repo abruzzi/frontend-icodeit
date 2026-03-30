@@ -2,56 +2,18 @@
 title: "Virtualization Strategies"
 summary: "Reduce rendering overhead for long lists, feeds, and comment timelines."
 kind: "pattern"
+status: "published"
 level: "meso"
-tags: ["performance", "reliability", "testing"]
+tags: ["performance", "reliability", "testing", "a11y"]
 usedIn:
   - slug: "feed-list"
     title: "Feed List Architecture"
+    reason: "Supports long, personalized feeds with stable FPS."
   - slug: "youtube-like-page"
     title: "YouTube-like Video Page"
-comparePages: []
-testingRubricId: "dynamic-list-core"
----
-
-## TL;DR
-
-Render only what the viewport needs, while preserving navigation and measurement stability.
-
-## Decision criteria
-
-- Fixed height lists are easiest and fastest.
-- Variable heights need measurement caches and correction.
-
-## Trade-offs
-
-<TradeoffMatrix
-  rows={[
-    {
-      topic: "Complexity",
-      optionA: "Fixed size virtualization",
-      optionB: "Dynamic size virtualization",
-      whenBWins: "Card sizes vary significantly and clipping is unacceptable.",
-    },
-  ]}
-/>
-
-<TestingRubric rubricId="dynamic-list-core" />
----
-title: Virtualization Strategies
-summary: Compare fixed-size and dynamic-size virtualization for large lists.
-kind: pattern
-level: meso
-tags:
-  - performance
-  - testing
-  - a11y
-usedIn:
-  - slug: feed-list
-    title: Feed List
-    reason: Supports long, personalized feeds with stable FPS.
 comparePages:
-  - fixed-vs-variable-virtualization
-testingRubricId: dynamic-list-core
+  - "fixed-vs-variable-virtualization"
+testingRubricId: "dynamic-list-core"
 ---
 
 ## TL;DR

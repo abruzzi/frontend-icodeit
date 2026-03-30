@@ -39,6 +39,13 @@ export const ui = {
     "font-semibold text-slate-900 dark:text-slate-100",
   cardTitle:
     "font-heading text-lg font-bold tracking-tight text-slate-900 dark:text-slate-50",
+  /** Roadmap pill on index cards (non-published content). */
+  statusBadge:
+    "inline-flex shrink-0 rounded-full px-2.5 py-0.5 text-[0.65rem] font-bold uppercase tracking-wider",
+  statusBadgeComingNext:
+    "bg-amber-100 text-amber-950 dark:bg-amber-950/70 dark:text-amber-100",
+  statusBadgeInProgress:
+    "bg-slate-200 text-slate-800 dark:bg-slate-600/80 dark:text-slate-100",
   comingSoon: "text-lg font-semibold text-slate-500 dark:text-slate-400",
   explainerCard:
     "my-6 rounded-2xl border border-slate-200/80 bg-slate-100/50 p-5 text-slate-800 sm:p-6 dark:border-slate-600/50 dark:bg-slate-900/55 dark:text-slate-200",

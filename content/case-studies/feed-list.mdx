@@ -2,6 +2,7 @@
 title: "Feed List Architecture"
 summary: "Design an infinitely scrolling feed with ranking freshness and resilient UX."
 kind: "case-study"
+status: "published"
 scenario: "feed-list"
 tags: ["performance", "reliability", "testing", "a11y"]
 patternRefs:
@@ -76,7 +77,7 @@ Define explicit feed freshness and tail-latency targets before choosing transpor
 ## Pattern links
 
 - `virtualization-strategies`: keeps render cost stable as items grow.
-- `pagination-offset-cursor-infinite`: protects ordering consistency during inserts.
+- `pagination-cursor-offset-infinite`: protects ordering consistency during inserts.
 - `optimistic-ui-rollback`: keeps reaction latency low without data corruption.
 
 ## Failure modes

@@ -2,18 +2,13 @@
 title: "Board Application Architecture"
 summary: "Design a kanban-style board with fast drag interactions and reliable updates."
 kind: "case-study"
+status: "published"
 scenario: "board-app"
 tags: ["performance", "reliability", "testing", "state-management", "a11y"]
 patternRefs:
   - slug: "optimistic-ui-rollback"
     title: "Optimistic UI and rollback"
     reason: "Instant card movement while preserving consistency."
-  - slug: "realtime-transport-sse-websocket-long-poll"
-    title: "Realtime transport strategy"
-    reason: "Board updates from teammates should appear quickly."
-  - slug: "a11y-testing-strategy-dynamic-uis"
-    title: "A11y testing for dynamic UIs"
-    reason: "Keyboard drag interactions need explicit guarantees."
 quickTake:
   - "Model board state with stable IDs and optimistic move mutations."
   - "Use event sequencing and rollback on conflict."
@@ -24,6 +19,16 @@ testingRubricId: "realtime-collaboration-core"
 ---
 
 ## TL;DR
+
+A board application like Jira or Trello is useful for tracking work items. A trello project can be useful for personal project like content creators for tracking items from scripting, filming, editing, publishing, etc. And Jira board is more for collabrative work that many people work on them semotinously.
+
+The simplest form is that you have a few columns, like To do, In progress, Done. Or more detailed like, Backlog, Ready for dev, In progress, In Review, Rolling out, and Done.
+
+On the surface, a board application is quite simple, you can move card into next stage as you go, and when it's finished you can achieve it either manually or using the concept like Sprint in agile to achieve them automatically.
+
+However, if we consider a real-world constraints and usage, there are a lot of design decisions can make many differences in terms of frontend user experience. Things like handling pagination when there are too many items, or update users action in real time to support collabration, or even make the drag-and-drop accessible for non-mouse users, etc.
+
+
 
 Treat card movement as ordered operations, update UI optimistically, then reconcile with authoritative server order.
 

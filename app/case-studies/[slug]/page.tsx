@@ -1,7 +1,13 @@
 import { notFound } from "next/navigation";
 
 import { RelatedLinksSection } from "@/components/content/related-links-section";
-import { getCaseStudies, getEntrySource, getPatterns } from "@/lib/content";
+import {
+  filterPublishedPatternRefs,
+  getCaseStudies,
+  getEntrySource,
+  getPatterns,
+  isPublishedContent,
+} from "@/lib/content";
 import { renderMdx } from "@/lib/content/mdx";
 import { resolveRelatedContent } from "@/lib/content/related";
 import { routes } from "@/lib/routes";
@@ -12,12 +18,18 @@ type Props = {
 };
 
 export function generateStaticParams() {
-  return getCaseStudies().map((entry) => ({ slug: entry.slug }));
+  return getCaseStudies()
+    .filter((entry) => isPublishedContent(entry.frontmatter))
+    .map((entry) => ({ slug: entry.slug }));
 }
 
 export default async function CaseStudyDetailPage({ params }: Props) {
   const entry = getEntrySource("case-studies", params.slug);
   if (!entry || entry.frontmatter.kind !== "case-study") {
+    notFound();
+  }
+
+  if (!isPublishedContent(entry.frontmatter)) {
     notFound();
   }
 
@@ -30,6 +42,10 @@ export default async function CaseStudyDetailPage({ params }: Props) {
   }
 
   const related = resolveRelatedContent(current, patterns, caseStudies);
+  const relatedPatterns = filterPublishedPatternRefs(
+    related.patterns,
+    patterns,
+  );
 
   return (
     <>
@@ -50,7 +66,7 @@ export default async function CaseStudyDetailPage({ params }: Props) {
 
       <RelatedLinksSection
         title="Related Patterns"
-        items={related.patterns}
+        items={relatedPatterns}
         hrefForSlug={routes.pattern}
       />
     </>

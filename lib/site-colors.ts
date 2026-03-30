@@ -8,3 +8,15 @@ export type SiteColors = {
 };
 
 export const siteColors = siteColorsJson as SiteColors;
+
+
+/*
+
+#ff0855 
+#0090ff
+#ff8000
+#f4c70f
+#00b209
+
+*/
+

@@ -2,6 +2,7 @@
 title: "Realtime Transport: SSE vs WebSocket vs Long Poll"
 summary: "Select the right transport based on interaction model, reliability needs, and infra constraints."
 kind: "pattern"
+status: "in-progress"
 level: "macro"
 tags: ["real-time", "reliability", "performance", "testing"]
 usedIn:
@@ -19,53 +20,6 @@ comparePages:
 testingRubricId: "realtime-collaboration-core"
 ---
 
-## TL;DR
+## Roadmap
 
-Choose WebSocket for frequent bidirectional interaction, SSE for simpler server-to-client streams, and long poll as compatibility fallback.
-
-## Problem this solves
-
-- Defines latency, ordering, and reconnect behavior for live updates.
-- Shapes infra complexity and cost for persistent connections.
-
-## Decision criteria
-
-- WebSocket: best for high-frequency duplex traffic.
-- SSE: best for one-way updates with simpler infra.
-- Long poll: best for environments with strict proxy/network constraints.
-
-## Layered depth
-
-### Intro
-
-Transport choice is a product decision: latency profile, scale model, and developer ergonomics change together.
-
-### Decision criteria
-
-Start with required interaction directionality and update frequency, then evaluate reconnect/replay needs.
-
-### Implementation detail
-
-- Define heartbeat and timeout policy per transport.
-- Standardize event envelope with sequence IDs across all transports.
-- Implement replay from snapshot + cursor to recover after disconnect.
-
-## Failure modes
-
-- Silent disconnects create stale UI with no reconnect attempt.
-- Sequence gaps after reconnect cause duplicate or missing state.
-- Proxy buffering breaks SSE freshness assumptions.
-
-## Pitfalls
-
-- Coupling domain events directly to transport protocol frames.
-- Ignoring fallback behavior for captive portals and constrained networks.
-
-## Testing and accessibility
-
-<TestingRubric rubricId="realtime-collaboration-core" />
-
-## Production trade-offs
-
-- WebSocket improves interaction quality but requires stronger connection lifecycle handling.
-- SSE simplifies operations but is limited for duplex workloads.
+Detailed write-up will follow the collaboration and chat case studies on video.

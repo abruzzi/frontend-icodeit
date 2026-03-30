@@ -109,25 +109,23 @@ We avoid unmaintained forks; `gray-matter` and the unified/remark ecosystem are 
 - `content/templates/case-study-template.mdx`
 - `content/templates/pattern-template.mdx`
 
-## Quick links to seeded pages
+## Quick links (published articles only)
 
 Case studies:
 
 - `/case-studies/feed-list`
 - `/case-studies/board-application`
-- `/case-studies/chat-application`
-- `/case-studies/typeahead-search-experience`
-- `/case-studies/video-feed-page`
-- `/case-studies/whiteboard-collaboration`
+- `/case-studies/typeahead-search`
 
 Patterns:
 
 - `/patterns/virtualization-strategies`
 - `/patterns/debounce-vs-throttle`
-- `/patterns/pagination-offset-cursor-infinite`
-- `/patterns/realtime-transport-sse-websocket-long-poll`
+- `/patterns/pagination-cursor-offset-infinite`
+- `/patterns/request-cancellation-stale-protection`
 - `/patterns/optimistic-ui-rollback`
-- `/patterns/a11y-testing-strategy-dynamic-uis`
+
+Additional case studies and patterns appear on the index with **Coming next** / **In progress** badges until `status: published` is set in frontmatter.
 
 Compare:
 

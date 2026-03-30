@@ -2,6 +2,7 @@
 title: "Cache Invalidation and SWR"
 summary: "Balance perceived performance and correctness with stale-while-revalidate flows."
 kind: "pattern"
+status: "in-progress"
 level: "macro"
 tags: ["performance", "reliability", "state-management", "testing"]
 usedIn:
@@ -13,13 +14,6 @@ comparePages: []
 testingRubricId: "dynamic-list-core"
 ---
 
-## TL;DR
+## Roadmap
 
-Serve cached content instantly, then revalidate in background with precise invalidation keys.
-
-## Decision criteria
-
-- High-read products benefit from SWR defaults.
-- Mutation-heavy surfaces need focused invalidation paths.
-
-<TestingRubric rubricId="dynamic-list-core" />
+Full pattern notes will ship after the video segment on cache and revalidation.

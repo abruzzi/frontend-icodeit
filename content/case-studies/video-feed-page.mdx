@@ -2,87 +2,23 @@
 title: "Video Feed Page Architecture"
 summary: "Design a YouTube-like video feed page with smooth playback transitions and personalized ranking."
 kind: "case-study"
+status: "coming-next"
 scenario: "video-page"
 tags: ["performance", "reliability", "testing", "a11y", "state-management"]
 patternRefs:
-  - slug: "pagination-offset-cursor-infinite"
+  - slug: "pagination-cursor-offset-infinite"
     title: "Pagination choices"
     reason: "Supports infinite recommendation rails with stable ordering."
   - slug: "virtualization-strategies"
     title: "Virtualization strategies"
     reason: "Controls DOM cost for long recommendation lists."
-  - slug: "a11y-testing-strategy-dynamic-uis"
-    title: "A11y testing for dynamic UIs"
-    reason: "Playback and recommendation updates need accessible announcements."
 quickTake:
-  - "Separate playback state from recommendation state."
-  - "Use cursor-based recommendation pagination with resilient media fallback."
+  - "Case study draft — will align with the YouTube walkthrough."
 productionNotes:
-  - "Preconnect to media/CDN origin before playback starts."
-  - "Fallback to lower bitrate ladders on unstable networks."
+  - "—"
 testingRubricId: "dynamic-list-core"
 ---
 
-## TL;DR
+## Roadmap
 
-Keep playback state isolated, paginate recommendations via cursor, and prefetch adjacent content for smooth transitions.
-
-## Steel thread
-
-Load a video, autoplay next recommendation candidate metadata, and append recommendation rail items on scroll.
-
-## C - Collect
-
-- Should autoplay be enabled by default?
-- What startup delay is acceptable before first frame?
-- Are captions and keyboard controls mandatory for all locales?
-
-## C - Component structure
-
-- `WatchPage` orchestrates selected video and recommendation feed.
-- `VideoPlayerShell` owns playback and quality controls.
-- `RecommendationRail` handles pagination and virtualization.
-
-## D - Data modeling
-
-- `Video`, `Channel`, `RecommendationEdge`, and `PlaybackSession` entities.
-- Recommendation order stored separately from canonical video map.
-- Track playback telemetry by session ID.
-
-## A - API design
-
-- `GET /videos/:id` for metadata and playback manifest pointer.
-- `GET /videos/:id/recommendations?cursor=...`
-- `POST /playback/events` batched telemetry endpoint.
-
-## O - Optimization
-
-- Prefetch next recommendation metadata and poster images.
-- Use adaptive quality ladder and startup bitrate hints.
-- Ensure keyboard controls and caption toggles are always reachable.
-
-## Pattern links
-
-- `pagination-offset-cursor-infinite` for recommendation pagination.
-- `virtualization-strategies` for long side-rail rendering.
-- `a11y-testing-strategy-dynamic-uis` for playback and update accessibility.
-
-## Failure modes
-
-- Recommendation reorder during scroll causes duplicate cards.
-- Adaptive bitrate oscillates and creates playback stalls.
-- Screen-reader users miss playback state changes.
-
-## Testing checklist
-
-<TestingRubric rubricId="dynamic-list-core" />
-
-## Explain it clearly
-
-- Short version: isolate playback core, paginate rail with cursor, prefetch next payload.
-- Longer version: ABR strategy, telemetry contracts, and a11y control model.
-
-## Production hardening notes
-
-- Alert on startup-failure rate and rebuffer ratio by device class.
-- Roll out new ranking models with shadow traffic first.
+Planned after the core feed and media scenarios are published on video.

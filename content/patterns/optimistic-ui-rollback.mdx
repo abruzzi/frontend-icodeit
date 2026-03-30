@@ -2,6 +2,7 @@
 title: "Optimistic UI and Rollback"
 summary: "Provide instant user feedback while preserving correctness under server rejection or conflicts."
 kind: "pattern"
+status: "published"
 level: "meso"
 tags: ["reliability", "performance", "state-management", "testing", "a11y"]
 usedIn:
@@ -69,30 +70,3 @@ Choose optimistic updates when server success probability is high and rollback s
 
 - Better responsiveness increases implementation complexity for reconciliation.
 - Strong rollback UX lowers trust risk but requires careful product copy and state design.
----
-title: "Optimistic UI and Rollback"
-summary: "Deliver responsive interactions while preserving eventual consistency."
-kind: "pattern"
-level: "meso"
-tags: ["reliability", "state-management", "testing"]
-usedIn:
-  - slug: "board-application"
-    title: "Board Application (Kanban)"
-  - slug: "feed-list"
-    title: "Feed List Architecture"
-  - slug: "whiteboard-collaboration"
-    title: "Whiteboard Collaboration"
-comparePages: []
-testingRubricId: "realtime-collaboration-core"
----
-
-## TL;DR
-
-Apply updates immediately with temporary IDs or pending flags, then reconcile on server confirmation.
-
-## Design notes
-
-- Keep optimistic and confirmed state distinguishable.
-- Roll back with user-visible cues when writes fail.
-
-<TestingRubric rubricId="realtime-collaboration-core" />
