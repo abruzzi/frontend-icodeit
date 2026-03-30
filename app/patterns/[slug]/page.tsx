@@ -11,8 +11,10 @@ import {
 } from "@/lib/content";
 import { renderMdx } from "@/lib/content/mdx";
 import { resolveRelatedContent } from "@/lib/content/related";
+import { extractTocHeadings } from "@/lib/content/toc-headings";
 import { routes } from "@/lib/routes";
 import { ui } from "@/lib/ui";
+import { ArticleToc } from "@/components/content/article-toc";
 
 type Props = {
   params: { slug: string };
@@ -35,6 +37,7 @@ export default async function PatternDetailPage({ params }: Props) {
   }
 
   const mdx = await renderMdx(entry.source);
+  const tocHeadings = extractTocHeadings(entry.source);
   const patterns = getPatterns();
   const caseStudies = getCaseStudies();
   const current = patterns.find((item) => item.slug === params.slug);
@@ -75,6 +78,8 @@ export default async function PatternDetailPage({ params }: Props) {
         items={relatedPatterns}
         hrefForSlug={routes.pattern}
       />
+
+      <ArticleToc headings={tocHeadings} documentPath={routes.pattern(params.slug)} />
     </>
   );
 }
