@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { GeistSans } from "geist/font/sans";
-import { Inter, JetBrains_Mono } from "next/font/google";
+import { Fira_Code, Inter, JetBrains_Mono } from "next/font/google";
 
 import { SiteHeader } from "@/components/design-system/site-header";
 import { ui } from "@/lib/ui";
@@ -18,6 +18,11 @@ const jetbrainsMono = JetBrains_Mono({
   variable: "--font-jetbrains-mono",
 });
 
+const firaCode = Fira_Code({
+  subsets: ["latin"],
+  variable: "--font-fira-code",
+});
+
 export const metadata: Metadata = {
   title: "Frontend at scale — patterns & case studies",
   description:
@@ -33,7 +38,7 @@ export default function RootLayout({
     <html
       lang="en"
       suppressHydrationWarning
-      className={`${inter.variable} ${GeistSans.variable} ${jetbrainsMono.variable}`}
+      className={`${inter.variable} ${GeistSans.variable} ${jetbrainsMono.variable} ${firaCode.variable}`}
     >
       <body
         className={`min-h-screen overflow-x-hidden bg-gradient-to-br from-slate-100 via-slate-150 to-slate-100 bg-no-repeat text-slate-900 antialiased dark:bg-slate-900 dark:bg-none dark:text-slate-50 ${inter.className}`}

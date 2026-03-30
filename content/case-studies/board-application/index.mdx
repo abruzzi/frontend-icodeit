@@ -102,6 +102,8 @@ At minimum:
 
 Cardinality: a board has **many** columns; a column has **many** cards. Cards belong to **one** column at a time in the classic model.
 
+<BoardDataModelDiagram />
+
 ### Server canonical model vs client view
 
 The **server** stores the **source of truth** for column order and each card’s `(columnId, position)` (or equivalent). The **client** usually mirrors that in a shape optimized for rendering:
@@ -132,14 +134,14 @@ For a walkthrough aimed at implementers, see [*Reordering Lists at Scale (Withou
 
 Treat a move not as “set these three fields” but as an **operation** the server can **validate**, **order**, and **dedupe**:
 
-```text
+```jsonc
 {
   "operationId": "uuid-client-generated",
   "type": "move_card",
   "cardId": "c_1",
   "fromColumnId": "col_a",
   "toColumnId": "col_b",
-  "afterCardId": "c_9"   // or toIndex: 3 — pick one convention and stick to it
+  "afterCardId": "c_9" // or toIndex: 3 — pick one convention and stick to it
 }
 ```
 

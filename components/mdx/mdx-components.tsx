@@ -1,5 +1,6 @@
 import type { MDXComponents } from "mdx/types";
 
+import { BoardDataModelDiagram } from "@/components/case-studies/board-application/BoardDataModelDiagram";
 import { BoardDndDemo } from "@/components/case-studies/board-application/BoardDndDemo";
 import { CcdaoFlowDiagram } from "@/components/explainers/CcdaoFlowDiagram";
 import { FailureModeStepper } from "@/components/explainers/FailureModeStepper";
@@ -10,6 +11,7 @@ import { Callout } from "./Callout";
 import { TestingRubric } from "./TestingRubric";
 
 export const mdxComponents: MDXComponents = {
+  BoardDataModelDiagram,
   BoardDndDemo,
   CcdaoFlowDiagram,
   PaginationMotionDemo,
