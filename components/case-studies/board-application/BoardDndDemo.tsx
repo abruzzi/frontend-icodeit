@@ -301,7 +301,7 @@ export function BoardDndDemo() {
       data-board-dnd-demo
     >
       <p className="mb-4 text-base text-slate-600 dark:text-slate-400">
-        Local-only demo using{" "}
+        A simple local-only board application using{" "}
         <a
           href="https://atlassian.design/components/pragmatic-drag-and-drop/"
           className="font-medium text-brand underline-offset-2 hover:underline"
@@ -309,7 +309,7 @@ export function BoardDndDemo() {
           target="_blank"
         >
           Pragmatic drag and drop
-        </a>.
+        </a>, drag and drop cards between columns to see how it works.
       </p>
       <div className="flex flex-col gap-4 lg:flex-row lg:items-stretch">
         {board.columns.map((col) => (
