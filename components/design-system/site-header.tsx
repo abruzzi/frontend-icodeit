@@ -40,7 +40,7 @@ export function SiteHeader() {
   const [menuOpen, setMenuOpen] = useState(false);
 
   return (
-    <header className="w-full border-b border-slate-200/60 pb-8 dark:border-slate-700/35 sm:pb-10">
+    <header className="w-full pb-8 sm:pb-10">
       {/* Mobile */}
       <div className="flex items-center justify-between gap-3 sm:hidden">
         <div className="flex min-w-0 items-center gap-1">

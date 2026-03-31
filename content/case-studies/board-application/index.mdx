@@ -144,19 +144,27 @@ As a senior engineer, it’s important to think beyond the happy path: slow netw
 
 ## Data modeling (deep dive)
 
+Once we have a good understanding of the UI, and understand what's to include, we can have a better idea on what in the data modeling.
+
 ### Entities and relationships
 
 At minimum:
 
 | Entity   | Role |
 | -------- | ---- |
-| `Board`  | Id, title, workspace, settings (e.g. column ids in order). |
+| `Board`  | Id, title, settings (e.g. column ids in order). |
 | `Column` | Id, board id, title, **order** among columns. |
 | `Card`   | Id, board id, **column id**, **position** (index or sort key), title and other fields. |
 
 Cardinality: a board has **many** columns; a column has **many** cards. Cards belong to **one** column at a time in the classic model.
 
 <BoardDataModelDiagram />
+
+<Callout tone="pitfall">
+The point here is not replace the backend data design, but mainly focus on frontend. For example, we will need to show a count on the UI, like how many cards on a board. Or if kanban usage, we want to show a indicator for `working in progress` limit is exceeding.
+
+The backend has less interesting in such data, the number of cards is stored in database in general, and the count is calculated when firstly fetched by frontend.
+</Callout>
 
 ### Server canonical model vs client view
 

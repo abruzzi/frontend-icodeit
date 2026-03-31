@@ -12,8 +12,8 @@ export default function HomePage() {
         </h1>
         <p>
           For practicing frontend engineers leveling up on real product-shaped
-          problems—boards, feeds, chat, search, media-heavy pages, and collaboration
-          surfaces.
+          problems—boards, feeds, chat, search, media-heavy pages, and
+          collaboration surfaces.
         </p>
         <p>
           Case studies walk the full path from requirements to trade-offs;
