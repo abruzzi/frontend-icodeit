@@ -21,9 +21,13 @@ This guide walks through a **kanban-style board application**: work items are **
 
 We'll focus mainly on **frontend concerns**: how to manage state, how to shape data and APIs, and where things break in production—written for **depth**. You can use it to prepare for a system design interview, but it also helps you develop a feel for how systems are designed and how to make decisions when you have many options.
 
-## What you are building
+## Introducing board application
 
-Let's **start with something we can touch.** The widget below is **columns** and **ordered cards** from a JSON-shaped fixture—drag cards between *Backlog*, *In progress*, and *Done*. It uses [Pragmatic drag and drop](https://atlassian.design/components/pragmatic-drag-and-drop/) and **local state only** (no server), so you have a concrete picture before any abstract layout.
+In practice, a board is a **shared place** where work is represented as **cards** in **columns**. People create and edit cards, and they **move** them—reordering within a lane or jumping across columns. When **several people** share a board, you also have to think about concurrent edits, how moves propagate, and what “correct order” means when two gestures land close together.
+
+Products like Jira or Trello made this shape familiar; the ideas transfer, but the **hard parts** are rarely the rectangle layout. They show up in **ordering**, retries, collaboration, and the gap between what the UI shows and what the server will accept.
+
+Let's **start with something we can touch.** The widget below shows **columns** and **ordered cards** loaded from a JSON-shaped fixture—drag cards between *Backlog*, *In progress*, and *Done*. It uses [Pragmatic drag and drop](https://atlassian.design/components/pragmatic-drag-and-drop/) and **local state only** (no server), so you see the core UX before we talk about APIs and persistence.
 
 <BoardDndDemo />
 
@@ -31,26 +35,30 @@ Let's **start with something we can touch.** The widget below is **columns** and
 This demo does not call an API. Later sections cover idempotent **move** operations and reconciling on ack or rollback—see **API design** and **Data modeling**.
 </Callout>
 
-## What is a board application?
-
-Teams use a **shared place** where work items are **cards**, grouped into **columns**. The main interactions are creating cards, editing details, and **moving cards** (reordering within a column or moving across columns). Often, **multiple people** use the same board, so we need to handle scenarios like several users editing the same card, and how to notify teammates when updates happen.
-
-Tools like Jira or Trello have been used widely because they help teams manage work at all sizes—and they’ve proven to be an effective way to track and manage that work efficiently.
-
-In this guide, we’ll discuss a few real-world challenges that can look normal on the surface, but get tricky once you consider edge cases. Ordering/position is a good example—we’ll see it in a later section.
-
-We can split the requirements into two categories: the **functionality** and the **cross-functional** requirements.
+From here on, it helps to split what you're building into two buckets: **functionality** (the features users see) and **cross-functional** requirements (how the system behaves under pressure).
 
 Functionality is the main feature of the application. For our case, we need to render a board, let users create and edit cards, and move cards across columns. We also need to support **multiple users** working on the same board at the same time.
 
 Cross-functional requirements include reliability, performance (both actual speed and perceived performance), security, accessibility, internationalization, and more. They’re equally important as functionality, because they determine whether the product feels solid in the real world.
 
-For that, your implementation should stay **correct** when:
+For that, your implementation should stay **correct** when the network is slow or flaky (**reliability**), when the same move is **retried** (maybe by another user), when **two people** move cards close together in time, and when users rely on the **keyboard** for some interactions instead of only drag-and-drop (**accessibility**).
 
-- the network is slow or flaky; (reliability)
-- the same move is **retried** (maybe by another user);
-- **two people** move cards close together in time;
-- users might rely on **keyboard** for some interactions, not only drag-and-drop. (accessibility)
+If you’re preparing for a system design interview, it helps to practice **clarifying questions** that narrow scope before you draw boxes: what you must ship first, how big the product can get, and which non-functional bar you’re held to. That framing makes the strategies in later sections easier to pick—you’re choosing for a stated problem, not a generic “board app.”
+
+<Callout tone="essentials">
+Interview-style clarifying questions often look like this:
+
+- **MVP vs later**: Beyond columns and cards, do we need search, filters, attachments, or custom fields—or can we treat those as out of scope for v1?
+- **User and permissions**: Is this single-team internal tooling or multi-tenant? Who can create boards, edit cards, or move cards—any viewer vs editor vs admin?
+- **Devices and offline**: Primary surface desktop web, mobile web, or native? Do we need offline edits (queued moves) or is online-only acceptable?
+- **Collaboration bar**: Single user for v1, or realtime multi-user from day one? If multi-user, is “refresh to see updates” enough, or do we need sub-second visibility?
+- **Scale**: Order of magnitude for boards, columns, cards per column, and concurrent editors—enough to rule out “load everything into the client”?
+- **Ordering and conflicts**: Is strict ordering per column non-negotiable? What should happen when two users move or reorder the same card at once—server wins, last-write-wins, or explicit conflicts?
+- **Performance and UX**: What feels “fast” (e.g. drag latency, time-to-interactive after load)? Any SLA for mutations or for seeing someone else’s move?
+- **Accessibility**: Is keyboard-only parity required for moving cards, or is pointer DnD the primary path for v1?
+
+You don’t need every answer up front—but **one sentence each** on scope, collaboration, and scale usually saves you from the wrong architecture.
+</Callout>
 
 ## How this guide walks it
 
@@ -58,15 +66,18 @@ There is no single architecture that is “best” for every product and team. *
 
 Complicated systems are easier if you do not start from “everything at once.” The same idea is often called a **[steel thread](https://www.rubick.com/steel-threads/)**: the **thinnest slice that still threads through the real boundaries of the system** for one important use case, shipped so it holds in production—then you grow from that spine. Jade Rubick’s article is the clearest write-up I know of the term.
 
-
 For this board application, a reasonable split can be as follows:
 
 1. **Fixtures first, render correctly.** Start from **fixture data** (for example a JSON snapshot in the frontend, or assume you can always fetch it) and render **faithfully**: columns, card order, fields the UI needs.
 
-2. **Interaction before the network.** Add **moving cards** and **order in client state only** so you learn the data updates and drag/drop boundaries without distributed-system noise. **Try it first**, which corresponds to **steps 1–2**.
+2. **Interaction before the network.** Add **moving cards** and **order in client state only** so you learn the data updates and drag/drop boundaries without distributed-system noise.
 
 3. **Persistence, single-player.** Save to the server next, **one user at a time**: a move persists and reloads correctly; **defer** notifications, realtime, and conflict UX until that baseline is boring.
 
+
+The above approach is simple and focuses on the frontend first. You can work safely on the UI (design + code) and iterate quickly. The benefit is you always have something to show a product owner or user, so you can get early feedback and adjust accordingly. You can design with mock data—avatars, default fallbacks, empty states—assuming the backend will eventually return the shape the UI consumes.
+
+The drawback, on the other hand, is you’re delaying integration, which can bite you later. If the backend can’t handle a case efficiently (or the API contract can’t support the UX you designed), you might have wasted time on UI work. You can also make assumptions that you won’t realize are wrong until much later.
 
 Another split can be (which is usually my favorite if I have to implement it):
 
@@ -74,7 +85,7 @@ Another split can be (which is usually my favorite if I have to implement it):
 2. Refresh the board and you should now see the new card
 3. Edit the card details (e.g. change the title), and call `update` endpoint (could be updating the in-memory array in the backend)
 4. See the changes applied
-5. ...
+5. And implement more end-to-end integrations (realtime updates, multi-user collaboration, etc.)
 
 The second approach has the same principle as the first one: we delay architecture decisions until we have to. The reason is simple—those decisions are normally hard to reverse. If you start with a non-SQL database, ship with some data already inside it, and then later realize a relational database is a better fit, you end up dealing with downtime and migration work.
 
@@ -84,7 +95,9 @@ Again, there isn't a right or wrong split here—but the goal stays the same:
 
 **After that** (when you need them): **ack / rollback**, **idempotent** operations, **reload that matches the server**, **two clients** converging, WIP limits, automation, and the rest.
 
-The rest of the article lines up with the **CCDAO** lens—**C**ollect constraints, **C**omponent structure, **D**ata modeling, **A**PI design, **O**ptimization—so each block maps to how you might walk the problem in a design review. **Data modeling** and **API design** go deepest from **step 3** onward.
+<Callout tone="essentials">
+The rest of the article lines up with the [**CCDAO**](https://www.youtube.com/watch?v=ojFsLG4TkUA) lens—**C**ollect constraints, **C**omponent structure, **D**ata modeling, **A**PI design, **O**ptimization—so each block maps to how you might walk the problem in a design review. **Data modeling** and **API design** go deepest from **step 3** onward.
+</Callout>
 
 ## Product and engineering constraints
 
