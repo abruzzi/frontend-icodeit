@@ -21,6 +21,8 @@ import "@xyflow/react/dist/style.css";
 import { useTheme } from "next-themes";
 import { useCallback, useEffect, useMemo, useState } from "react";
 
+import { ui } from "@/lib/ui";
+
 type ErEntityKind = "board" | "column" | "card" | "user";
 
 export type ErAttribute = {
@@ -342,7 +344,9 @@ export function BoardDataModelDiagram() {
   );
 
   return (
-    <div className="board-data-model-flow not-prose my-8 rounded-2xl border border-slate-200/90 bg-white/90 p-2 shadow-sm dark:border-slate-600/50 dark:bg-slate-900/55 sm:p-3">
+    <div
+      className={`board-data-model-flow ${ui.caseStudyDemoShell} p-2 sm:p-3`}
+    >
       <p className="mb-2 px-2 pt-1 text-sm leading-relaxed text-slate-600 dark:text-slate-400 sm:px-3">
         ER sketch with <strong className="text-slate-800 dark:text-slate-200">attributes</strong> (PK
         underlined) and associations: each <strong className="text-slate-800 dark:text-slate-200">Card</strong>{" "}

@@ -8,6 +8,23 @@ import {
 import { User } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 
+import { ui } from "@/lib/ui";
+
+/** Drag payload discriminator — keep in sync with `isBoardCardPayload`. */
+const BOARD_CARD_DRAG_TYPE = "board-card" as const;
+
+const DEMO_AVATAR_BASE = "https://i.pravatar.cc/150";
+
+function demoAssigneeAvatarUrl(seed: number) {
+  return `${DEMO_AVATAR_BASE}?img=${seed}`;
+}
+
+/** Drop column min height for the demo layout (arbitrary px). */
+const BOARD_COLUMN_MIN_HEIGHT_CLASS = "min-h-[220px]";
+
+const PRAGMATIC_DRAG_AND_DROP_URL =
+  "https://atlassian.design/components/pragmatic-drag-and-drop/";
+
 /** Matches the article’s “server-ish” snapshot: columns each carry an ordered `cards` list. */
 export type BoardAssignee = {
   id: number;
@@ -45,7 +62,7 @@ export const DEMO_INITIAL_BOARD: BoardSnapshot = {
           assignee: {
             id: 2,
             name: "Charlie Moore",
-            avatar_url: "https://i.pravatar.cc/150?img=2",
+            avatar_url: demoAssigneeAvatarUrl(2),
           },
         }
       ],
@@ -60,7 +77,7 @@ export const DEMO_INITIAL_BOARD: BoardSnapshot = {
           assignee: {
             id: 5,
             name: "Hannah Smith",
-            avatar_url: "https://i.pravatar.cc/150?img=5",
+            avatar_url: demoAssigneeAvatarUrl(5),
           },
         },
         {
@@ -69,7 +86,7 @@ export const DEMO_INITIAL_BOARD: BoardSnapshot = {
           assignee: {
             id: 8,
             name: "Diana Lopez",
-            avatar_url: "https://i.pravatar.cc/150?img=8",
+            avatar_url: demoAssigneeAvatarUrl(8),
           },
         }
       ],
@@ -84,7 +101,7 @@ export const DEMO_INITIAL_BOARD: BoardSnapshot = {
           assignee: {
             id: 1,
             name: "Quentin Davis",
-            avatar_url: "https://i.pravatar.cc/150?img=1",
+            avatar_url: demoAssigneeAvatarUrl(1),
           },
         }
       ],
@@ -93,7 +110,7 @@ export const DEMO_INITIAL_BOARD: BoardSnapshot = {
 };
 
 type BoardCardPayload = {
-  type: "board-card";
+  type: typeof BOARD_CARD_DRAG_TYPE;
   cardId: string;
   columnId: string;
 };
@@ -104,7 +121,7 @@ type ColumnPayload = {
 
 function isBoardCardPayload(data: Record<string, unknown>): data is BoardCardPayload {
   return (
-    data.type === "board-card" &&
+    data.type === BOARD_CARD_DRAG_TYPE &&
     typeof data.cardId === "string" &&
     typeof data.columnId === "string"
   );
@@ -142,10 +159,12 @@ function moveCardBetweenColumns(
     return board;
   }
 
+  const cardToMove = moving;
+
   return {
     columns: afterRemove.map((col) =>
       col.id === toColumnId
-        ? { ...col, cards: [...col.cards, moving!] }
+        ? { ...col, cards: [...col.cards, cardToMove] }
         : col,
     ),
   };
@@ -169,7 +188,7 @@ function BoardCard({
     return draggable({
       element: el,
       getInitialData: () => ({
-        type: "board-card",
+        type: BOARD_CARD_DRAG_TYPE,
         cardId: card.id,
         columnId,
       }),
@@ -250,7 +269,7 @@ function BoardColumn({
   return (
     <div
       ref={ref}
-      className={`flex min-h-[220px] min-w-0 flex-1 flex-col gap-3 rounded-2xl border p-4 transition-colors dark:border-slate-600/50 ${
+      className={`flex ${BOARD_COLUMN_MIN_HEIGHT_CLASS} min-w-0 flex-1 flex-col gap-3 rounded-2xl border p-4 transition-colors dark:border-slate-600/50 ${
         isOver
           ? "border-palette-jade/55 bg-palette-jade/[0.09] dark:border-palette-jade/50 dark:bg-palette-jade/[0.14]"
           : "border-slate-200/80 bg-slate-50/80 dark:bg-slate-900/40"
@@ -297,13 +316,13 @@ export function BoardDndDemo() {
 
   return (
     <div
-      className="not-prose my-8 rounded-2xl border border-slate-200/90 bg-white/90 p-4 shadow-sm dark:border-slate-600/50 dark:bg-slate-900/55 sm:p-6"
+      className={`${ui.caseStudyDemoShell} p-4 sm:p-6`}
       data-board-dnd-demo
     >
       <p className="mb-4 text-base text-slate-600 dark:text-slate-400">
         A simple local-only board application using{" "}
         <a
-          href="https://atlassian.design/components/pragmatic-drag-and-drop/"
+          href={PRAGMATIC_DRAG_AND_DROP_URL}
           className="font-medium text-brand underline-offset-2 hover:underline"
           rel="noreferrer"
           target="_blank"

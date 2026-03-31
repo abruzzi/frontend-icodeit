@@ -1,6 +1,7 @@
-import { ui } from "@/lib/ui";
-import type { RubricItem } from "../../lib/content/types";
-import { TESTING_A11Y_RUBRICS } from "../../lib/content/rubrics";
+import { TESTING_A11Y_RUBRICS } from "@/lib/content/rubrics";
+import type { RubricItem } from "@/lib/content/types";
+
+import { TestingRubricTable } from "./testing-rubric-table";
 
 type TestingA11yRubricProps = {
   title?: string;
@@ -23,28 +24,7 @@ export function TestingA11yRubric({
       <h3 className="text-base font-semibold text-slate-900 dark:text-slate-50">
         {title}
       </h3>
-      <div className="overflow-x-auto">
-        <table className={ui.table}>
-          <thead>
-            <tr>
-              <th className={ui.th}>Category</th>
-              <th className={ui.th}>Level</th>
-              <th className={ui.th}>Requirement</th>
-              <th className={ui.th}>Done When</th>
-            </tr>
-          </thead>
-          <tbody>
-            {resolvedItems.map((item) => (
-              <tr key={item.id}>
-                <td className={ui.td}>{item.category}</td>
-                <td className={ui.td}>{item.level}</td>
-                <td className={ui.td}>{item.requirement}</td>
-                <td className={ui.td}>{item.doneWhen}</td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
+      <TestingRubricTable items={resolvedItems} />
     </section>
   );
 }

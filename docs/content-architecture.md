@@ -7,7 +7,7 @@ This repository uses frontmatter-driven references to connect case studies and p
 - Case studies declare outbound pattern links in `patternRefs`.
 - Patterns can declare curated backlinks in `usedIn`.
 - Backlinks are also inferred automatically by scanning case-study `patternRefs`.
-- All content uses `testingRubricId` to embed a shared testing + a11y rubric.
+- Articles can reference a shared testing + a11y rubric via `testingRubricId` in frontmatter (rendered with the MDX `TestingRubric` component).
 
 ## Bidirectional related-content rendering
 
@@ -20,14 +20,19 @@ This repository uses frontmatter-driven references to connect case studies and p
 
 ## Explorable MDX components
 
-- `TradeoffMatrix`: weighted criteria and option scoring for decision matrices.
-- `ProtocolComparison`: tab-based SSE/WebSocket/Long Poll comparison structure.
-- `FailureModeWalkthrough`: ordered trigger -> impact -> mitigation -> observability flow.
+Registered in `components/mdx/mdx-components.tsx` (import names match JSX tags in MDX):
+
+- `BoardDndDemo`, `BoardDataModelDiagram` — board case study interactives.
+- `CcdaoFlowDiagram` — CCDAO flow diagram.
+- `PaginationMotionDemo`, `TradeoffMatrix`, `ProtocolChooser`, `FailureModeStepper` — explainers and choosers.
+- `Callout` — tinted asides (`tone`: `note` | `required` | `pitfall` | `essentials` | `production`).
+- `TestingRubric` — table from `rubricId` and `lib/content/rubrics.ts` (used with `testingRubricId` in frontmatter).
+
+**Also in the repo (not necessarily wired in MDX):** `ProtocolComparison` (tabs), `FailureModeWalkthrough` (alternate failure-mode presentation). Add them to `mdx-components.tsx` if you need them in content.
 
 ## Testing + accessibility rubric
 
-- `TestingA11yRubric` accepts either:
-  - inline `items`, or
-  - `rubricId` (recommended) backed by `lib/content/rubrics.ts`.
-- Current shared preset:
-  - `dynamic-list-core`
+- **`TestingRubric`** (MDX): requires `rubricId`; wraps content in `ui.explainerCard` and shows a message if the id is missing from `lib/content/rubrics.ts`.
+- **`TestingA11yRubric`** (programmatic / optional MDX registration): supports `rubricId` or inline `items`, optional `title`; lighter wrapper (section + heading).
+
+Shared presets live in `lib/content/rubrics.ts` (for example `dynamic-list-core`).

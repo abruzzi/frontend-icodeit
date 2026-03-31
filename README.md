@@ -46,10 +46,10 @@ npm run lint
 | **Routes** (single source for `href`s) | `lib/routes.ts` |
 | **Header nav labels + hrefs** | `lib/nav.ts` (uses `routes`) |
 | **Brand + palette hex** (Tailwind + SVG/Canvas + `:root` vars) | `site-colors.json` → `tailwind.config.js` + `lib/site-colors.ts` |
-| **Layout / spacing tokens** | `lib/ui.ts` |
+| **Layout / spacing tokens** | `lib/ui.ts` (includes `caseStudyDemoShell` for interactive MDX demos) |
 | **Case study & pattern content** | `content/case-studies/<slug>/index.mdx`, `content/patterns/*.mdx` |
 | **Compare pages (structured data)** | `lib/compare/docs.ts` — see *Intentional choices* below |
-| **MDX → HTML** | `lib/content/mdx.tsx`, `components/mdx/mdx-components.tsx` |
+| **MDX compile + syntax highlighting** | `lib/content/mdx.tsx` (Shiki via `@shikijs/rehype`), `components/mdx/mdx-components.tsx` |
 | **Related pattern ↔ case study links** | `lib/content/related.ts` + frontmatter |
 | **Vertical spacing between page blocks** | `app/template.tsx` uses `ui.pageStack` because React fragments collapse to one child under `main` |
 
@@ -62,7 +62,7 @@ npm run lint
 
 ## Stack & dependencies
 
-- **Next.js 14** (App Router), **React 18.3**, **TypeScript ~5.6**, **Tailwind CSS 3.4**, **ESLint 8** + `eslint-config-next` (version **matches** `next` — required by Next). ESLint 8 is end-of-life; moving to **ESLint 9** needs **Next 15+** and the flat-config migration—tracked as a future upgrade, not a silent drift.
+- **Next.js 14.2** (App Router; `package.json` pins the patch), **React ^18.3**, **TypeScript ~5.6**, **Tailwind CSS 3.4**, **ESLint 8** + `eslint-config-next` (version **matches** `next` — required by Next). ESLint 8 is end-of-life; moving to **ESLint 9** needs **Next 15+** and the flat-config migration—tracked as a future upgrade, not a silent drift.
 - **Runtime deps** are limited to what ships in the browser bundle; **types, ESLint, PostCSS, Tailwind** live in `devDependencies`.
 - Major upgrades (**Next 15+**, **React 19**, **Tailwind 4**, **ESLint 9**) are possible but need a dedicated pass (lint config, typings, and any breaking MDX APIs).
 
@@ -71,6 +71,7 @@ npm run lint
 | Package | Role |
 | -------- | ------ |
 | `next-mdx-remote` | RSC-friendly MDX compile for content files |
+| `@shikijs/rehype` | Code blocks in MDX (Shiki highlighter + themes in `lib/content/mdx.tsx`) |
 | `gray-matter` | Frontmatter parsing |
 | `@xyflow/react` | CCDAO flow diagram in MDX |
 | `framer-motion` | Page transition wrapper (`app/template.tsx`) |
@@ -87,7 +88,7 @@ We avoid unmaintained forks; `gray-matter` and the unified/remark ecosystem are 
 
 1. **Compare routes** (`/compare/[slug]`) use **`lib/compare/docs.ts`** instead of MDX so rows map cleanly to `TradeoffMatrix` / `ProtocolChooser`. To add a page: extend `COMPARE_DOCS` and redeploy; moving to MDX later is documented in that file.
 2. **`next.config.js`** does **not** set `swcMinify` — it was removed/ignored in modern Next; minification defaults to SWC.
-3. **Logo** is still a text mark until `public/logo-*.png` exists; see comment in `components/design-system/site-logo.tsx`.
+3. **Logo** is a text mark in `components/design-system/site-logo.tsx` until brand images are added under `public/` (see comment in that file).
 4. **`style.md`** is human design notes; **`site-colors.json`** is the machine source of truth for brand hex in code.
 
 ---
