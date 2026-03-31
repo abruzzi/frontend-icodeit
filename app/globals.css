@@ -82,7 +82,7 @@
   counter-increment: mdx-ol;
 }
 
-/* Ordered: hide the bullet chevron; number is `::before` (lavender disc + violet digit). */
+/* Ordered: hide the bullet chevron; number is `::before` — same token as ul chevron (`--palette-magenta`). */
 .prose ol.mdx-num-ol > li > .mdx-icon-li-marker {
   display: none;
 }
@@ -103,8 +103,8 @@
   font-variant-numeric: tabular-nums;
   line-height: inherit;
   letter-spacing: -0.02em;
-  color: rgb(91 33 182);
-  background: color-mix(in srgb, #c084fc 32%, #ffffff);
+  color: var(--palette-magenta, #ff0855);
+  background: color-mix(in srgb, var(--palette-magenta, #ff0855) 26%, #ffffff);
   margin-top: 0.2em;
 }
 
@@ -115,8 +115,8 @@
 }
 
 .dark .prose ol.mdx-num-ol > li::before {
-  color: rgb(196 181 254);
-  background: color-mix(in srgb, #c084fc 28%, rgb(30 41 59));
+  color: color-mix(in srgb, var(--palette-magenta, #ff0855) 72%, #ffffff);
+  background: color-mix(in srgb, var(--palette-magenta, #ff0855) 22%, rgb(30 41 59));
 }
 
 .prose ul.mdx-icon-ul > li > .mdx-icon-li-content {

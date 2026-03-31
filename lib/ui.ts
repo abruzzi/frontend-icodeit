@@ -4,7 +4,7 @@ const PANEL_SURFACE =
 
 /** Shared typography for MDX (no card wrapper). */
 const PROSE_ARTICLE =
-  "prose prose-slate max-w-none prose-lg dark:prose-invert prose-headings:scroll-mt-24 prose-headings:font-heading prose-headings:font-extrabold prose-headings:tracking-tighter prose-headings:text-slate-900 dark:prose-headings:text-slate-50 prose-h2:mt-14 prose-h2:mb-3 prose-h3:mt-10 prose-p:mb-7 prose-p:leading-relaxed prose-a:text-brand prose-a:font-medium prose-a:no-underline hover:prose-a:underline prose-code:font-mono min-w-0";
+  "prose prose-slate max-w-none prose-lg dark:prose-invert prose-headings:scroll-mt-24 prose-headings:font-heading prose-headings:font-extrabold prose-headings:tracking-tighter prose-headings:text-slate-900 dark:prose-headings:text-slate-50 prose-h2:mt-14 prose-h2:mb-3 prose-h2:text-palette-azure dark:prose-h2:text-palette-azure prose-h3:mt-10 prose-p:mb-7 prose-p:leading-relaxed prose-a:text-brand prose-a:font-medium prose-a:no-underline hover:prose-a:underline prose-code:font-mono min-w-0";
 
 /** Layout + surfaces. */
 export const ui = {
