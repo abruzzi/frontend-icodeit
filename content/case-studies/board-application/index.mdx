@@ -48,11 +48,11 @@ Complicated systems are easier if you do not start from “everything at once.�
 
 This walkthrough **stages** where that thread crosses the next boundary—it is the same iterative discipline, not a different philosophy. **Steps 1–2** are a **client-local steel thread**: faithful UI plus real move semantics in memory, so drag boundaries and ordering updates fail first without the network seam. **Step 3** threads the same use case **through persistence** (single-player, reload matches truth). You are only choosing to pierce **client ↔ server** once the in-browser spine is boring.
 
-**1. Fixtures first, render correctly.** Start from **fixture data** (for example a JSON snapshot in the frontend, or assume you can always fetch it) and render **faithfully**: columns, card order, fields the UI needs.
+1. **Fixtures first, render correctly.** Start from **fixture data** (for example a JSON snapshot in the frontend, or assume you can always fetch it) and render **faithfully**: columns, card order, fields the UI needs.
 
-**2. Interaction before the network.** Add **moving cards** and **order in client state only** so you learn the data updates and drag/drop boundaries without distributed-system noise. **Try it first** above is exactly **steps 1–2**.
+2. **Interaction before the network.** Add **moving cards** and **order in client state only** so you learn the data updates and drag/drop boundaries without distributed-system noise. **Try it first** above is exactly **steps 1–2**.
 
-**3. Persistence, single-player.** Save to the server next, **one user at a time**: a move persists and reloads correctly; **defer** notifications, realtime, and conflict UX until that baseline is boring.
+3. **Persistence, single-player.** Save to the server next, **one user at a time**: a move persists and reloads correctly; **defer** notifications, realtime, and conflict UX until that baseline is boring.
 
 **After that** (when you need them): **ack / rollback**, **idempotent** operations, **reload matches server**, **two clients** converging, WIP limits, automation, and the rest.
 

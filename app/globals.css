@@ -56,3 +56,99 @@
   )::after {
   content: "";
 }
+
+/* MDX list polish: `mdxComponents.ul` / `ol` / `li` (bullet = real markup; ordered = counter + ::before). */
+
+.prose :is(ul.mdx-icon-ul, ol.mdx-num-ol) {
+  list-style: none;
+  /* Flush with prose block edge — markers are in-flow (chevron / ::before). */
+  margin-inline-start: 0;
+  padding-inline-start: 0;
+}
+
+.prose ol.mdx-num-ol {
+  counter-reset: mdx-ol;
+}
+
+.prose :is(ul.mdx-icon-ul, ol.mdx-num-ol) > li {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.65em;
+  margin-inline-start: 0;
+  padding-inline-start: 0;
+}
+
+.prose ol.mdx-num-ol > li {
+  counter-increment: mdx-ol;
+}
+
+/* Ordered: hide the bullet chevron; number is `::before` (lavender disc + violet digit). */
+.prose ol.mdx-num-ol > li > .mdx-icon-li-marker {
+  display: none;
+}
+
+.prose ol.mdx-num-ol > li::before {
+  content: counter(mdx-ol);
+  flex-shrink: 0;
+  box-sizing: border-box;
+  min-width: 1.75rem;
+  height: 1.75rem;
+  padding-inline: 0.2rem;
+  border-radius: 9999px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.7rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  line-height: inherit;
+  letter-spacing: -0.02em;
+  color: rgb(91 33 182);
+  background: color-mix(in srgb, #c084fc 32%, #ffffff);
+  margin-top: 0.2em;
+}
+
+@supports (margin-top: calc((1lh - 1em) / 2)) {
+  .prose ol.mdx-num-ol > li::before {
+    margin-top: calc((1lh - 1em) / 2);
+  }
+}
+
+.dark .prose ol.mdx-num-ol > li::before {
+  color: rgb(196 181 254);
+  background: color-mix(in srgb, #c084fc 28%, rgb(30 41 59));
+}
+
+.prose ul.mdx-icon-ul > li > .mdx-icon-li-content {
+  flex: 1;
+  min-width: 0;
+}
+
+/* Chevron lines up with the *first line of text* inside the line box: offset by
+ * half-leading `(lh - 1em)/2` instead of crushing `line-height` to 1. */
+.prose ul.mdx-icon-ul > li > .mdx-icon-li-marker {
+  line-height: inherit;
+  margin-top: 0.2em;
+}
+
+@supports (margin-top: calc((1lh - 1em) / 2)) {
+  .prose ul.mdx-icon-ul > li > .mdx-icon-li-marker {
+    margin-top: calc((1lh - 1em) / 2);
+  }
+}
+
+/* Normalize margins for the common first wrapper elements so the icon
+ * visually centers with the first line. */
+.prose ul.mdx-icon-ul > li > .mdx-icon-li-content > p,
+.prose ul.mdx-icon-ul > li > .mdx-icon-li-content > div,
+.prose ol.mdx-num-ol > li > .mdx-icon-li-content > p,
+.prose ol.mdx-num-ol > li > .mdx-icon-li-content > div {
+  margin: 0;
+}
+
+.prose ul.mdx-icon-ul > li > .mdx-icon-li-content > p:first-child,
+.prose ul.mdx-icon-ul > li > .mdx-icon-li-content > div:first-child,
+.prose ol.mdx-num-ol > li > .mdx-icon-li-content > p:first-child,
+.prose ol.mdx-num-ol > li > .mdx-icon-li-content > div:first-child {
+  margin-top: 0;
+}
