@@ -150,38 +150,29 @@ export function BoardNetworkFailureDemo() {
     </div>
   );
 
-  if (result.state === "success") {
-    return (
-      <div className="space-y-3">
-        {controls}
-        <BoardDndDemo />
-      </div>
-    );
+  switch (result.state) {
+    case "success":
+      return (
+        <div className="space-y-3">
+          {controls}
+          <BoardDndDemo />
+        </div>
+      );
+    case "loading":
+    case "idle":
+      return (
+        <div className="space-y-3">
+          {controls}
+          <BoardLoadingSkeletonDemo />
+        </div>
+      );
+    case "error":
+      return (
+        <div className="space-y-3">
+          {controls}
+          <ErrorPanel kind={result.kind} onRetry={() => setMode("success")} />
+        </div>
+      );
   }
-
-  if (result.state === "loading") {
-    return (
-      <div className="space-y-3">
-        {controls}
-        <BoardLoadingSkeletonDemo />
-      </div>
-    );
-  }
-
-  if (result.state === "idle") {
-    return (
-      <div className="space-y-3">
-        {controls}
-        <BoardLoadingSkeletonDemo />
-      </div>
-    );
-  }
-
-  return (
-    <div className="space-y-3">
-      {controls}
-      <ErrorPanel kind={result.kind} onRetry={() => setMode("success")} />
-    </div>
-  );
 }
 
