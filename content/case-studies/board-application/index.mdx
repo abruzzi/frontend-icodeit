@@ -99,6 +99,49 @@ Again, there isn't a right or wrong split here—but the goal stays the same:
 The rest of the article lines up with the [**CCDAO**](https://www.youtube.com/watch?v=ojFsLG4TkUA) lens—**C**ollect constraints, **C**omponent structure, **D**ata modeling, **A**PI design, **O**ptimization—so each block maps to how you might walk the problem in a design review. **Data modeling** and **API design** go deepest from **step 3** onward.
 </Callout>
 
+## Designing the UI
+
+For most frontend engineers, UI is the easiest place to start because it’s concrete and close to what we do every day. So let’s begin with the board page and sketch the **happy path** first: the board has a few columns, each column already has some cards, and the initial fetch succeeds.
+
+From that snapshot, a reasonable first component list looks like:
+
+- **Board**: name, meta (e.g. total card count), and the overall layout.
+- **Filters**: status, assignee, labels, etc. (if in scope).
+- **Search**: a query input + results behavior (if in scope).
+- **Column**: title, card count / WIP badge, drop target.
+- **Card**: title + lightweight metadata (assignee, labels, due date).
+- **UserAvatar**: consistent avatar + fallback rendering.
+
+But that list is still *read-only*. Once you ask “where does this data come from?” the UI immediately grows:
+
+- Can users add/rename/reorder columns?
+- Are filters built-in, or can users create saved views?
+- When a card is edited, is it inline, a side panel, or a modal?
+
+And then there’s the part people forget when they only design the happy path.
+
+### Loading
+
+Initially, when the page starts loading, it’s safe to assume not every user has perfect network conditions. They might be on 4G, travelling, or switching networks—so a blank page is rarely the right experience. Design for this state explicitly: use a spinner or a skeleton to make it feel *fast* while you fetch the snapshot.
+
+<BoardLoadingSkeletonDemo />
+
+### Errors
+
+In the real world, things go wrong—and the UX here is part of the product. Decide how the UI behaves on timeouts, 5xx, and partial failures (retry, toast, inline error, status page).
+
+<BoardNetworkFailureDemo />
+
+### Empty state
+
+When there are no cards yet, no columns yet, or no results for a search—what should the user do next (create a card, create a column, start from a template)?
+
+<BoardEmptyStateDemo />
+
+<Callout tone="essentials">
+As a senior engineer, it’s important to think beyond the happy path: slow networks, backend errors, and the user’s “first time here” journey.
+</Callout>
+
 ## Product and engineering constraints
 
 These decisions change your data model and API more than any library choice:
