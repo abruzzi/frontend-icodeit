@@ -142,36 +142,6 @@ When there are no cards yet, no columns yet, or no results for a search—what s
 As a senior engineer, it’s important to think beyond the happy path: slow networks, backend errors, and the user’s “first time here” journey.
 </Callout>
 
-## Product and engineering constraints
-
-These decisions change your data model and API more than any library choice:
-
-- **Columns**: fixed workflow vs user-defined; max count; WIP limits; “done” / archive rules.
-- **Scale**: rough upper bound for cards per column (dozens vs thousands)—drives **pagination** inside a column vs load-all.
-- **Permissions**: who may move which cards; read-only viewers.
-- **Collaboration**: must moves appear for others within ~100ms, ~1s, or is **refresh** enough?
-- **Accessibility**: is **full parity** without a pointer required?
-- **Offline**: if moves queue locally, you need an explicit **merge** story when the client comes back.
-
-## Why boards are tricky
-
-- **Order is state.** Unlike a simple CRUD form, the product *is* the ordering of ids inside each column. Small bugs look like “my card jumped” or “it duplicated.”
-- **Moves are concurrent.** Two users can target the **same index** or the **same card**; the server must be the **authority** on the final order (or you expose conflicts explicitly).
-- **Optimistic UI is the default expectation.** Drag-and-drop feels broken if every move waits for the network; that means **pending state**, **rollback**, and **idempotent** server handling.
-
-## UI structure and where state should live
-
-Typical regions:
-
-- **Board shell**: loads board metadata, permissions, and the **initial snapshot** (or starts subscriptions).
-- **Column list**: renders columns in order; each column owns **only presentation** for that lane (title, WIP badge, drop target).
-- **Cards**: mostly **presentational**; read from shared data; emit **intent** (“move card X after Y in column Z”) rather than mutating a global blob from deep inside a leaf component.
-- **Drag / drop or keyboard layer**: keeps **ephemeral** state (what is being dragged, hover targets) **separate** from the **server-backed** board model. Mixing them in one object is a common source of impossible-to-replay bugs.
-
-**Rule of thumb:** the **canonical board order** lives in one place (normalized store + ordered id lists). Gestures **propose** updates; the store **applies** confirmed or optimistic patches.
-
-The **Try it first** demo uses the same idea at the leaf: columns own drop targets; cards are **presentational** and read shared column data; drag-and-drop **proposes** a new assignment (there, only client state; in production, an operation + ack).
-
 ## Data modeling (deep dive)
 
 ### Entities and relationships
