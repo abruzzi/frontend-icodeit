@@ -1,4 +1,5 @@
 import rehypeShikiFromHighlighter from "@shikijs/rehype/core";
+import { transformerMetaHighlight } from "@shikijs/transformers";
 import { compileMDX } from "next-mdx-remote/rsc";
 import type { Root as HastRoot } from "hast";
 import remarkGfm from "remark-gfm";
@@ -35,6 +36,7 @@ const SHIKI_LANGS = [
   "javascript",
   "json",
   "jsonc",
+  "jsx",
   "markdown",
   "md",
   "mdx",
@@ -83,6 +85,10 @@ function rehypeShikiIcodeitPlugin() {
           light: SHIKI_THEMES.light,
           dark: SHIKI_THEMES.dark,
         },
+        /** So MDX `pre` can detect `json` / `jsonc` fences for collapsible UI. */
+        addLanguageClass: true,
+        /** Fence meta ` ```ts {1,3-5}` → highlighted lines (see Shiki docs). */
+        transformers: [transformerMetaHighlight()],
         onError: (e) => {
           console.error("[rehype-shiki]", e);
         },

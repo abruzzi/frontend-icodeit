@@ -13,6 +13,7 @@ import { ProtocolChooser } from "@/components/explainers/ProtocolChooser";
 import { TradeoffMatrix } from "@/components/explainers/TradeoffMatrix";
 import { ChevronRight } from "lucide-react";
 import { Callout } from "./Callout";
+import { MdxPre } from "./MdxPre";
 import { TestingRubric } from "./TestingRubric";
 
 export const mdxComponents: MDXComponents = {
@@ -28,6 +29,7 @@ export const mdxComponents: MDXComponents = {
   FailureModeStepper,
   TestingRubric,
   Callout,
+  pre: MdxPre,
   // Bullet lists: icon marker + `.mdx-icon-li-marker` offset in `globals.css` (uses `lh`, not `line-height: 1`).
   ul: ({ className, ...props }) => {
     return (

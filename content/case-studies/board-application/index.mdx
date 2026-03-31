@@ -144,7 +144,9 @@ As a senior engineer, it’s important to think beyond the happy path: slow netw
 
 ## Data modeling (deep dive)
 
-Once we have a good understanding of the UI, and understand what's to include, we can have a better idea on what in the data modeling.
+Once we have a solid picture of the UI—what we are including, how it loads, and which edge states we actually own—we can reason much more clearly about **data modeling**. The question becomes: what shape stays correct when cards move, assignees change, and events arrive out of order? 
+
+It’s common to first render from a nested snapshot (often what a read API returns), then introduce a normalized client shape when duplication and partial updates become painful.
 
 ### Entities and relationships
 
@@ -156,24 +158,159 @@ At minimum:
 | `Column` | Id, board id, title, **order** among columns. |
 | `Card`   | Id, board id, **column id**, **position** (index or sort key), title and other fields. |
 
-Cardinality: a board has **many** columns; a column has **many** cards. Cards belong to **one** column at a time in the classic model.
+Cardinality: a board has **many** columns; a column has **many** cards. In the classic model each card belongs to **one** column at a time.
 
 <BoardDataModelDiagram />
 
 <Callout tone="pitfall">
-The point here is not replace the backend data design, but mainly focus on frontend. For example, we will need to show a count on the UI, like how many cards on a board. Or if kanban usage, we want to show a indicator for `working in progress` limit is exceeding.
-
-The backend has less interesting in such data, the number of cards is stored in database in general, and the count is calculated when firstly fetched by frontend.
+This is a **frontend-facing** description, not a mandate for how your database must look. The UI still needs **derived** values—total cards on a board, WIP against a limit, light aggregations—that might come from the API as precomputed fields, from a quick client pass, or from a mix of both. What matters on the client is knowing **where to patch** when something changes, so you are not scanning deeply nested trees for every small edit.
 </Callout>
+
+### Nested snapshot
+
+The following is a typical response from the **server side**: columns at the top level, each column embedding its `cards` array with the fields the UI needs.
+
+```json
+{
+  "id": "board-1",
+  "name": "Board 1",
+  "cardCount": 3,
+  "columnCount": 3,
+  "columnIds": ["col-1", "col-2", "col-3"],
+  "columns": [
+    {
+      "id": "col-1",
+      "title": "Backlog",
+      "cards": [
+        { "id": "TICKET-1", "title": "Setup project structure" },
+        {
+          "id": "TICKET-3",
+          "title": "Configure ESLint & Prettier",
+          "assignee": {
+            "id": 2,
+            "name": "Charlie Moore",
+            "avatar_url": "https://i.pravatar.cc/150?img=2"
+          }
+        }
+      ]
+    },
+    {
+      "id": "col-2",
+      "title": "In Progress",
+      "cards": [
+        {
+          "id": "TICKET-2",
+          "title": "Install dependencies",
+          "assignee": {
+            "id": 2,
+            "name": "Charlie Moore",
+            "avatar_url": "https://i.pravatar.cc/150?img=2"
+          }
+        }
+      ]
+    },
+    {
+      "id": "col-3",
+      "title": "Done",
+      "cards": []
+    }
+  ]
+}
+```
+
+Such a data structure is easy to use on the frontend, because we can render components by **traversing** the tree in a straightforward way: walk the `columns` array, and for each column walk its `cards`. The payload lines up naturally with a `Board → Column → Card` component tree.
+
+```jsx
+function Board({ data }) {
+  return data.columns.map((col) => <Column key={col.id} data={col} />);
+}
+
+function Column({ data }) {
+  return data.cards.map((card) => <Card key={card.id} data={card} />);
+}
+
+function Card({ data }) {
+  return (
+    <article>
+      <h2>{data.title}</h2>
+    </article>
+  );
+}
+```
+
+On the other hand, a nested structure like this makes it harder to update a **particular** piece of data when the same entity is **copied** in more than one place. In the example above, both **TICKET-2** and **TICKET-3** are assigned to **Charlie Moore**, and Charlie’s profile (including `avatar_url`) appears twice in the tree. If the user changes their avatar on a profile screen, how do we bring the board back in sync? We can **refresh the whole board** and re-render everything, or we can **search the tree** and apply a precise update to every node that embeds that user—but either approach takes extra effort, and as the board grows it is easy to miss a nested copy or to do redundant work.
+
+### Normalized client state
+
+A better approach is to **flatten** the data into a format where we only need to update **one place** for a given entity, and every usage of that entity is **derived** from that single source of truth. References between entities are **ids**, not duplicated objects. In a database or in traditional backend design this is usually called **normalisation**; on the frontend you will see the same idea in write-ups about **normalized state** and client caches (for example Redux-style stores). A **normalised** snapshot that carries the same board might look like this:
+
+```json
+{
+  "id": "board-1",
+  "name": "Board 1",
+  "cardCount": 3,
+  "columnCount": 3,
+  "columnIds": ["col-1", "col-2", "col-3"],
+  "columns": {
+    "col-1": {
+      "id": "col-1",
+      "title": "Backlog",
+      "cards": ["TICKET-1", "TICKET-3"]
+    },
+    "col-2": {
+      "id": "col-2",
+      "title": "In Progress",
+      "cards": ["TICKET-2"]
+    },
+    "col-3": {
+      "id": "col-3",
+      "title": "Done",
+      "cards": []
+    }
+  },
+  "cards": {
+    "TICKET-1": {
+      "id": "TICKET-1",
+      "title": "Setup project structure",
+      "assignee": null
+    },
+    "TICKET-2": {
+      "id": "TICKET-2",
+      "title": "Install dependencies",
+      "assignee": 2
+    },
+    "TICKET-3": {
+      "id": "TICKET-3",
+      "title": "Configure ESLint & Prettier",
+      "assignee": 2
+    }
+  },
+  "users": {
+    "2": {
+      "id": "2",
+      "name": "Charlie Moore",
+      "avatar_url": "https://i.pravatar.cc/150?img=2"
+    }
+  }
+}
+```
+
+<Callout tone="essentials">
+Note how each kind of object has **its own** top-level section—`columns`, `cards`, and `users` (or `assignees`). Each node holds the fields that belong to that entity, and when it needs another entity it **references** it through an `id` instead of embedding a second full copy.
+
+There is no duplicated user payload in this normalised shape: when we need to update the avatar for user `2`, we open the `users` section, update that one record, and we do **not** have to touch the `cards` entries except that they already point at the same id.
+</Callout>
+
+Matching JSON for these two shapes lives under `content/case-studies/board-application/snippets/` (`board-1.json` and `board-1-normalised.json`).
 
 ### Server canonical model vs client view
 
-The **server** stores the **source of truth** for column order and each card’s `(columnId, position)` (or equivalent). The **client** usually mirrors that in a shape optimized for rendering:
+Even when the client keeps a **normalised** map for rendering, **persistence** still belongs to the **server**. The server remains the source of truth for column order and for each card’s `(columnId, position)` (or whatever ordering model you commit to). The **client** mirrors that authority in a shape that is convenient to render and to patch:
 
 - **`cardsById: Record<CardId, Card>`** — full card records.
 - **`columnId → orderedCardIds: CardId[]`** — render order per column.
 
-Why both? The list gives you **order** in O(n) render without scanning all cards; the map gives you **O(1)** lookup when a realtime event references `cardId` only.
+Keeping **both** is a common compromise: the **ordered id list** per column gives you **O(n)** rendering for that column without scanning every card on the board, while the **map by id** gives you **O(1)** lookup when a realtime payload names a `cardId` and you need the rest of the fields immediately.
 
 ### Ordering: index vs sort key
 

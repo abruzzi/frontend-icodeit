@@ -1,14 +1,16 @@
 /**
- * Shiki dual themes (same pair as icodeit-next `rehype-pretty-code`: solarized-light / github-dark-dimmed).
- * Light token colors + `--shiki-dark-*` for `html.dark` — https://shiki.style/guide/dual-themes#class-based-dark-mode
+ * Shiki dual themes: solarized-light / github-dark-dimmed for token colors only.
+ * Backgrounds stay transparent so the article / page gradient shows through.
+ * Font: JetBrains Mono (same as `globals.css` pre/code — `style.md` editor stack).
+ * Dark: https://shiki.style/guide/dual-themes#class-based-dark-mode
  *
- * Fenced blocks use Fira Code (`--font-fira-code` from `app/layout.tsx`); body copy / inline `code` stay JetBrains.
+ * Fenced blocks are wrapped in `.shiki-code-root` (toolbar + line gutter) from `ShikiCodeBlockShell`.
  */
 .prose pre.shiki,
 .prose pre.shiki code,
 .prose pre.shiki span {
-  font-family: var(--font-fira-code), ui-monospace, monospace;
-  font-feature-settings: "calt" 1, "liga" 1, "zero" 1, "ss01" 1;
+  font-family: var(--font-jetbrains-mono), ui-monospace, monospace;
+  font-feature-settings: "calt" 1, "liga" 1;
 }
 
 html.dark .shiki,
@@ -20,26 +22,54 @@ html.dark .shiki span {
   text-decoration: var(--shiki-dark-text-decoration) !important;
 }
 
-.prose :where(pre.shiki) {
-  margin-top: 1.25em;
-  margin-bottom: 1.25em;
-  padding: 0;
-  overflow-x: auto;
-  border-radius: 0.75rem;
-  border: 1px solid rgb(226 232 240 / 0.95);
-  box-shadow: 0 1px 2px rgb(15 23 42 / 0.04);
+/* Prose code blocks: no fill on pre/tokens so body/hero background is visible. */
+.prose pre.shiki,
+.prose pre.shiki span {
+  background-color: transparent !important;
 }
 
-.dark .prose :where(pre.shiki) {
-  border-color: rgb(71 85 105 / 0.75);
+html.dark .prose pre.shiki,
+html.dark .prose pre.shiki span {
+  background-color: transparent !important;
+}
+
+/* Wrapped blocks: outer shell owns margin + border; inner pre is flush. */
+.prose :where(.shiki-code-root) {
+  margin-top: 1.25em;
+  margin-bottom: 1.25em;
+}
+
+.prose :where(.shiki-code-root pre.shiki) {
+  margin: 0;
+  padding: 0;
+  overflow-x: auto;
+  border: none;
+  border-radius: 0;
   box-shadow: none;
+  background-color: transparent !important;
+}
+
+/* Collapsible JSON: one outer card; inner shell has no extra vertical margin. */
+.prose :where(.mdx-json-details) {
+  margin-top: 1.25em;
+  margin-bottom: 1.25em;
+}
+
+.prose :where(.mdx-json-details .shiki-code-root) {
+  margin-top: 0;
+  margin-bottom: 0;
+  border-radius: 0;
+}
+
+.prose :where(.mdx-json-details .shiki-code-root pre.shiki) {
+  border-radius: 0;
 }
 
 .prose :where(pre.shiki code) {
   display: block;
   width: max-content;
   min-width: 100%;
-  padding: 1rem 1.25rem;
+  padding: 1rem 1.25rem 1rem 0.875rem;
   font-size: 0.875rem;
   line-height: 1.65;
   background: transparent !important;
@@ -47,4 +77,29 @@ html.dark .shiki span {
 
 .prose :where(pre.shiki code .line) {
   min-height: 1.65em;
+}
+
+/* `transformerMetaHighlight` — use fence meta like ` ```json {1,3-5}` */
+.prose pre.shiki .line.highlighted {
+  background-color: color-mix(
+    in srgb,
+    var(--palette-magenta, #ff0855) 14%,
+    transparent
+  ) !important;
+}
+
+.prose pre.shiki .line.highlighted span {
+  background-color: transparent !important;
+}
+
+html.dark .prose pre.shiki .line.highlighted {
+  background-color: color-mix(
+    in srgb,
+    var(--palette-magenta, #ff0855) 20%,
+    transparent
+  ) !important;
+}
+
+html.dark .prose pre.shiki .line.highlighted span {
+  background-color: transparent !important;
 }

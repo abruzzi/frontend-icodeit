@@ -1,0 +1,37 @@
+{
+  "id": "board-1",
+  "name": "Board 1",
+  "cardCount": 3,
+  "columnCount": 3,
+  "columnIds": ["col-1", "col-2", "col-3"],
+  "columns": [
+    {
+      "id": "col-1",
+      "title": "Backlog",
+      "cards": [
+        { "id": "TICKET-1", "title": "Setup project structure" },
+        {
+          "id": "TICKET-3",
+          "title": "Configure ESLint & Prettier",
+          "assignee": {
+            "id": 2,
+            "name": "Charlie Moore",
+            "avatar_url": "https://i.pravatar.cc/150?img=2"
+          }
+        }
+      ]
+    },
+    {
+      "id": "col-2",
+      "title": "In Progress",
+      "cards": [
+        { "id": "TICKET-2", "title": "Install dependencies" }
+      ]
+    },
+    {
+      "id": "col-3",
+      "title": "Done",
+      "cards": []
+    }
+  ]
+}
