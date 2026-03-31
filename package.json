@@ -19,6 +19,7 @@
     "@atlaskit/pragmatic-drag-and-drop": "^1.7.9",
     "@shikijs/rehype": "^4.0.2",
     "@tailwindcss/typography": "^0.5.15",
+    "@vercel/analytics": "^2.0.1",
     "@xyflow/react": "^12.10.1",
     "framer-motion": "^11.18.0",
     "geist": "^1.7.0",

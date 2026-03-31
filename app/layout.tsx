@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { Analytics } from "@vercel/analytics/next";
 import { GeistSans } from "geist/font/sans";
 import { Fira_Code, Inter, JetBrains_Mono } from "next/font/google";
 
@@ -48,6 +49,7 @@ export default function RootLayout({
             <SiteHeader />
             {children}
           </main>
+          <Analytics />
         </Providers>
       </body>
     </html>
