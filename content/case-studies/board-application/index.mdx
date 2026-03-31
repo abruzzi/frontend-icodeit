@@ -17,7 +17,9 @@ productionNotes:
 testingRubricId: "realtime-collaboration-core"
 ---
 
-This guide walks through a **kanban-style board** (columns like *Backlog* / *In progress* / *Done*, as in Trello or Jira): what to store, how to shape data and APIs, and where things break in production—written for **depth**, not a timed interview.
+This guide walks through a **kanban-style board application**: work items are **cards**, grouped into **columns** like *Backlog* / *In progress* / *Done* (as in Trello or Jira). We'll discuss common challenges, patterns, and strategies that address them—and the trade-offs behind those choices.
+
+We'll focus mainly on **frontend concerns**: how to manage state, how to shape data and APIs, and where things break in production—written for **depth**. You can use it to prepare for a system design interview, but it also helps you develop a feel for how systems are designed and how to make decisions when you have many options.
 
 ## What you are building
 
@@ -31,14 +33,24 @@ This demo does not call an API. Later sections cover idempotent **move** operati
 
 ## What is a board application?
 
-Teams use a **shared surface** where work items are **cards** grouped into **columns**. The main interaction is **moving a card** (reorder within a column or move across columns). Often, **several people** use the same board; sometimes columns are **huge** or **customized**.
+Teams use a **shared place** where work items are **cards**, grouped into **columns**. The main interactions are creating cards, editing details, and **moving cards** (reordering within a column or moving across columns). Often, **multiple people** use the same board, so we need to handle scenarios like several users editing the same card, and how to notify teammates when updates happen.
 
-Your implementation should stay **correct** when:
+Tools like Jira or Trello have been used widely because they help teams manage work at all sizes—and they’ve proven to be an effective way to track and manage that work efficiently.
 
-- the network is slow or flaky;
-- the same move is **retried**;
+In this guide, we’ll discuss a few real-world challenges that can look normal on the surface, but get tricky once you consider edge cases. Ordering/position is a good example—we’ll see it in a later section.
+
+We can split the requirements into two categories: the **functionality** and the **cross-functional** requirements.
+
+Functionality is the main feature of the application. For our case, we need to render a board, let users create and edit cards, and move cards across columns. We also need to support **multiple users** working on the same board at the same time.
+
+Cross-functional requirements include reliability, performance (both actual speed and perceived performance), security, accessibility, internationalization, and more. They’re equally important as functionality, because they determine whether the product feels solid in the real world.
+
+For that, your implementation should stay **correct** when:
+
+- the network is slow or flaky; (reliability)
+- the same move is **retried** (maybe by another user);
 - **two people** move cards close together in time;
-- users might rely on **keyboard** for some interactions, not only drag-and-drop.
+- users might rely on **keyboard** for some interactions, not only drag-and-drop. (accessibility)
 
 ## How this guide walks it
 
@@ -46,17 +58,33 @@ There is no single architecture that is “best” for every product and team. *
 
 Complicated systems are easier if you do not start from “everything at once.” The same idea is often called a **[steel thread](https://www.rubick.com/steel-threads/)**: the **thinnest slice that still threads through the real boundaries of the system** for one important use case, shipped so it holds in production—then you grow from that spine. Jade Rubick’s article is the clearest write-up I know of the term.
 
-This walkthrough **stages** where that thread crosses the next boundary—it is the same iterative discipline, not a different philosophy. **Steps 1–2** are a **client-local steel thread**: faithful UI plus real move semantics in memory, so drag boundaries and ordering updates fail first without the network seam. **Step 3** threads the same use case **through persistence** (single-player, reload matches truth). You are only choosing to pierce **client ↔ server** once the in-browser spine is boring.
+
+For this board application, a reasonable split can be as follows:
 
 1. **Fixtures first, render correctly.** Start from **fixture data** (for example a JSON snapshot in the frontend, or assume you can always fetch it) and render **faithfully**: columns, card order, fields the UI needs.
 
-2. **Interaction before the network.** Add **moving cards** and **order in client state only** so you learn the data updates and drag/drop boundaries without distributed-system noise. **Try it first** above is exactly **steps 1–2**.
+2. **Interaction before the network.** Add **moving cards** and **order in client state only** so you learn the data updates and drag/drop boundaries without distributed-system noise. **Try it first**, which corresponds to **steps 1–2**.
 
 3. **Persistence, single-player.** Save to the server next, **one user at a time**: a move persists and reloads correctly; **defer** notifications, realtime, and conflict UX until that baseline is boring.
 
-**After that** (when you need them): **ack / rollback**, **idempotent** operations, **reload matches server**, **two clients** converging, WIP limits, automation, and the rest.
 
-The rest of the article lines up with the **CCDAO** lens—**C**ollect constraints, **C**omponent structure, **D**ata modeling, **A**PI design, **O**ptimization—so each block maps to how you might walk the problem in a design review. **Data modeling** and **API design** go deepest on **step 3** and beyond.
+Another split can be (which is usually my favorite if I have to implement it):
+
+1. Add a card (only with a title), and call a backend service (the backend can decide to use a mock or actually persist to a database)
+2. Refresh the board and you should now see the new card
+3. Edit the card details (e.g. change the title), and call `update` endpoint (could be updating the in-memory array in the backend)
+4. See the changes applied
+5. ...
+
+The second approach has the same principle as the first one: we delay architecture decisions until we have to. The reason is simple—those decisions are normally hard to reverse. If you start with a non-SQL database, ship with some data already inside it, and then later realize a relational database is a better fit, you end up dealing with downtime and migration work.
+
+So try to delay the decision until later, when you have a better understanding of what you're **building**, what the constraints are, and what options you have—so you can make better **decisions**.
+
+Again, there isn't a right or wrong split here—but the goal stays the same:
+
+**After that** (when you need them): **ack / rollback**, **idempotent** operations, **reload that matches the server**, **two clients** converging, WIP limits, automation, and the rest.
+
+The rest of the article lines up with the **CCDAO** lens—**C**ollect constraints, **C**omponent structure, **D**ata modeling, **A**PI design, **O**ptimization—so each block maps to how you might walk the problem in a design review. **Data modeling** and **API design** go deepest from **step 3** onward.
 
 ## Product and engineering constraints
 
