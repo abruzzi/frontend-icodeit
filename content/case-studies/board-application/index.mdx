@@ -17,7 +17,7 @@ productionNotes:
 testingRubricId: "realtime-collaboration-core"
 ---
 
-This guide walks through a <Highlight variant="underline3">kanban-style board application</Highlight>: work items are **cards**, grouped into **columns** like *Backlog* / *In progress* / *Done* (as in Trello or Jira). We'll discuss common challenges, patterns, and strategies that address them—and the trade-offs behind those choices.
+This guide walks through a <Highlight variant="underline3">kanban-style board</Highlight> application: work items are **cards**, grouped into **columns** like *Backlog* / *In progress* / *Done* (as in Trello or Jira). We'll discuss common challenges, patterns, and strategies that address them—and the trade-offs behind those choices.
 
 We'll focus mainly on **frontend concerns**: how to manage state, how to shape data and APIs, and where things break in production—written for **depth**. You can use it to prepare for a system design interview, but it also helps you develop a feel for how systems are designed and how to make decisions when you have many options.
 
@@ -64,18 +64,18 @@ You don’t need every answer up front—but **one sentence each** on scope, col
 
 There is no single architecture that is “best” for every product and team. **Here I use one path I like because it is easy to understand and to follow**—especially on the web: thin UI, clear data shape, then persistence—without pretending it is the only respectable approach.
 
-Complicated systems are easier if you do not start from “everything at once.” The same idea is often called a **[steel thread](https://www.rubick.com/steel-threads/)**: the **thinnest slice that still threads through the real boundaries of the system** for one important use case, shipped so it holds in production—then you grow from that spine. Jade Rubick’s article is the clearest write-up I know of the term.
+Complicated systems are easier if you do not start from “everything at once.” The same idea is often called a **[steel thread](https://www.rubick.com/steel-threads/)**: the **<Highlight variant="underline2">thinnest slice</Highlight> that still threads through the real boundaries of the system** for one important use case, shipped so it holds in production—then you grow from that spine. Jade Rubick’s article is the clearest write-up I know of the term.
 
 For this board application, a reasonable split can be as follows:
 
-1. **Fixtures first, render correctly.** Start from **fixture data** (for example a JSON snapshot in the frontend, or assume you can always fetch it) and render **faithfully**: columns, card order, fields the UI needs.
+1. Start from fixture data (for example a JSON snapshot in the frontend, or assume you can always fetch it), and render the board faithfully—columns, card order, and the fields the UI needs.
 
-2. **Interaction before the network.** Add **moving cards** and **order in client state only** so you learn the data updates and drag/drop boundaries without distributed-system noise.
+2. Add moving cards with ordering kept in client state only, so you learn how updates and drag-and-drop boundaries behave before you layer on distributed-system concerns.
 
-3. **Persistence, single-player.** Save to the server next, **one user at a time**: a move persists and reloads correctly; **defer** notifications, realtime, and conflict UX until that baseline is boring.
+3. Persist moves to the server next, one user at a time, until reload shows the same board—and defer notifications, realtime, and conflict UX until that baseline is boring.
 
 
-The above approach is simple and focuses on the frontend first. You can work safely on the UI (design + code) and iterate quickly. The benefit is you always have something to show a product owner or user, so you can get early feedback and adjust accordingly. You can design with mock data—avatars, default fallbacks, empty states—assuming the backend will eventually return the shape the UI consumes.
+The above approach is simple and focuses on the frontend first. You can work safely on the UI (design + code) and <Highlight variant="underline3">iterate quickly</Highlight>. The benefit is you always have something to show a product owner or user, so you can get early feedback and adjust accordingly. You can design with mock data—avatars, default fallbacks, empty states—assuming the backend will eventually return the shape the UI consumes.
 
 The drawback, on the other hand, is you’re delaying integration, which can bite you later. If the backend can’t handle a case efficiently (or the API contract can’t support the UX you designed), you might have wasted time on UI work. You can also make assumptions that you won’t realize are wrong until much later.
 
@@ -87,7 +87,7 @@ Another split can be (which is usually my favorite if I have to implement it):
 4. See the changes applied
 5. And implement more end-to-end integrations (realtime updates, multi-user collaboration, etc.)
 
-The second approach has the same principle as the first one: we delay architecture decisions until we have to. The reason is simple—those decisions are normally hard to reverse. If you start with a non-SQL database, ship with some data already inside it, and then later realize a relational database is a better fit, you end up dealing with downtime and migration work.
+The second approach has the same principle as the first one: we delay architecture decisions until we have to. The reason is simple—those decisions are normally *hard to reverse*. If you start with a non-SQL database, ship with some data already inside it, and then later realize a relational database is a better fit, you end up dealing with downtime and migration work.
 
 So try to delay the decision until later, when you have a better understanding of what you're **building**, what the constraints are, and what options you have—so you can make better **decisions**.
 
@@ -105,12 +105,14 @@ For most frontend engineers, UI is the easiest place to start because it’s con
 
 From that snapshot, a reasonable first component list looks like:
 
-- **Board**: name, meta (e.g. total card count), and the overall layout.
-- **Filters**: status, assignee, labels, etc. (if in scope).
-- **Search**: a query input + results behavior (if in scope).
-- **Column**: title, card count / WIP badge, drop target.
-- **Card**: title + lightweight metadata (assignee, labels, due date).
-- **UserAvatar**: consistent avatar + fallback rendering.
+| Component   | Role |
+| ----------- | ---- |
+| Board       | Name, meta (e.g. total card count), and the overall layout. |
+| Filters     | Status, assignee, labels, etc. (if in scope). |
+| Search      | Query input + results behavior (if in scope). |
+| Column      | Title, card count / WIP badge, drop target. |
+| Card        | Title + lightweight metadata (assignee, labels, due date). |
+| UserAvatar  | Consistent avatar + fallback rendering. |
 
 But that list is still *read-only*. Once you ask “where does this data come from?” the UI immediately grows:
 
@@ -157,8 +159,9 @@ At minimum:
 | `Board`  | Id, title, settings (e.g. column ids in order). |
 | `Column` | Id, board id, title, **order** among columns. |
 | `Card`   | Id, board id, **column id**, **position** (index or sort key), title and other fields. |
+| `User`   | Id, display name, **avatar** URL, etc.; cards reference an assignee by **user id** (or null). |
 
-Cardinality: a board has **many** columns; a column has **many** cards. In the classic model each card belongs to **one** column at a time.
+Cardinality: a board has **many** columns; a column has **many** cards. In the classic model each card belongs to **one** column at a time. A user may be the assignee on **many** cards; each card has at most **one** assignee in the usual model.
 
 <BoardDataModelDiagram />
 
@@ -300,8 +303,6 @@ Note how each kind of object has **its own** top-level section—`columns`, `car
 
 There is no duplicated user payload in this normalised shape: when we need to update the avatar for user `2`, we open the `users` section, update that one record, and we do **not** have to touch the `cards` entries except that they already point at the same id.
 </Callout>
-
-Matching JSON for these two shapes lives under `content/case-studies/board-application/snippets/` (`board-1.json` and `board-1-normalised.json`).
 
 ### Server canonical model vs client view
 
