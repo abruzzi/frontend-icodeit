@@ -1,4 +1,5 @@
 import { notFound } from "next/navigation";
+import type { Metadata } from "next";
 
 import { RelatedLinksSection } from "@/components/content/related-links-section";
 import {
@@ -20,6 +21,31 @@ import { AuthorBio } from "@/components/content/author-bio";
 type Props = {
   params: { slug: string };
 };
+
+export async function generateMetadata({ params }: Props): Promise<Metadata> {
+  const entry = getEntrySource("patterns", params.slug);
+  if (!entry || entry.frontmatter.kind !== "pattern") {
+    return {};
+  }
+  return {
+    title: entry.frontmatter.title,
+    description: entry.frontmatter.summary,
+    alternates: { canonical: routes.pattern(params.slug) },
+    openGraph: {
+      type: "article",
+      url: routes.pattern(params.slug),
+      title: entry.frontmatter.title,
+      description: entry.frontmatter.summary,
+      images: [{ url: "/assets/juntao.qiu.avatar.webp" }],
+    },
+    twitter: {
+      card: "summary_large_image",
+      title: entry.frontmatter.title,
+      description: entry.frontmatter.summary,
+      images: ["/assets/juntao.qiu.avatar.webp"],
+    },
+  };
+}
 
 export function generateStaticParams() {
   return getPatterns()
