@@ -152,3 +152,72 @@
 .prose ol.mdx-num-ol > li > .mdx-icon-li-content > div:first-child {
   margin-top: 0;
 }
+
+/* --- Site hero: ambient “breathing” gradients (no pointer spotlight) --- */
+@keyframes hero-breathe-fog-a {
+  0%,
+  100% {
+    opacity: 0.032;
+    transform: translate(0, 0) scale(1);
+  }
+  50% {
+    opacity: 0.078;
+    transform: translate(2.2%, -1.8%) scale(1.045);
+  }
+}
+
+@keyframes hero-breathe-fog-b {
+  0%,
+  100% {
+    opacity: 0.026;
+    transform: translate(0.8%, 1.2%) scale(1.02);
+  }
+  40% {
+    opacity: 0.062;
+    transform: translate(-2.4%, 0.4%) scale(1.07);
+  }
+  78% {
+    opacity: 0.038;
+    transform: translate(0.3%, 2.1%) scale(1.03);
+  }
+}
+
+.hero-breathe-layer-a {
+  pointer-events: none;
+  inset: -14% -10% -12% -10%;
+  will-change: transform, opacity;
+  background: radial-gradient(
+    ellipse 58% 52% at 34% 36%,
+    rgb(226 62 87 / 0.11),
+    transparent 72%
+  );
+  animation: hero-breathe-fog-a 14.5s ease-in-out infinite;
+}
+
+.hero-breathe-layer-b {
+  pointer-events: none;
+  inset: -18% -12% -10% -14%;
+  will-change: transform, opacity;
+  background: radial-gradient(
+    ellipse 52% 48% at 62% 42%,
+    rgb(0 144 255 / 0.07),
+    transparent 68%
+  );
+  animation: hero-breathe-fog-b 19s ease-in-out infinite;
+}
+
+html.dark .hero-breathe-layer-a {
+  background: radial-gradient(
+    ellipse 58% 52% at 34% 36%,
+    rgb(255 8 85 / 0.09),
+    transparent 72%
+  );
+}
+
+html.dark .hero-breathe-layer-b {
+  background: radial-gradient(
+    ellipse 52% 48% at 62% 42%,
+    rgb(0 144 255 / 0.085),
+    transparent 68%
+  );
+}
