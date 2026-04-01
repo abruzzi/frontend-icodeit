@@ -298,6 +298,8 @@ A better approach is to **flatten** the data into a format where we only need to
 }
 ```
 
+<BoardNormalisationStepperDemo />
+
 <Callout tone="essentials">
 Note how each kind of object has **its own** top-level section—`columns`, `cards`, and `users` (or `assignees`). Each node holds the fields that belong to that entity, and when it needs another entity it **references** it through an `id` instead of embedding a second full copy.
 
