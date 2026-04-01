@@ -54,10 +54,10 @@ export const DEMO_INITIAL_BOARD: BoardSnapshot = {
       id: "col-1",
       title: "Backlog",
       cards: [
-        { id: "TICKET-1", title: "Setup project structure" },
-        { id: "TICKET-2", title: "Install dependencies" },
+        { id: "card-1", title: "Setup project structure" },
+        { id: "card-2", title: "Install dependencies" },
         {
-          id: "TICKET-3",
+          id: "card-3",
           title: "Configure ESLint & Prettier",
           assignee: {
             id: 2,
@@ -72,7 +72,7 @@ export const DEMO_INITIAL_BOARD: BoardSnapshot = {
       title: "In Progress",
       cards: [
         {
-          id: "TICKET-4",
+          id: "card-4",
           title: "Implement user list API",
           assignee: {
             id: 5,
@@ -81,7 +81,7 @@ export const DEMO_INITIAL_BOARD: BoardSnapshot = {
           },
         },
         {
-          id: "TICKET-5",
+          id: "card-5",
           title: "Create Board UI",
           assignee: {
             id: 8,
@@ -96,7 +96,7 @@ export const DEMO_INITIAL_BOARD: BoardSnapshot = {
       title: "Done",
       cards: [
         {
-          id: "TICKET-6",
+          id: "card-6",
           title: "Add TailwindCSS setup",
           assignee: {
             id: 1,

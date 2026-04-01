@@ -185,9 +185,9 @@ The following is a typical response from the **server side**: columns at the top
       "id": "col-1",
       "title": "Backlog",
       "cards": [
-        { "id": "TICKET-1", "title": "Setup project structure" },
+        { "id": "card-1", "title": "Setup project structure" },
         {
-          "id": "TICKET-3",
+          "id": "card-3",
           "title": "Configure ESLint & Prettier",
           "assignee": {
             "id": 2,
@@ -202,7 +202,7 @@ The following is a typical response from the **server side**: columns at the top
       "title": "In Progress",
       "cards": [
         {
-          "id": "TICKET-2",
+          "id": "card-2",
           "title": "Install dependencies",
           "assignee": {
             "id": 2,
@@ -241,7 +241,7 @@ function Card({ data }) {
 }
 ```
 
-On the other hand, a nested structure like this makes it harder to update a **particular** piece of data when the same entity is **copied** in more than one place. In the example above, both **TICKET-2** and **TICKET-3** are assigned to **Charlie Moore**, and Charlie’s profile (including `avatar_url`) appears twice in the tree. If the user changes their avatar on a profile screen, how do we bring the board back in sync? We can **refresh the whole board** and re-render everything, or we can **search the tree** and apply a precise update to every node that embeds that user—but either approach takes extra effort, and as the board grows it is easy to miss a nested copy or to do redundant work.
+On the other hand, a nested structure like this makes it harder to update a **particular** piece of data when the same entity is **copied** in more than one place. In the example above, both **card-2** and **card-3** are assigned to **Charlie Moore**, and Charlie’s profile (including `avatar_url`) appears twice in the tree. If the user changes their avatar on a profile screen, how do we bring the board back in sync? We can **refresh the whole board** and re-render everything, or we can **search the tree** and apply a precise update to every node that embeds that user—but either approach takes extra effort, and as the board grows it is easy to miss a nested copy or to do redundant work.
 
 ### Normalized client state
 
@@ -258,12 +258,12 @@ A better approach is to **flatten** the data into a format where we only need to
     "col-1": {
       "id": "col-1",
       "title": "Backlog",
-      "cards": ["TICKET-1", "TICKET-3"]
+      "cards": ["card-1", "card-3"]
     },
     "col-2": {
       "id": "col-2",
       "title": "In Progress",
-      "cards": ["TICKET-2"]
+      "cards": ["card-2"]
     },
     "col-3": {
       "id": "col-3",
@@ -272,18 +272,18 @@ A better approach is to **flatten** the data into a format where we only need to
     }
   },
   "cards": {
-    "TICKET-1": {
-      "id": "TICKET-1",
+    "card-1": {
+      "id": "card-1",
       "title": "Setup project structure",
       "assignee": null
     },
-    "TICKET-2": {
-      "id": "TICKET-2",
+    "card-2": {
+      "id": "card-2",
       "title": "Install dependencies",
       "assignee": 2
     },
-    "TICKET-3": {
-      "id": "TICKET-3",
+    "card-3": {
+      "id": "card-3",
       "title": "Configure ESLint & Prettier",
       "assignee": 2
     }
@@ -312,15 +312,15 @@ Even when the client keeps a **normalised** map for rendering, **persistence** s
 
 The normalised JSON above already hints at two **different jobs** hiding inside “show the board”:
 
-1. **Look up a card by id** — In the example, every full card body lives under `cards`, keyed by id (`"TICKET-1"`, `"TICKET-2"`, …). When a realtime payload or a mutation response says “something changed on **TICKET-3**,” you jump straight to `cards["TICKET-3"]` and update **one object**. You do **not** hunt through `col-1`, then `col-2`, to find which nested array still holds that ticket. In TypeScript people often write that table as **`Record<CardId, Card>`** or `cardsById`.
+1. **Look up a card by id** — In the example, every full card body lives under `cards`, keyed by id (`"card-1"`, `"card-2"`, …). When a realtime payload or a mutation response says “something changed on **card-3**,” you jump straight to `cards["card-3"]` and update **one object**. You do **not** hunt through `col-1`, then `col-2`, to find which nested array still holds that card. In TypeScript people often write that table as **`Record<CardId, Card>`** or `cardsById`.
 
-2. **Know the order inside each column** — In the same example, `columns["col-1"].cards` is **not** an array of full card objects anymore; it is `["TICKET-1", "TICKET-3"]`: an **ordered list of ids** for *Backlog*. To paint that column in the UI, you walk that list in order, and for each id you read the title and assignee from `cards[id]`. That list is your **source of truth for ordering** on the client (until the server sends a correction). People often name that structure **`columnId → orderedCardId[]`**.
+2. **Know the order inside each column** — In the same example, `columns["col-1"].cards` is **not** an array of full card objects anymore; it is `["card-1", "card-3"]`: an **ordered list of ids** for *Backlog*. To paint that column in the UI, you walk that list in order, and for each id you read the title and assignee from `cards[id]`. That list is your **source of truth for ordering** on the client (until the server sends a correction). People often name that structure **`columnId → orderedCardId[]`**.
 
-Why keep **both** instead of only the map? If you only had `cards` and each card carried `columnId`, you could still render, but every frame you would be asking “**which** cards belong to *Backlog*, and **in what order**?”—usually by scanning **all** cards. The per-column id list answers that in one pass: you render **at most** the tickets that appear in `["TICKET-1", "TICKET-3"]` for *Backlog*, in exactly that sequence, without touching **TICKET-2** in *In Progress*. When an event names a single `cardId`, the map still lets you jump to the record in **one step** and update assignee, title, or flags without walking the whole board.
+Why keep **both** instead of only the map? If you only had `cards` and each card carried `columnId`, you could still render, but every frame you would be asking “**which** cards belong to *Backlog*, and **in what order**?”—usually by scanning **all** cards. The per-column id list answers that in one pass: you render **at most** the cards that appear in `["card-1", "card-3"]` for *Backlog*, in exactly that sequence, without touching **card-2** in *In Progress*. When an event names a single `cardId`, the map still lets you jump to the record in **one step** and update assignee, title, or flags without walking the whole board.
 
 So: **server** owns the canonical order and persistence; **client** holds a **table of cards by id** plus, for each `col-*`, an **ordered list of those ids**—the same split you already see in the normalised fixture, just spelled out as *why* it is there.
 
-## API design (deep dive)
+## Desiging the API
 
 At some point the board has to talk to a **real backend**, and that is when API design stops being a tidy diagram and turns into a **conversation**. I have never seen it work well as a solo act—backend and frontend both have constraints worth listening to—but I still think the **shape the UI actually consumes** (nested vs normalised, field names, how you represent ordering) ought to win when there is tension, because that is what you render and patch every day. We already sketched that side in **Data modeling**; the API should line up with it instead of fighting it.
 
@@ -356,13 +356,16 @@ For **200**, the body should resemble what you already committed to in **Data mo
 
 ```json show
 {
-  "board": { "id": "b1", "title": "Sprint 12", "version": 42 },
+  "board": { "id": "board-1", "title": "Board 1", "version": 42 },
   "columns": [
-    { "id": "c_todo", "title": "To do", "order": 0 },
-    { "id": "c_doing", "title": "In progress", "order": 1 }
+    { "id": "col-1", "title": "Backlog", "order": 0 },
+    { "id": "col-2", "title": "In Progress", "order": 1 },
+    { "id": "col-3", "title": "Done", "order": 2 }
   ],
   "cards": [
-    { "id": "card_1", "columnId": "c_todo", "position": 0, "title": "…" }
+    { "id": "card-1", "columnId": "col-1", "position": 0, "title": "Setup project structure" },
+    { "id": "card-2", "columnId": "col-2", "position": 0, "title": "Install dependencies" },
+    { "id": "card-3", "columnId": "col-1", "position": 1, "title": "Configure ESLint & Prettier" }
   ]
 }
 ```
@@ -378,13 +381,13 @@ I would treat errors with the same care as loading and empty states in **Designi
 
 ### Pagination and large columns
 
-If you are somewhere under “a few dozen to low hundreds” of cards, **one round trip** that pulls the whole board is often totally reasonable—I would not paginate for ceremony. Where life gets noisy is the **monster backlog**: years of tickets, a single column that never shrinks, or many teams sharing one huge surface. Then you want enough to paint the screen quickly, and more as the user scrolls or digs into a lane.
+If you are somewhere under “a few dozen to low hundreds” of cards, **one round trip** that pulls the whole board is often totally reasonable—I would not paginate for ceremony. Where life gets noisy is the **monster backlog**: years of cards, a single column that never shrinks, or many teams sharing one huge surface. Then you want enough to paint the screen quickly, and more as the user scrolls or digs into a lane.
 
 **Cursor-based** pagination tends to survive reality better than naive page numbers when new items keep landing **at the top** of a column while someone is paging. You might extend the board read with something shaped like:
 
 ```json show
 {
-  "board": { "id": "b1", "title": "Sprint 12", "version": 42 },
+  "board": { "id": "board-1", "title": "Board 1", "version": 42 },
   "columns": [],
   "cards": [],
   "pageInfo": {
@@ -425,10 +428,10 @@ On boards I usually push people past “PATCH three fields” and toward an **op
 {
   "operationId": "uuid-client-generated",
   "type": "move_card",
-  "cardId": "c_1",
-  "fromColumnId": "col_a",
-  "toColumnId": "col_b",
-  "afterCardId": "c_9" // or toIndex: 3 — pick one convention and stick to it
+  "cardId": "card-1",
+  "fromColumnId": "col-1",
+  "toColumnId": "col-2",
+  "afterCardId": "card-2" // or toIndex: 3 — pick one convention and stick to it
 }
 ```
 

@@ -17,6 +17,7 @@ import { Callout } from "./Callout";
 import { Highlight } from "./Highlight";
 import { MdxPre } from "./MdxPre";
 import { TestingRubric } from "./TestingRubric";
+import { Token } from "./Token";
 
 export const mdxComponents: MDXComponents = {
   BoardDataModelDiagram,
@@ -33,6 +34,7 @@ export const mdxComponents: MDXComponents = {
   TestingRubric,
   Callout,
   Highlight,
+  Token,
   pre: MdxPre,
   // Bullet lists: icon marker + `.mdx-icon-li-marker` offset in `globals.css` (uses `lh`, not `line-height: 1`).
   ul: ({ className, ...props }) => {

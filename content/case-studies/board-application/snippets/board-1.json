@@ -9,9 +9,9 @@
       "id": "col-1",
       "title": "Backlog",
       "cards": [
-        { "id": "TICKET-1", "title": "Setup project structure" },
+        { "id": "card-1", "title": "Setup project structure" },
         {
-          "id": "TICKET-3",
+          "id": "card-3",
           "title": "Configure ESLint & Prettier",
           "assignee": {
             "id": 2,
@@ -25,7 +25,7 @@
       "id": "col-2",
       "title": "In Progress",
       "cards": [
-        { "id": "TICKET-2", "title": "Install dependencies" }
+        { "id": "card-2", "title": "Install dependencies" }
       ]
     },
     {

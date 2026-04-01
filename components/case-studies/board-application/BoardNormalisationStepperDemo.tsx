@@ -127,7 +127,7 @@ function FlatMapsView() {
     users: Record<string, { id: string; name: string }>;
   };
 
-  const cardOrder = ["TICKET-1", "TICKET-2", "TICKET-3"] as const;
+  const cardOrder = ["card-1", "card-2", "card-3"] as const;
 
   return (
     <motion.div
