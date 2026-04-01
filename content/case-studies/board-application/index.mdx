@@ -17,7 +17,7 @@ productionNotes:
 testingRubricId: "realtime-collaboration-core"
 ---
 
-This guide walks through a **kanban-style board application**: work items are **cards**, grouped into **columns** like *Backlog* / *In progress* / *Done* (as in Trello or Jira). We'll discuss common challenges, patterns, and strategies that address them—and the trade-offs behind those choices.
+This guide walks through a <Highlight variant="underline3">kanban-style board application</Highlight>: work items are **cards**, grouped into **columns** like *Backlog* / *In progress* / *Done* (as in Trello or Jira). We'll discuss common challenges, patterns, and strategies that address them—and the trade-offs behind those choices.
 
 We'll focus mainly on **frontend concerns**: how to manage state, how to shape data and APIs, and where things break in production—written for **depth**. You can use it to prepare for a system design interview, but it also helps you develop a feel for how systems are designed and how to make decisions when you have many options.
 
@@ -144,9 +144,9 @@ As a senior engineer, it’s important to think beyond the happy path: slow netw
 
 ## Data modeling (deep dive)
 
-Once we have a solid picture of the UI—what we are including, how it loads, and which edge states we actually own—we can reason much more clearly about **data modeling**. The question becomes: what shape stays correct when cards move, assignees change, and events arrive out of order? 
+Once we have a solid picture of the UI—what we are including, how it loads, and which edge states we actually own—we can reason much more clearly about <Highlight variant="underline3">data modeling</Highlight>. The question becomes: what shape stays correct when cards move, assignees change, and events arrive out of order?
 
-It’s common to first render from a nested snapshot (often what a read API returns), then introduce a normalized client shape when duplication and partial updates become painful.
+It’s common to first render from a nested snapshot (often what a read API returns), then introduce a <Highlight variant="underline4">normalized client shape</Highlight> when duplication and partial updates become painful.
 
 ### Entities and relationships
 
