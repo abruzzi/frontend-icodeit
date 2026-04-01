@@ -320,7 +320,7 @@ Why keep **both** instead of only the map? If you only had `cards` and each card
 
 So: **server** owns the canonical order and persistence; **client** holds a **table of cards by id** plus, for each `col-*`, an **ordered list of those ids**—the same split you already see in the normalised fixture, just spelled out as *why* it is there.
 
-## Desiging the API
+## Designing the API
 
 At some point the board has to talk to a **real backend**, and that is when API design stops being a tidy diagram and turns into a **conversation**. I have never seen it work well as a solo act—backend and frontend both have constraints worth listening to—but I still think the **shape the UI actually consumes** (nested vs normalised, field names, how you represent ordering) ought to win when there is tension, because that is what you render and patch every day. We already sketched that side in **Data modeling**; the API should line up with it instead of fighting it.
 
@@ -419,6 +419,12 @@ A **resource-style** move is still a good teaching shape:
 ```
 
 It is easy to explain to product and easy to mock—but the failure mode that actually hurts is not the happy path; it is the request that **succeeded on the server** and whose response **never came back**, so you still want a **client-generated id** or an **`Idempotency-Key`** before you call that “done.”
+
+<WorkingInProgress
+  href="https://juntao.substack.com/"
+  actionLabel="Follow the issue"
+  description="We’re still validating examples for this part."
+>
 
 ### Moves as operations (recommended mental model)
 
@@ -523,3 +529,5 @@ For a walkthrough aimed at implementers, see [*Reordering Lists at Scale (Withou
 - CCDAO framing and more scenarios: [juntao.substack.com](https://juntao.substack.com).
 - **LexoRank** (ordering at scale): [YouTube walkthrough](https://www.youtube.com/watch?v=Z6c7txCqsu8), [Atlassian LexoRank source](https://bitbucket.org/atlassian/lexorank/src/main/), and the **LexoRank for card ordering** pattern card on [Patterns](/patterns).
 - As this series grows, **optimistic UI**, **realtime transport**, and **a11y for dynamic UIs** will get dedicated pattern pages tied back to this board walkthrough.
+
+</WorkingInProgress>

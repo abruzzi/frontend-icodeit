@@ -29,6 +29,8 @@ Registered in `components/mdx/mdx-components.tsx` (import names match JSX tags i
 - `PaginationMotionDemo`, `TradeoffMatrix`, `ProtocolChooser`, `FailureModeStepper` — explainers and choosers.
 - `Callout` — tinted asides (`tone`: `note` | `required` | `pitfall` | `essentials` | `production`).
 - `Highlight` — short phrases with decorative magenta underline (`variant`: `underline1`–`underline4`, `zigzag`).
+- `Token` — inline coloured pill (`color` from site palette; default `gold`).
+- `WorkingInProgress` — draft / incomplete section: gradient-faded preview + WIP labels; wrap children in MDX.
 - `TestingRubric` — table from `rubricId` and `lib/content/rubrics.ts` (used with `testingRubricId` in frontmatter).
 
 **Also in the repo (not necessarily wired in MDX):** `ProtocolComparison` (tabs), `FailureModeWalkthrough` (alternate failure-mode presentation). Add them to `mdx-components.tsx` if you need them in content.
