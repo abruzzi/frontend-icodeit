@@ -8,6 +8,8 @@ import {
 
 import { ChevronRight } from "lucide-react";
 
+import { MDX_JSON_EXPANDED_CLASS } from "@/lib/content/shiki-transformer-mdx-json-expand";
+
 import { ShikiCodeBlockShell } from "./ShikiCodeBlockShell";
 
 function findCodeElement(children: ReactNode): ReactElement | null {
@@ -28,6 +30,12 @@ function isShikiPre(className: unknown): boolean {
   return /\bshiki\b/.test(className);
 }
 
+/** Set by `shikiTransformerMdxJsonExpand` when fence meta includes `expanded`, `show`, etc. */
+function isJsonExpandedPre(className: unknown): boolean {
+  if (typeof className !== "string") return false;
+  return new RegExp(`\\b${MDX_JSON_EXPANDED_CLASS}\\b`).test(className);
+}
+
 function renderPre(
   props: ComponentPropsWithoutRef<"pre">,
 ): ReactElement<React.ComponentProps<"pre">> {
@@ -40,7 +48,8 @@ function renderPre(
 }
 
 /**
- * Shiki blocks: toolbar, line numbers, copy. JSON / JSONC: optional `<details>` (collapsed by default).
+ * Shiki blocks: toolbar, line numbers, copy. JSON / JSONC: `<details>` by default; add fence meta
+ * `expanded`, `expand`, `open`, `inline`, or `show` to render expanded (see `shikiTransformerMdxJsonExpand`).
  */
 export function MdxPre(props: ComponentPropsWithoutRef<"pre">) {
   const { children, className, ...rest } = props;
@@ -56,9 +65,10 @@ export function MdxPre(props: ComponentPropsWithoutRef<"pre">) {
   }
 
   const preEl = renderPre({ children, className, ...rest });
+  const isJsonFence =
+    codeEl != null && isJsonLanguageClass(codeEl.props.className);
   const collapse =
-    codeEl != null &&
-    isJsonLanguageClass(codeEl.props.className);
+    isJsonFence && !isJsonExpandedPre(className);
 
   if (collapse) {
     return (

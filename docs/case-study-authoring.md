@@ -16,6 +16,8 @@ This guide captures **voice**, **structure**, and **MDX building blocks** establ
 
 ## 2. Voice and tone
 
+**Conversational, not compressed:** Long-form case studies should sound like a **peer explaining trade-offs**, not a neutral spec or checklist. Use flowing paragraphs, occasional **first person** (“I would…”, “what I like to do…”) where it matches the author’s voice, and keep **nuance**—avoid flattening everything into telegraphic bullets or “best practice” boilerplate unless a list genuinely helps scanning.
+
 | Habit | Example |
 | -------- | -------- |
 | **Direct address** | Use “you” for the reader’s choices; “we” for shared walkthrough of the system. |
@@ -118,7 +120,7 @@ A <Highlight variant="underline3">kanban-style board</Highlight> where cards liv
 ### 5.7 Code blocks (`pre` → `MdxPre`)
 
 - Fenced code runs through **Shiki** (see [`lib/content/mdx.tsx`](../lib/content/mdx.tsx)).
-- **`json` and `jsonc`** fences render inside a **collapsed `<details>`** (“Show full JSON”) so long payloads don’t dominate the scroll; use them for API/fixture dumps.
+- **`json` and `jsonc`** fences render inside a **collapsed `<details>`** (“Show full JSON”) by default so long payloads don’t dominate the scroll. For short snippets, add fence **meta** after the language: `expanded`, `expand`, `open`, `inline`, or `show` (e.g. ` ```json expanded `) to render the block **expanded** with the normal code toolbar. Optional override: `collapsed`, `collapse`, or `fold` wins if you need to force the wrapper when combined with other meta. Implemented in `lib/content/shiki-transformer-mdx-json-expand.ts` + `MdxPre`.
 - Other languages get the standard toolbar (copy, line numbers per [`ShikiCodeBlockShell`](../components/mdx/ShikiCodeBlockShell.tsx)).
 
 ---

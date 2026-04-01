@@ -308,12 +308,167 @@ There is no duplicated user payload in this normalised shape: when we need to up
 
 ### Server canonical model vs client view
 
-Even when the client keeps a **normalised** map for rendering, **persistence** still belongs to the **server**. The server remains the source of truth for column order and for each card’s `(columnId, position)` (or whatever ordering model you commit to). The **client** mirrors that authority in a shape that is convenient to render and to patch:
+Even when the client keeps a **normalised** map for rendering, **persistence** still belongs to the **server**. The server decides what is actually stored: which column a card lives in, in what **order**, and what happens when two moves race. The **client** is a mirror—it applies patches, shows optimistic UI, and must be able to reconcile when the server says “here is the truth now.”
 
-- **`cardsById: Record<CardId, Card>`** — full card records.
-- **`columnId → orderedCardIds: CardId[]`** — render order per column.
+The normalised JSON above already hints at two **different jobs** hiding inside “show the board”:
 
-Keeping **both** is a common compromise: the **ordered id list** per column gives you **O(n)** rendering for that column without scanning every card on the board, while the **map by id** gives you **O(1)** lookup when a realtime payload names a `cardId` and you need the rest of the fields immediately.
+1. **Look up a card by id** — In the example, every full card body lives under `cards`, keyed by id (`"TICKET-1"`, `"TICKET-2"`, …). When a realtime payload or a mutation response says “something changed on **TICKET-3**,” you jump straight to `cards["TICKET-3"]` and update **one object**. You do **not** hunt through `col-1`, then `col-2`, to find which nested array still holds that ticket. In TypeScript people often write that table as **`Record<CardId, Card>`** or `cardsById`.
+
+2. **Know the order inside each column** — In the same example, `columns["col-1"].cards` is **not** an array of full card objects anymore; it is `["TICKET-1", "TICKET-3"]`: an **ordered list of ids** for *Backlog*. To paint that column in the UI, you walk that list in order, and for each id you read the title and assignee from `cards[id]`. That list is your **source of truth for ordering** on the client (until the server sends a correction). People often name that structure **`columnId → orderedCardId[]`**.
+
+Why keep **both** instead of only the map? If you only had `cards` and each card carried `columnId`, you could still render, but every frame you would be asking “**which** cards belong to *Backlog*, and **in what order**?”—usually by scanning **all** cards. The per-column id list answers that in one pass: you render **at most** the tickets that appear in `["TICKET-1", "TICKET-3"]` for *Backlog*, in exactly that sequence, without touching **TICKET-2** in *In Progress*. When an event names a single `cardId`, the map still lets you jump to the record in **one step** and update assignee, title, or flags without walking the whole board.
+
+So: **server** owns the canonical order and persistence; **client** holds a **table of cards by id** plus, for each `col-*`, an **ordered list of those ids**—the same split you already see in the normalised fixture, just spelled out as *why* it is there.
+
+## API design (deep dive)
+
+At some point the board has to talk to a **real backend**, and that is when API design stops being a tidy diagram and turns into a **conversation**. I have never seen it work well as a solo act—backend and frontend both have constraints worth listening to—but I still think the **shape the UI actually consumes** (nested vs normalised, field names, how you represent ordering) ought to win when there is tension, because that is what you render and patch every day. We already sketched that side in **Data modeling**; the API should line up with it instead of fighting it.
+
+Traditionally—and I mean the ordinary, mainstream history of our industry, not an academic detour—most teams still reach for **REST-flavoured HTTP + JSON**: `GET` for reads, `POST` or `PATCH` for writes, routes that read like resources. Every ecosystem has a DSL that makes the first draft look easy.
+
+```js
+app.get("/boards/:boardId", () => {
+  /* return snapshot */
+});
+
+app.post("/boards/:boardId/cards", () => {
+  /* create card */
+});
+```
+
+What I like to do next is take the operations you already named in **Collect constraints**—what must exist for v1, how big things can get, whether multiple people are in the same board at once—and **map them straight onto endpoints** while you are still allowed to be boring. The interesting work is not the first happy-path sketch; it is what happens when **retries**, **concurrency**, and a **suddenly enormous backlog** show up and your innocent `GET` is no longer innocent.
+
+### Transports
+
+**HTTP** is still the spine: load the snapshot, submit mutations, stare at status codes in DevTools without needing a second mental model. When the product truly needs other people to **see** moves without hammering refresh, you add something parallel—usually **WebSocket**, sometimes **SSE**—where the server can push “this operation landed” or a small **patch** after the fact.
+
+I am completely fine shipping v1 on **HTTP only** with periodic refresh; realtime is as much a **product** bet as an engineering one, and pretending otherwise is how you inherit a socket layer you did not need yet.
+
+### Read: board snapshot
+
+Picture the first load of the board page. A natural first contract is:
+
+`GET /boards/:boardId`
+
+If your gateway prefixes everything with `/api`, that is fine—the **payload** is what you and the client will live with for months.
+
+For **200**, the body should resemble what you already committed to in **Data modeling**. Returning a **nested** columns-with-cards snapshot early on is not a moral failure; it is often the fastest way to ship, as long as you know how you might evolve toward maps and ordered id lists later.
+
+```json show
+{
+  "board": { "id": "b1", "title": "Sprint 12", "version": 42 },
+  "columns": [
+    { "id": "c_todo", "title": "To do", "order": 0 },
+    { "id": "c_doing", "title": "In progress", "order": 1 }
+  ],
+  "cards": [
+    { "id": "card_1", "columnId": "c_todo", "position": 0, "title": "…" }
+  ]
+}
+```
+
+I would treat errors with the same care as loading and empty states in **Designing the UI**: decide what **timeouts**, **5xx**, and validation failures look like in **JSON**, not only as bare status codes, so the client can retry or explain instead of showing a generic “something broke.” A stable **`code`** is worth more than a clever English `message` you will regret string-matching in six months.
+
+```json show
+{
+  "code": "BOARD_NOT_FOUND",
+  "message": "Board does not exist or you do not have access."
+}
+```
+
+### Pagination and large columns
+
+If you are somewhere under “a few dozen to low hundreds” of cards, **one round trip** that pulls the whole board is often totally reasonable—I would not paginate for ceremony. Where life gets noisy is the **monster backlog**: years of tickets, a single column that never shrinks, or many teams sharing one huge surface. Then you want enough to paint the screen quickly, and more as the user scrolls or digs into a lane.
+
+**Cursor-based** pagination tends to survive reality better than naive page numbers when new items keep landing **at the top** of a column while someone is paging. You might extend the board read with something shaped like:
+
+```json show
+{
+  "board": { "id": "b1", "title": "Sprint 12", "version": 42 },
+  "columns": [],
+  "cards": [],
+  "pageInfo": {
+    "endCursor": "eyJjIjoiLi4uIn0",
+    "hasNextPage": true
+  }
+}
+```
+
+When **one column** can hold **thousands** of cards, I would seriously consider splitting reads:
+
+`GET /boards/:boardId/columns/:columnId/cards?cursor=&limit=`
+
+—and then write down, in actual prose in your doc or spec, **how the cursor behaves** when inserts happen above the user’s window. That sounds pedantic until the frontend and backend quietly disagree about what “next page” means.
+
+### Writes, idempotency, and retries
+
+Reads are socially cheap; **writes** are where you discover you were never alone in the system—other users, and your own **double submits**, flaky Wi‑Fi, tab sleep, and all the ways a response can vanish after the server already committed. **Idempotency** is the promise that the **same logical action**, retried, does not become **two** irreversible effects. If I save a title twice, I still want one sensible outcome; if I delete a card someone else already removed, I want a **predictable** response—`200` with no-op, `204`, whatever you pick—more than I want a theatrical error.
+
+A **resource-style** move is still a good teaching shape:
+
+`PATCH /cards/:cardId`
+
+```json show
+{
+  "columnId": "col-2",
+  "afterCardId": null
+}
+```
+
+It is easy to explain to product and easy to mock—but the failure mode that actually hurts is not the happy path; it is the request that **succeeded on the server** and whose response **never came back**, so you still want a **client-generated id** or an **`Idempotency-Key`** before you call that “done.”
+
+### Moves as operations (recommended mental model)
+
+On boards I usually push people past “PATCH three fields” and toward an **operation** the server can **validate**, **order**, and **dedupe**—because a move is an **intent**, and the world moves between your gesture and the commit.
+
+```jsonc show
+{
+  "operationId": "uuid-client-generated",
+  "type": "move_card",
+  "cardId": "c_1",
+  "fromColumnId": "col_a",
+  "toColumnId": "col_b",
+  "afterCardId": "c_9" // or toIndex: 3 — pick one convention and stick to it
+}
+```
+
+**`operationId`** is the one you **reuse** when the user retries the **same gesture**—not a fresh UUID every time the transport blinks. **`afterCardId`** (or an index; pick **one** story and be honest about the trade-off) carries **intent**; the server is allowed to **adjust** if the neighbour card moved, and it should return enough **truth**—final order, **version**—that the client is not guessing in the dark.
+
+`POST /boards/:boardId/operations` with `Idempotency-Key: <operationId>` (or uniqueness enforced on `operationId` in the body) is boring on purpose; boring is what saves you at 2 a.m.
+
+On **success**, you hand back a bumped **`version`** (or **`seq`**) and either a **full snapshot**—blunt but clear—or a **minimal patch** (`{ affectedColumnIds, cards, order }`) if you are trying to be kind to bandwidth. **4xx** should carry something the UI can show; **409** should carry enough **server truth** that optimistic UI can roll back or reconcile without a mystery full refresh. Until the ack lands, the client is usually tracking **pending** somewhere—queue, flags, whatever matches your state library.
+
+### Concurrency: version or sequence
+
+Somewhere in the snapshot or the stream there has to be a number the client can compare: a **`version`** on the board (or per column), or a monotonic **`seq`** on applied operations if you are logging them that way. When paths cross, **server wins** plus **`409`** and a fresh fragment is the usual hammer for **whole-card moves**; **merge** becomes interesting when two people edit the **same card body** at once—that is a different problem than two drags racing.
+
+Track **`lastSeenVersion`** or **`lastAppliedSeq`** on the client and learn to ignore **stale** noise.
+
+### Realtime: event stream (optional)
+
+When you add push, keep the payload small and the rules strict. Something like:
+
+```json show
+{
+  "seq": 1001,
+  "type": "move_applied",
+  "payload": { "operationId": "…", "…final positions…" }
+}
+```
+
+Order events by **`seq`**, reconnect with **`afterSeq`**, resync if you detect a gap, and treat duplicate **`operationId`** as ignorable on the client too—**idempotency** is not only a server problem.
+
+### Hot paths
+
+If you are only allowed to care about a few routes: **initial load** in one round trip (or paginated per column when you must), **move** as one mutation plus whatever broadcast you promised, and **in-board search**—if it exists—probably deserves its **own** read path instead of pretending the browser cache is a database.
+
+### Auth
+
+Thread **workspace / user** through the whole surface. On **403 vs 404** for “you cannot see this board,” pick a story that matches your privacy product and **stick to it**—consistency matters more than winning an argument on HTTP pedantry.
+
+## Optimization strategies
+
+By the time APIs are on the table, ordering is not an abstract exercise anymore—it shows up in **write amplification**, conflict behaviour, and how painful migrations become when you change your mind. That is why these next pieces sit here, right after **API design**, instead of being tucked away as a footnote.
 
 ### Ordering: index vs sort key
 
@@ -331,121 +486,6 @@ For learning, **explicit index + server normalizes** is enough; optimize when pr
 Teams often **start with integer `position`**, ship, and only later notice **write amplification** (many rows touched on one insert), **hot spots** in the index, or painful **migrations** when two clients resolve “move after card X” differently under load. LexoRank is the pattern many mature products adopt **before** those fires; it is also easy to **skip in interviews and greenfield code** because “just use an index” sounds sufficient until scale and collaboration show up.
 
 For a walkthrough aimed at implementers, see [*Reordering Lists at Scale (Without Breaking Everything)*](https://www.youtube.com/watch?v=Z6c7txCqsu8) on YouTube. Atlassian publishes a reference implementation in the [**LexoRank** repo](https://bitbucket.org/atlassian/lexorank/src/main/). Roadmap: a focused **LexoRank for card ordering** pattern lives on the [Patterns](/patterns) index; this board guide stays the scenario-shaped home for *when* ordering strategy matters in a kanban model.
-
-### Moves as operations (recommended mental model)
-
-Treat a move not as “set these three fields” but as an **operation** the server can **validate**, **order**, and **dedupe**:
-
-```jsonc
-{
-  "operationId": "uuid-client-generated",
-  "type": "move_card",
-  "cardId": "c_1",
-  "fromColumnId": "col_a",
-  "toColumnId": "col_b",
-  "afterCardId": "c_9" // or toIndex: 3 — pick one convention and stick to it
-}
-```
-
-- **`operationId`**: same id on **retries** so the server does not apply the same move twice.
-- **`afterCardId` (or index)** defines **intent**; the server may **adjust** if the neighbor moved (return final state).
-
-The client keeps a **pending operations** list or marks cards as **pending** until ack.
-
-### Concurrency: version or sequence
-
-Every board snapshot should carry something the client can compare:
-
-- **`version`** (monotonic integer) on the board or per column, or
-- a **`seq`** stream for **applied operations** (see API below).
-
-On conflict, either:
-
-- **Server wins**: respond with **409** + **latest snapshot** or delta, client rolls back optimistic UI; or
-- **Merge**: rare for whole-card moves; more relevant if multiple fields edit the same card simultaneously.
-
-Clients should track **`lastSeenVersion`** or **`lastAppliedSeq`** and ignore **stale** events.
-
-### Hot paths
-
-- **Initial load**: one round-trip for board + columns + cards (or paginated per column).
-- **Move**: one mutation + optional **broadcast** to other tabs/users.
-- **Search within board** (if any): usually a **separate** read model or query, not a full scan of the client cache.
-
-## API design (deep dive)
-
-### Transports
-
-- **HTTP** for **snapshot load** and **mutations** is standard.
-- **WebSocket** (or **SSE**) when others must see moves **without** polling: server pushes **operation applied** or **patched state** after each accepted move.
-
-You can ship v1 with **HTTP only** and periodic refresh; collaboration then adds the second channel.
-
-### Read: board snapshot
-
-A practical first contract:
-
-`GET /boards/:boardId`
-
-Response sketch:
-
-```json
-{
-  "board": { "id": "b1", "title": "Sprint 12", "version": 42 },
-  "columns": [
-    { "id": "c_todo", "title": "To do", "order": 0 },
-    { "id": "c_doing", "title": "In progress", "order": 1 }
-  ],
-  "cards": [
-    { "id": "card_1", "columnId": "c_todo", "position": 0, "title": "…" }
-  ]
-}
-```
-
-If a column can hold **thousands** of cards, split:
-
-`GET /boards/:boardId/columns/:columnId/cards?cursor=&limit=`
-
-and document **how cursor behaves** when new cards are inserted at the top.
-
-### Write: submit move (idempotent)
-
-`POST /boards/:boardId/operations`
-
-Headers: `Idempotency-Key: <operationId>` (or put `operationId` in the body and enforce uniqueness server-side).
-
-**Success** returns:
-
-- updated **`version`** (or next **`seq`**), and either
-- **full snapshot** (simplest for small boards), or
-- **minimal patch** (`{ affectedColumnIds, cards, order }`) to merge client-side.
-
-**Reject** (validation, permission) returns **4xx** with a body the UI can show; client **rolls back** optimistic state.
-
-**Conflict** (`409`): body includes **server truth** (snapshot fragment or “reapply from version 43”) so the client can reconcile without a full mystery refresh.
-
-### Realtime: event stream (optional)
-
-After collaboration ships, a minimal event shape:
-
-```json
-{
-  "seq": 1001,
-  "type": "move_applied",
-  "payload": { "operationId": "…", "…final positions…" }
-}
-```
-
-Rules that save you later:
-
-- Events are **strictly ordered** by `seq`.
-- On reconnect: **`GET …?afterSeq=lastSeen`** or **resync snapshot** if gap detected.
-- **Ignore** unknown `operationId` duplicates—idempotency applies on the client too.
-
-### Auth
-
-- Attach **workspace / user** context on every call.
-- Prefer **403** for “no permission” vs **404** for “board does not exist” based on your privacy product policy—be consistent.
 
 ## Performance, reliability, and accessibility
 

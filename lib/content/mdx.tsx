@@ -9,6 +9,7 @@ import { createHighlighter } from "shiki";
 import { visit } from "unist-util-visit";
 
 import { mdxComponents } from "@/components/mdx/mdx-components";
+import { shikiTransformerMdxJsonExpand } from "@/lib/content/shiki-transformer-mdx-json-expand";
 
 /** Same as icodeit-next `lib/rehype-pretty-code.ts` (rehype-pretty-code + shikiji there). */
 const SHIKI_THEMES = {
@@ -88,7 +89,10 @@ function rehypeShikiIcodeitPlugin() {
         /** So MDX `pre` can detect `json` / `jsonc` fences for collapsible UI. */
         addLanguageClass: true,
         /** Fence meta ` ```ts {1,3-5}` → highlighted lines (see Shiki docs). */
-        transformers: [transformerMetaHighlight()],
+        transformers: [
+          transformerMetaHighlight(),
+          shikiTransformerMdxJsonExpand(),
+        ],
         onError: (e) => {
           console.error("[rehype-shiki]", e);
         },
