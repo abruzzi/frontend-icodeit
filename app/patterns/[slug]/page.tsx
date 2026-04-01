@@ -15,6 +15,7 @@ import { extractTocHeadings } from "@/lib/content/toc-headings";
 import { routes } from "@/lib/routes";
 import { ui } from "@/lib/ui";
 import { ArticleToc } from "@/components/content/article-toc";
+import { AuthorBio } from "@/components/content/author-bio";
 
 type Props = {
   params: { slug: string };
@@ -66,6 +67,8 @@ export default async function PatternDetailPage({ params }: Props) {
       </article>
 
       <article className={ui.proseArticleBody}>{mdx}</article>
+
+      <AuthorBio />
 
       <RelatedLinksSection
         title="Used In Case Studies"
