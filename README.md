@@ -15,6 +15,8 @@ For the first release, navigation focuses on **case studies** and **patterns**. 
 npm install
 ```
 
+Content and design docs (case studies, MDX, tokens): see **`docs/setup.md`**.
+
 ## Run locally (development)
 
 ```bash
@@ -51,6 +53,7 @@ npm run lint
 | **Compare pages (structured data)** | `lib/compare/docs.ts` — see *Intentional choices* below |
 | **MDX compile + syntax highlighting** | `lib/content/mdx.tsx` (Shiki via `@shikijs/rehype`), `components/mdx/mdx-components.tsx` |
 | **Related pattern ↔ case study links** | `lib/content/related.ts` + frontmatter |
+| **Case study / MDX authoring (voice, components, flow)** | `docs/case-study-authoring.md` — hub: `docs/setup.md` |
 | **Vertical spacing between page blocks** | `app/template.tsx` uses `ui.pageStack` because React fragments collapse to one child under `main` |
 
 **Reusable UI**

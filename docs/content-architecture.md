@@ -2,6 +2,8 @@
 
 This repository uses frontmatter-driven references to connect case studies and patterns.
 
+**Authoring voice, article flow, and full MDX inventory (`Highlight`, `Callout`, code fences, demos):** see [`docs/case-study-authoring.md`](./case-study-authoring.md). **Doc hub:** [`docs/setup.md`](./setup.md).
+
 ## Frontmatter contract
 
 - Case studies declare outbound pattern links in `patternRefs`.
@@ -26,6 +28,7 @@ Registered in `components/mdx/mdx-components.tsx` (import names match JSX tags i
 - `CcdaoFlowDiagram` — CCDAO flow diagram.
 - `PaginationMotionDemo`, `TradeoffMatrix`, `ProtocolChooser`, `FailureModeStepper` — explainers and choosers.
 - `Callout` — tinted asides (`tone`: `note` | `required` | `pitfall` | `essentials` | `production`).
+- `Highlight` — short phrases with decorative magenta underline (`variant`: `underline1`–`underline4`, `zigzag`).
 - `TestingRubric` — table from `rubricId` and `lib/content/rubrics.ts` (used with `testingRubricId` in frontmatter).
 
 **Also in the repo (not necessarily wired in MDX):** `ProtocolComparison` (tabs), `FailureModeWalkthrough` (alternate failure-mode presentation). Add them to `mdx-components.tsx` if you need them in content.

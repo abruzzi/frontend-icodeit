@@ -78,6 +78,8 @@ To ensure `frontend.icodeit.com.au` and `icodeit.com.au` look like siblings:
 
 This section distills what we standardized while building the **board application** case study so the next article can **reuse the same components, tokens, and habits** without rediscovering them.
 
+**Full authoring guide (voice, tone, article flow, every MDX tag, code-block behavior):** [`docs/case-study-authoring.md`](docs/case-study-authoring.md). **Doc index:** [`docs/setup.md`](docs/setup.md).
+
 ### 9.1 Where things live
 
 | What | Where |
@@ -101,6 +103,7 @@ This section distills what we standardized while building the **board applicatio
 
 ### 9.3 MDX building blocks to reuse
 
+- **`<Highlight variant="…">`** — Short editorial emphasis with a magenta SVG underline (`underline1`–`underline4`, `zigzag`); see `components/mdx/Highlight.tsx`.
 - **`<Callout tone="…">`** — Short asides; tones: `note`, `required`, `pitfall`, `essentials`, `production`. Icons and light washes come from **`site-colors.json`** palette / brand tokens (see `components/mdx/Callout.tsx`). Use for constraints, warnings, or “production mode” callouts instead of ad-hoc bordered divs.
 - **`<TestingRubric rubricId="…" />`** — End-of-article rubric; ids live in `lib/content/rubrics.ts`. Set `testingRubricId` in frontmatter for consistency with related content tooling where applicable.
 - **Lists** — MDX `ul` / `ol` / `li` are overridden in `mdx-components.tsx` (chevron markers, numbered lists); spacing is tuned with **`globals.css`** (`.mdx-icon-li-*`). Prefer normal markdown lists over custom markup.
@@ -130,4 +133,4 @@ This section distills what we standardized while building the **board applicatio
 5. Reuse **`<Callout>`**, **`ui.explainerCard`**, and **rubric** patterns before inventing new visual treatments.
 6. For any new **global** visual token, extend **`site-colors.json`** and consume via Tailwind—avoid hard-coding hex in JSX except where a third-party canvas requires raw colors (document why in a comment).
 
-Related: **`README.md`** (architecture table), **`docs/content-architecture.md`** (MDX registry and rubrics).
+Related: **`README.md`** (architecture table), **`docs/content-architecture.md`** (MDX registry and rubrics), **`docs/case-study-authoring.md`** (voice + long-form structure).
