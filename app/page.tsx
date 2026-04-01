@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { ChevronRight } from "lucide-react";
 
 import { routes } from "@/lib/routes";
 import { ui } from "@/lib/ui";
@@ -35,7 +36,12 @@ export default function HomePage() {
             data, APIs, and optimization for scale, reliability, and accessibility.
           </p>
           <Link className={ui.ctaLink} href={routes.caseStudiesIndex}>
-            Explore case studies
+            <span>Explore case studies</span>
+            <ChevronRight
+              className="cta-icon-breathe h-4 w-4 shrink-0 text-palette-azure"
+              strokeWidth={2.5}
+              aria-hidden
+            />
           </Link>
         </article>
         <article className={ui.panel}>
@@ -45,7 +51,12 @@ export default function HomePage() {
             show up in many apps (pagination, normalization, optimistic UI, etc.).
           </p>
           <Link className={ui.ctaLink} href={routes.patternsIndex}>
-            Explore patterns
+            <span>Explore patterns</span>
+            <ChevronRight
+              className="cta-icon-breathe h-4 w-4 shrink-0 text-palette-azure"
+              strokeWidth={2.5}
+              aria-hidden
+            />
           </Link>
         </article>
       </section>

@@ -1,5 +1,6 @@
 import Link from "next/link";
 import type { ReactNode } from "react";
+import { ChevronRight } from "lucide-react";
 
 import type { ContentStatus } from "@/lib/content/types";
 import { ui } from "@/lib/ui";
@@ -51,7 +52,12 @@ export function ContentEntryCard({
       <p>{meta}</p>
       {href ? (
         <Link className={ui.ctaLink} href={href}>
-          {ctaLabel}
+          <span>{ctaLabel}</span>
+          <ChevronRight
+            className="cta-icon-breathe h-4 w-4 shrink-0 text-palette-azure"
+            strokeWidth={2.5}
+            aria-hidden
+          />
         </Link>
       ) : null}
     </article>

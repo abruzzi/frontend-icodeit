@@ -60,7 +60,7 @@ export const ui = {
   th: "border-b border-slate-200/90 bg-slate-100/80 px-3 py-2.5 font-semibold text-slate-800 dark:border-slate-500/50 dark:bg-slate-800/90 dark:text-slate-100",
   td: "border-b border-slate-200/70 px-3 py-2.5 align-top text-slate-700 dark:border-slate-600/50 dark:text-slate-200",
   ctaLink:
-    "inline-block text-base font-medium text-brand no-underline transition-opacity duration-200 hover:opacity-80",
+    "group inline-flex items-center gap-1.5 text-base font-medium text-brand no-underline transition-opacity duration-200 hover:opacity-80",
   /** Internal nav links in related lists — brand + dotted underline + icon in markup. */
   relatedListLink:
     "group inline-flex max-w-full items-center gap-1.5 text-base font-medium text-brand underline decoration-dotted decoration-brand/50 underline-offset-[5px] transition-colors hover:decoration-brand dark:text-brand dark:decoration-brand/60 dark:hover:decoration-brand",

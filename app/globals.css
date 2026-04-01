@@ -153,6 +153,28 @@
   margin-top: 0;
 }
 
+/* CTA links: subtle “alive” icon motion (home + index cards). */
+@keyframes cta-icon-breathe {
+  0%,
+  100% {
+    transform: translateX(0) scale(1);
+    opacity: 0.78;
+  }
+  50% {
+    transform: translateX(2px) scale(1.06);
+    opacity: 1;
+  }
+}
+
+.cta-icon-breathe {
+  animation: cta-icon-breathe 2.8s ease-in-out infinite;
+  will-change: transform, opacity;
+}
+
+.cta-icon-breathe:hover {
+  animation-play-state: paused;
+}
+
 /* --- Site hero: ambient “breathing” gradients (no pointer spotlight) --- */
 @keyframes hero-breathe-fog-a {
   0%,
