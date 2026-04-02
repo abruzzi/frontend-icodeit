@@ -13,6 +13,7 @@ import { PaginationMotionDemo } from "@/components/explainers/PaginationMotionDe
 import { ProtocolChooser } from "@/components/explainers/ProtocolChooser";
 import { TradeoffMatrix } from "@/components/explainers/TradeoffMatrix";
 import { ChevronRight } from "lucide-react";
+import { CourseCurriculumStoryline } from "@/components/courses/course-curriculum-storyline";
 import { Callout } from "./Callout";
 import { Highlight } from "./Highlight";
 import { MdxPre } from "./MdxPre";
@@ -21,6 +22,7 @@ import { Token } from "./Token";
 import { WorkingInProgress } from "./WorkingInProgress";
 
 export const mdxComponents: MDXComponents = {
+  CourseCurriculumStoryline,
   BoardDataModelDiagram,
   BoardDndDemo,
   BoardEmptyStateDemo,

@@ -18,6 +18,7 @@ import {
   fsdeCurriculumCloudLabels,
   fsdeFeaturedTestimonial,
   fsdeMarqueeTestimonials,
+  getCourseIntroMuxPlaybackId,
   getCourseIntroVideoId,
 } from "@/lib/courses/fsde-landing-data";
 import {
@@ -115,7 +116,8 @@ export default async function FrontendSystemDesignEssentialsPage() {
       ? await renderMdx(detailsSource)
       : await renderMdx(content.trim());
 
-  const videoId = getCourseIntroVideoId();
+  const muxPlaybackId = getCourseIntroMuxPlaybackId();
+  const youtubeVideoId = getCourseIntroVideoId();
 
   return (
     <>
@@ -138,7 +140,10 @@ export default async function FrontendSystemDesignEssentialsPage() {
       </CourseScrollReveal>
 
       <CourseScrollReveal className={ui.courseSectionY}>
-        <CourseVideoIntro videoId={videoId} />
+        <CourseVideoIntro
+          muxPlaybackId={muxPlaybackId}
+          youtubeVideoId={youtubeVideoId}
+        />
       </CourseScrollReveal>
 
       <CourseScrollReveal className={ui.courseSectionY}>

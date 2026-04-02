@@ -18,6 +18,7 @@
   "dependencies": {
     "@atlaskit/pragmatic-drag-and-drop": "^1.7.9",
     "@dagrejs/dagre": "^3.0.0",
+    "@mux/mux-player-react": "^3.11.7",
     "@shikijs/rehype": "^4.0.2",
     "@shikijs/transformers": "^4.0.2",
     "@tailwindcss/typography": "^0.5.15",

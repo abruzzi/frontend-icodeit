@@ -17,7 +17,20 @@ export type CourseTestimonial = {
   avatarSrc?: string;
 };
 
-/** YouTube video ID for the intro embed (optional). */
+/**
+ * Public Mux playback ID for the FSDE intro video.
+ * Override with `NEXT_PUBLIC_COURSE_INTRO_MUX_PLAYBACK_ID` (e.g. staging).
+ */
+export const fsdeIntroMuxPlaybackIdDefault =
+  "JeaB4qJyW01QDfWperiGVNXdhVuaL8cxF8mfFtv8tC1g";
+
+/** Mux playback ID for the intro (env overrides the baked-in default). */
+export function getCourseIntroMuxPlaybackId(): string {
+  const fromEnv = process.env.NEXT_PUBLIC_COURSE_INTRO_MUX_PLAYBACK_ID?.trim();
+  return fromEnv && fromEnv.length > 0 ? fromEnv : fsdeIntroMuxPlaybackIdDefault;
+}
+
+/** YouTube video ID for the intro embed (optional; used only if Mux id is cleared). */
 export function getCourseIntroVideoId(): string | null {
   const id = process.env.NEXT_PUBLIC_COURSE_INTRO_VIDEO_ID?.trim();
   return id && id.length > 0 ? id : null;

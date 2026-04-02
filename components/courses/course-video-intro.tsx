@@ -2,13 +2,17 @@
 
 import { motion } from "framer-motion";
 
+import { CourseIntroMuxPlayer } from "@/components/courses/course-intro-mux-player";
 import { ui } from "@/lib/ui";
 
 type Props = {
-  videoId: string | null;
+  /** Public Mux playback ID (preferred). */
+  muxPlaybackId: string | null;
+  /** YouTube video ID when Mux is not configured. */
+  youtubeVideoId: string | null;
 };
 
-export function CourseVideoIntro({ videoId }: Props) {
+export function CourseVideoIntro({ muxPlaybackId, youtubeVideoId }: Props) {
   return (
     <div className="space-y-8" id="course-video">
       <h2 className={ui.courseSectionTitle} id="course-video-heading">
@@ -28,10 +32,12 @@ export function CourseVideoIntro({ videoId }: Props) {
         transition={{ type: "spring", stiffness: 140, damping: 24 }}
       >
         <div className="aspect-video w-full">
-          {videoId ? (
+          {muxPlaybackId ? (
+            <CourseIntroMuxPlayer playbackId={muxPlaybackId} />
+          ) : youtubeVideoId ? (
             <iframe
               title="Course introduction video"
-              src={`https://www.youtube-nocookie.com/embed/${videoId}?rel=0`}
+              src={`https://www.youtube-nocookie.com/embed/${youtubeVideoId}?rel=0`}
               className="h-full w-full"
               allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
               allowFullScreen
@@ -41,9 +47,13 @@ export function CourseVideoIntro({ videoId }: Props) {
               <p className="max-w-md text-base font-medium text-slate-700 dark:text-slate-200">
                 Intro video will appear here. Set{" "}
                 <code className="rounded-md bg-white/80 px-2 py-0.5 font-mono text-sm text-slate-800 dark:bg-slate-800 dark:text-slate-100">
+                  NEXT_PUBLIC_COURSE_INTRO_MUX_PLAYBACK_ID
+                </code>{" "}
+                (Mux) or{" "}
+                <code className="rounded-md bg-white/80 px-2 py-0.5 font-mono text-sm text-slate-800 dark:bg-slate-800 dark:text-slate-100">
                   NEXT_PUBLIC_COURSE_INTRO_VIDEO_ID
                 </code>{" "}
-                to your YouTube video ID.
+                (YouTube).
               </p>
             </div>
           )}
