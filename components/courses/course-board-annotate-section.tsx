@@ -14,7 +14,7 @@ const ENTER_DELAY_MS = 340;
 const LEAVE_MS = 200;
 /** Slightly brighter than `red-500` so connectors read on light + dark surrounds. */
 const LINE_STROKE = "#ff5a5a";
-const LINE_STROKE_WIDTH = 1.85;
+const LINE_STROKE_WIDTH = 1.5;
 /** Hollow anchor ring (px); stroke matches the connector. */
 const DOT_RADIUS = 4;
 const DOT_STROKE_WIDTH = 1.75;

@@ -40,6 +40,15 @@ module.exports = {
         diffuse:
           "0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1)",
       },
+      keyframes: {
+        courseMarquee: {
+          "0%": { transform: "translateX(0)" },
+          "100%": { transform: "translateX(-50%)" },
+        },
+      },
+      animation: {
+        "course-marquee": "courseMarquee 90s linear infinite",
+      },
     },
   },
   plugins: [

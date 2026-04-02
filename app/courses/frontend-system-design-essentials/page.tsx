@@ -5,19 +5,9 @@ import matter from "gray-matter";
 import type { Metadata } from "next";
 import type { MDXComponents } from "mdx/types";
 
-import { CourseHero } from "@/components/courses/course-hero";
-import { CourseBoardAnnotateSection } from "@/components/courses/course-board-annotate-section";
-import { CourseCornerstoneBoard } from "@/components/courses/course-cornerstone-board";
-import { CourseCurriculumCloud } from "@/components/courses/course-curriculum-cloud";
-import { CoursePricing } from "@/components/courses/course-pricing";
-import { CourseScrollReveal } from "@/components/courses/course-scroll-reveal";
-import { CourseTestimonials } from "@/components/courses/course-testimonials";
-import { CourseVideoIntro } from "@/components/courses/course-video-intro";
 import { mdxComponents } from "@/components/mdx/mdx-components";
+import { buildFsdeCourseMdxComponents } from "@/lib/courses/fsde-course-mdx";
 import {
-  fsdeCurriculumCloudLabels,
-  fsdeFeaturedTestimonial,
-  fsdeMarqueeTestimonials,
   getCourseIntroMuxPlaybackId,
   getCourseIntroVideoId,
 } from "@/lib/courses/fsde-landing-data";
@@ -117,71 +107,19 @@ export default async function FrontendSystemDesignEssentialsPage() {
           courseLandingHeroMdxComponents,
         );
 
-  const mdx = await renderMdx(content.trim());
-
   const muxPlaybackId = getCourseIntroMuxPlaybackId();
   const youtubeVideoId = getCourseIntroVideoId();
 
-  return (
-    <>
-      <CourseHero heroIntro={heroIntro} />
+  const mergedComponents: MDXComponents = {
+    ...mdxComponents,
+    ...buildFsdeCourseMdxComponents({
+      heroIntro,
+      muxPlaybackId,
+      youtubeVideoId,
+    }),
+  };
 
-      <CourseScrollReveal id="course-map" className={ui.courseSectionY}>
-        <div className="space-y-8">
-          <div>
-            <p className={ui.courseEyebrow}>Curriculum</p>
-            <h2 className={`mt-3 ${ui.courseSectionTitle}`}>
-              What the course covers
-            </h2>
-            <p className="mt-4 max-w-2xl text-pretty text-slate-600 dark:text-slate-400">
-              A tight set of core themes — the centre reads loudest; edges soften
-              so the band stays easy to scan.
-            </p>
-          </div>
-          <CourseCurriculumCloud labels={fsdeCurriculumCloudLabels} />
-        </div>
-      </CourseScrollReveal>
+  const page = await renderMdx(content.trim(), mergedComponents);
 
-      <CourseScrollReveal className={ui.courseSectionY}>
-        <CourseVideoIntro
-          muxPlaybackId={muxPlaybackId}
-          youtubeVideoId={youtubeVideoId}
-        />
-      </CourseScrollReveal>
-
-      <CourseScrollReveal className={ui.courseSectionY}>
-        <CourseTestimonials
-          featured={fsdeFeaturedTestimonial}
-          marqueeItems={fsdeMarqueeTestimonials}
-        />
-      </CourseScrollReveal>
-
-      <CourseScrollReveal className={ui.courseSectionY}>
-        <CoursePricing />
-      </CourseScrollReveal>
-
-      <CourseScrollReveal className={ui.courseSectionY}>
-        <CourseCornerstoneBoard />
-      </CourseScrollReveal>
-
-      <CourseScrollReveal
-        id="course-board-map"
-        className={ui.courseSectionY}
-      >
-        <CourseBoardAnnotateSection />
-      </CourseScrollReveal>
-
-      <CourseScrollReveal className={`${ui.courseSectionY} pb-8`}>
-        <div className="space-y-4">
-          <p className={ui.courseEyebrow}>Details</p>
-          <h2 className={ui.courseSectionTitle} id="course-details">
-            Inside the course
-          </h2>
-        </div>
-        <article className={`${ui.proseArticle} mt-8 border-t border-slate-200/80 pt-10 dark:border-slate-600/40 sm:pt-12`}>
-          {mdx}
-        </article>
-      </CourseScrollReveal>
-    </>
-  );
+  return <>{page}</>;
 }

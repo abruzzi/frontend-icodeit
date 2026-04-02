@@ -2,7 +2,7 @@
 
 import { motion } from "framer-motion";
 import Image from "next/image";
-import { useLayoutEffect, useMemo, useRef, useState } from "react";
+import { useMemo, useState } from "react";
 
 import type { CourseTestimonial } from "@/lib/courses/fsde-landing-data";
 import { ui } from "@/lib/ui";
@@ -62,22 +62,20 @@ function FeaturedTestimonial({ item }: { item: CourseTestimonial }) {
 
 function MarqueeRow({
   items,
-  duration,
+  durationSec,
 }: {
   items: CourseTestimonial[];
-  duration: number;
+  /** One full loop (half the duplicated track) in seconds; higher = slower. */
+  durationSec: number;
 }) {
-  const trackRef = useRef<HTMLDivElement>(null);
-  const [loopWidth, setLoopWidth] = useState(0);
-
-  useLayoutEffect(() => {
-    const el = trackRef.current;
-    if (!el) return;
-    setLoopWidth(el.scrollWidth / 2);
-  }, [items]);
+  const [paused, setPaused] = useState(false);
 
   return (
-    <div className="relative -mx-4 overflow-hidden py-2 sm:-mx-6">
+    <div
+      className="relative -mx-4 overflow-hidden py-2 sm:-mx-6"
+      onMouseEnter={() => setPaused(true)}
+      onMouseLeave={() => setPaused(false)}
+    >
       <div
         className="pointer-events-none absolute inset-y-0 left-0 z-10 w-12 bg-gradient-to-r from-slate-50 to-transparent dark:from-slate-900 sm:w-16"
         aria-hidden
@@ -87,14 +85,11 @@ function MarqueeRow({
         aria-hidden
       />
 
-      <motion.div
-        ref={trackRef}
-        className="flex w-max gap-6 px-4"
-        animate={loopWidth > 0 ? { x: [0, -loopWidth] } : {}}
-        transition={{
-          duration,
-          repeat: Infinity,
-          ease: "linear",
+      <div
+        className="flex w-max gap-6 px-4 motion-reduce:animate-none animate-course-marquee"
+        style={{
+          animationDuration: `${durationSec}s`,
+          animationPlayState: paused ? "paused" : "running",
         }}
       >
         {items.map((item, i) => (
@@ -111,7 +106,7 @@ function MarqueeRow({
             </p>
           </div>
         ))}
-      </motion.div>
+      </div>
     </div>
   );
 }
@@ -134,7 +129,7 @@ export function CourseTestimonials({ featured, marqueeItems }: Props) {
         </p>
       </div>
 
-      <MarqueeRow items={dup} duration={48} />
+      <MarqueeRow items={dup} durationSec={100} />
 
       <FeaturedTestimonial item={featured} />
     </div>

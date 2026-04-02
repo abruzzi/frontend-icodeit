@@ -6,19 +6,33 @@ kind: "course"
 status: "in-progress"
 ---
 
+{/*
+  Course landing flow — reorder sections here, or insert raw MDX (e.g. horizontal rules,
+  short intros) between components. Tags are defined in lib/courses/fsde-course-mdx.tsx
+  (Fsde* = Frontend System Design Essentials).
+*/}
+
+<FsdeCourseHero />
+
+<FsdeCourseCurriculumCloudSection />
+
+<FsdeCourseVideoSection />
+
+<FsdeCoursePricingSection />
+
+<FsdeCourseTestimonialsSection />
+
+<FsdeCourseCornerstoneSection />
+
+<FsdeCourseBoardAnnotateSection />
+
+<FsdeCourseDetailsSection>
+
 This is the course I wish existed when I first became the person everyone asked to “just make the frontend scale”.
 
 Most engineers are trained to build features in isolation. But in a real app, features don’t ship alone — they sit inside a system: data models, fetching and mutation patterns, rendering strategies, and all the cross‑functional reality (performance, reliability, accessibility, security).
 
 This course connects those dots so you can **design <Highlight variant="underline3">scalable, maintainable frontend systems</Highlight>** instead of patching features together until the codebase fights back.
-
-## What you’ll walk away with
-
-- Confidence to design scalable frontend systems instead of patching features together.
-- A clear framework for data modeling, fetching, mutation, and rendering strategies.
-- Hands-on practice with real-world patterns you’ll actually use at work.
-- A capstone project you can showcase in your portfolio or interviews.
-- The mindset and skills to think like a senior engineer and make trade-offs wisely.
 
 ## The capstone: a board application (the running thread)
 
@@ -28,4 +42,8 @@ If you like the [board application](/case-studies/board-application) case study 
 
 <CourseCurriculumStoryline />
 
+<CoursePricingCompact />
+
 <CourseFaqSection />
+
+</FsdeCourseDetailsSection>
