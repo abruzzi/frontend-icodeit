@@ -21,10 +21,7 @@ import {
   getCourseIntroMuxPlaybackId,
   getCourseIntroVideoId,
 } from "@/lib/courses/fsde-landing-data";
-import {
-  courseHeroTitleFromMdx,
-  splitCoursePageMdx,
-} from "@/lib/courses/course-page-mdx";
+import { firstMarkdownH1 } from "@/lib/courses/course-page-mdx";
 import { renderMdx } from "@/lib/content/mdx";
 import { ui } from "@/lib/ui";
 
@@ -60,13 +57,17 @@ const COURSE_DIR = path.join(
 );
 
 const COURSE_MDX_PATH = path.join(COURSE_DIR, "index.mdx");
+const COURSE_HERO_MDX_PATH = path.join(COURSE_DIR, "hero.mdx");
 
 export async function generateMetadata(): Promise<Metadata> {
   const raw = fs.readFileSync(COURSE_MDX_PATH, "utf8");
-  const { data, content } = matter(raw);
-  const { heroSource } = splitCoursePageMdx(content.trim());
+  const { data } = matter(raw);
+  const heroRaw = fs.existsSync(COURSE_HERO_MDX_PATH)
+    ? fs.readFileSync(COURSE_HERO_MDX_PATH, "utf8")
+    : "";
+  const { content: heroBody } = matter(heroRaw);
   const title =
-    courseHeroTitleFromMdx(heroSource) ??
+    firstMarkdownH1(heroBody) ??
     (typeof data.title === "string" ? data.title : null) ??
     "Frontend System Design Essentials";
   const description =
@@ -95,10 +96,15 @@ export async function generateMetadata(): Promise<Metadata> {
 export default async function FrontendSystemDesignEssentialsPage() {
   const raw = fs.readFileSync(COURSE_MDX_PATH, "utf8");
   const { data, content } = matter(raw);
-  const { heroSource, detailsSource } = splitCoursePageMdx(content.trim());
+
+  const heroRaw = fs.existsSync(COURSE_HERO_MDX_PATH)
+    ? fs.readFileSync(COURSE_HERO_MDX_PATH, "utf8")
+    : "";
+  const { content: heroBody } = matter(heroRaw);
+  const heroSource = heroBody.trim();
 
   const heroIntro =
-    heroSource.trim().length > 0
+    heroSource.length > 0
       ? await renderMdx(heroSource, courseLandingHeroMdxComponents)
       : await renderMdx(
           `# ${typeof data.title === "string" ? data.title : "Course"}\n\n${
@@ -111,10 +117,7 @@ export default async function FrontendSystemDesignEssentialsPage() {
           courseLandingHeroMdxComponents,
         );
 
-  const mdx =
-    detailsSource.trim().length > 0
-      ? await renderMdx(detailsSource)
-      : await renderMdx(content.trim());
+  const mdx = await renderMdx(content.trim());
 
   const muxPlaybackId = getCourseIntroMuxPlaybackId();
   const youtubeVideoId = getCourseIntroVideoId();

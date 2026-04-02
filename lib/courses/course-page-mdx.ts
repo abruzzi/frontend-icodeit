@@ -1,23 +1,11 @@
-/** Body split: everything before this HTML comment is compiled for the landing hero (H1 + lead). */
-export const COURSE_PAGE_DETAILS_MARKER = "<!-- course:details -->";
+/**
+ * Small helpers for course MDX files. Hero vs body are separate files (`hero.mdx` + `index.mdx`);
+ * no HTML-comment split.
+ */
 
-export function splitCoursePageMdx(body: string): {
-  heroSource: string;
-  detailsSource: string;
-} {
-  const idx = body.indexOf(COURSE_PAGE_DETAILS_MARKER);
-  if (idx === -1) {
-    return { heroSource: "", detailsSource: body.trim() };
-  }
-  return {
-    heroSource: body.slice(0, idx).trim(),
-    detailsSource: body.slice(idx + COURSE_PAGE_DETAILS_MARKER.length).trim(),
-  };
-}
-
-/** First markdown H1 in the hero slice (for metadata). */
-export function courseHeroTitleFromMdx(heroSource: string): string | undefined {
-  const m = heroSource.match(/^#\s+(.+)$/m);
+/** First ATX markdown H1 in a slice (e.g. `hero.mdx` body for metadata). */
+export function firstMarkdownH1(source: string): string | undefined {
+  const m = source.trim().match(/^#\s+(.+)$/m);
   const t = m?.[1]?.trim();
   return t || undefined;
 }
