@@ -8,6 +8,8 @@ import rehypeSlug from "rehype-slug";
 import { createHighlighter } from "shiki";
 import { visit } from "unist-util-visit";
 
+import type { MDXComponents } from "mdx/types";
+
 import { mdxComponents } from "@/components/mdx/mdx-components";
 import { shikiTransformerMdxJsonExpand } from "@/lib/content/shiki-transformer-mdx-json-expand";
 
@@ -109,10 +111,18 @@ function rehypeShikiIcodeitPlugin() {
   };
 }
 
-export async function renderMdx(source: string) {
+export async function renderMdx(
+  source: string,
+  componentOverrides?: MDXComponents,
+) {
+  const components =
+    componentOverrides == null
+      ? mdxComponents
+      : { ...mdxComponents, ...componentOverrides };
+
   const { content } = await compileMDX({
     source,
-    components: mdxComponents,
+    components,
     options: {
       mdxOptions: {
         remarkPlugins: [remarkGfm],

@@ -1,66 +1,171 @@
-import Link from "next/link";
+import fs from "node:fs";
+import path from "node:path";
 
+import matter from "gray-matter";
+import type { Metadata } from "next";
+import type { MDXComponents } from "mdx/types";
+
+import { CourseHero } from "@/components/courses/course-hero";
+import { CourseMindmap } from "@/components/courses/course-mindmap";
+import { CoursePricing } from "@/components/courses/course-pricing";
+import { CourseScrollReveal } from "@/components/courses/course-scroll-reveal";
+import { CourseTestimonials } from "@/components/courses/course-testimonials";
+import { CourseVideoIntro } from "@/components/courses/course-video-intro";
+import { mdxComponents } from "@/components/mdx/mdx-components";
+import {
+  fsdeTestimonials,
+  getCourseIntroVideoId,
+} from "@/lib/courses/fsde-landing-data";
+import {
+  courseHeroTitleFromMdx,
+  splitCoursePageMdx,
+} from "@/lib/courses/course-page-mdx";
+import { buildMindmapFlowFromMarkdown } from "@/lib/courses/parse-mindmap-md";
+import { renderMdx } from "@/lib/content/mdx";
 import { ui } from "@/lib/ui";
 
-export const metadata = {
-  title: "Frontend System Design Essentials",
-  description:
-    "Course in progress — a practical path to designing scalable, resilient frontends.",
+const courseLandingHeroMdxComponents: MDXComponents = {
+  ...mdxComponents,
+  h1: ({ className, ...props }) => (
+    <h1
+      {...props}
+      className={["mt-2 sm:mt-3", ui.courseDisplayTitle, className]
+        .filter(Boolean)
+        .join(" ")}
+    />
+  ),
+  p: ({ className, ...props }) => (
+    <p
+      {...props}
+      className={[
+        "mt-6 max-w-3xl text-pretty sm:mt-7 md:mt-8",
+        ui.courseLead,
+        className,
+      ]
+        .filter(Boolean)
+        .join(" ")}
+    />
+  ),
 };
 
-export default function FrontendSystemDesignEssentialsPage() {
+const COURSE_DIR = path.join(
+  process.cwd(),
+  "content",
+  "courses",
+  "frontend-system-design-essentials",
+);
+
+const COURSE_MDX_PATH = path.join(COURSE_DIR, "index.mdx");
+const COURSE_MINDMAP_MD_PATH = path.join(COURSE_DIR, "mindmap.md");
+
+export async function generateMetadata(): Promise<Metadata> {
+  const raw = fs.readFileSync(COURSE_MDX_PATH, "utf8");
+  const { data, content } = matter(raw);
+  const { heroSource } = splitCoursePageMdx(content.trim());
+  const title =
+    courseHeroTitleFromMdx(heroSource) ??
+    (typeof data.title === "string" ? data.title : null) ??
+    "Frontend System Design Essentials";
+  const description =
+    typeof data.description === "string"
+      ? data.description
+      : typeof data.summary === "string"
+        ? data.summary
+        : "Practical frontend system design — framework, capstone board app, and production-ready patterns.";
+
+  return {
+    title,
+    description,
+    openGraph: {
+      title,
+      description,
+      type: "website",
+    },
+    twitter: {
+      card: "summary_large_image",
+      title,
+      description,
+    },
+  };
+}
+
+export default async function FrontendSystemDesignEssentialsPage() {
+  const raw = fs.readFileSync(COURSE_MDX_PATH, "utf8");
+  const { data, content } = matter(raw);
+  const { heroSource, detailsSource } = splitCoursePageMdx(content.trim());
+
+  const heroIntro =
+    heroSource.trim().length > 0
+      ? await renderMdx(heroSource, courseLandingHeroMdxComponents)
+      : await renderMdx(
+          `# ${typeof data.title === "string" ? data.title : "Course"}\n\n${
+            typeof data.description === "string"
+              ? data.description
+              : typeof data.summary === "string"
+                ? data.summary
+                : "Details below."
+          }`,
+          courseLandingHeroMdxComponents,
+        );
+
+  const mdx =
+    detailsSource.trim().length > 0
+      ? await renderMdx(detailsSource)
+      : await renderMdx(content.trim());
+
+  const mindmapRaw = fs.readFileSync(COURSE_MINDMAP_MD_PATH, "utf8");
+  const { content: mindmapBody } = matter(mindmapRaw);
+  const mindmapGraph = buildMindmapFlowFromMarkdown(mindmapBody);
+
+  const videoId = getCourseIntroVideoId();
+
   return (
     <>
-      <section className={ui.section}>
-        <h1 className={ui.pageTitle}>Frontend System Design Essentials</h1>
-        <p className="text-slate-600 dark:text-slate-400">
-          This course page is a work in progress. I’ll flesh out the syllabus,
-          lesson breakdown, and the exact outcomes here.
-        </p>
-      </section>
+      <CourseHero heroIntro={heroIntro} />
 
-      <section className={ui.panelProse}>
-        <h2>What this course is</h2>
-        <p>
-          A practical course for frontend engineers who want to go beyond
-          building features and get comfortable with system-level decisions:
-          data modeling, API shape, state ownership, performance constraints,
-          reliability, and accessibility.
-        </p>
+      <CourseScrollReveal id="course-map" className={ui.courseSectionY}>
+        <div className="space-y-6">
+          <div>
+            <p className={ui.courseEyebrow}>Curriculum map</p>
+            <h2 className={`mt-3 ${ui.courseSectionTitle}`}>
+              What the course covers
+            </h2>
+            <p className="mt-4 max-w-2xl text-pretty text-slate-600 dark:text-slate-400">
+              Structure is authored in{" "}
+              <code className="rounded bg-slate-200/80 px-1.5 py-0.5 font-mono text-sm dark:bg-slate-700">
+                mindmap.md
+              </code>{" "}
+              and laid out automatically (left → right). Drag nodes to tweak
+              the view; pan and zoom on the grid background.
+            </p>
+          </div>
+          <CourseMindmap graph={mindmapGraph} />
+        </div>
+      </CourseScrollReveal>
 
-        <h2>Who it’s for</h2>
-        <ul>
-          <li>
-            You build production UIs and want to reason about architecture more
-            deliberately.
-          </li>
-          <li>
-            You’re preparing for frontend system design interviews, but you also
-            want skills that translate directly to real work.
-          </li>
-        </ul>
+      <CourseScrollReveal className={ui.courseSectionY}>
+        <CourseVideoIntro videoId={videoId} />
+      </CourseScrollReveal>
 
-        <h2>What you’ll get (draft)</h2>
-        <ul>
-          <li>How to run a CCDAO-style design pass without hand-waving.</li>
-          <li>How to model client state for data-heavy apps (lists, boards, feeds).</li>
-          <li>How to design mutation flows: optimistic UI, idempotency, rollback.</li>
-          <li>How to choose pagination, caching, and realtime transports.</li>
-          <li>How to think about a11y and failure modes from day one.</li>
-        </ul>
+      <CourseScrollReveal className={ui.courseSectionY}>
+        <CourseTestimonials items={fsdeTestimonials} />
+      </CourseScrollReveal>
 
-        <h2>CTA (coming soon)</h2>
-        <p>
-          I’ll add the purchase / signup CTA once pricing and delivery format are
-          finalized. For now, the main site has the course tile and updates.
-        </p>
-        <p>
-          <Link className={ui.ctaLink} href="https://www.icodeit.com.au/">
-            <span>Visit icodeit.com.au</span>
-          </Link>
-        </p>
-      </section>
+      <CourseScrollReveal className={ui.courseSectionY}>
+        <CoursePricing />
+      </CourseScrollReveal>
+
+      <CourseScrollReveal className={`${ui.courseSectionY} pb-8`}>
+        <div className="space-y-4">
+          <p className={ui.courseEyebrow}>Details</p>
+          <h2 className={ui.courseSectionTitle} id="course-details">
+            Inside the course
+          </h2>
+        </div>
+        <article className={`${ui.proseArticle} mt-8 border-t border-slate-200/80 pt-10 dark:border-slate-600/40 sm:pt-12`}>
+          {mdx}
+        </article>
+      </CourseScrollReveal>
     </>
   );
 }
-

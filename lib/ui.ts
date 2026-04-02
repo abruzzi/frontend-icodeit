@@ -64,4 +64,26 @@ export const ui = {
   /** Internal nav links in related lists — brand + dotted underline + icon in markup. */
   relatedListLink:
     "group inline-flex max-w-full items-center gap-1.5 text-base font-medium text-brand underline decoration-dotted decoration-brand/50 underline-offset-[5px] transition-colors hover:decoration-brand dark:text-brand dark:decoration-brand/60 dark:hover:decoration-brand",
+  /**
+   * Course landing pages: wider measure, looser vertical rhythm, marketing-scale type.
+   * Use inside `app/courses/layout.tsx` (breakout from `mainShell` max width).
+   */
+  courseShell: "text-xl leading-relaxed text-slate-700 dark:text-slate-200 sm:text-[1.35rem] sm:leading-relaxed",
+  /** Space around the course hero *card* (inner padding lives on `courseHeroCard`). */
+  courseHeroY: "relative w-full pt-4 pb-12 sm:pt-6 sm:pb-16 md:pb-20",
+  /**
+   * Course hero surface: frosted panel, dot grid + glows sit in absolutely positioned layers inside.
+   */
+  /** No `overflow-hidden` here — it clips `<Highlight>` underlines; clip bg layers inside `CourseHero` instead. */
+  courseHeroCard:
+    "relative isolate w-full rounded-3xl border border-slate-200/90 bg-gradient-to-br from-white via-slate-50/95 to-slate-100/90 p-8 shadow-xl shadow-slate-900/[0.07] ring-1 ring-slate-900/[0.04] backdrop-blur-md sm:p-10 md:p-12 lg:px-14 lg:py-16 dark:border-slate-700/80 dark:from-slate-950 dark:via-slate-900 dark:to-slate-950 dark:shadow-black/45 dark:ring-white/[0.06]",
+  courseSectionY: "py-20 sm:py-24 md:py-32",
+  courseEyebrow:
+    "text-xs font-bold uppercase tracking-[0.22em] text-palette-azure sm:text-sm",
+  courseDisplayTitle:
+    "font-heading text-4xl font-extrabold tracking-tighter text-slate-900 dark:text-slate-50 sm:text-5xl md:text-6xl lg:text-[3.5rem] lg:leading-[1.08]",
+  courseLead:
+    "max-w-3xl text-pretty text-lg text-slate-600 dark:text-slate-300 sm:text-xl md:text-2xl md:leading-snug",
+  courseSectionTitle:
+    "font-heading text-3xl font-extrabold tracking-tighter text-slate-900 dark:text-slate-50 sm:text-4xl md:text-5xl",
 } as const;
