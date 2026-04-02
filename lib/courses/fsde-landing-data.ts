@@ -89,6 +89,80 @@ export const fsdeMarqueeTestimonials: CourseTestimonial[] = [
     name: "dev_nvK",
     role: "YouTube · Optimistic updates",
   },
+  {
+    id: "yt-PhiromKhim-it5tx",
+    quote:
+      "I have 2 years of experience in frontend development but still didn't know half of what you have shown including other videos. I appreciate your contents!!",
+    name: "PhiromKhim-it5tx",
+    role: "YouTube · Course comments",
+  },
+  {
+    id: "yt-AkshitKumar-m7u",
+    quote:
+      "I got this same question in my Interview and was able to answer because of you. Thanks for the help",
+    name: "AkshitKumar-m7u",
+    role: "YouTube · Course comments",
+  },
+  {
+    id: "yt-waqifhosain5713",
+    quote: "One of the best channel for frontend system design <3 <3",
+    name: "waqifhosain5713",
+    role: "YouTube · Course comments",
+  },
+  {
+    id: "yt-abhinavvishwakarma6810",
+    quote: "Well explained the concept of preload, prefetch",
+    name: "abhinavvishwakarma6810",
+    role: "YouTube · Course comments",
+  },
+  {
+    id: "yt-tenaciousbali",
+    quote:
+      "Please keep continuing teaching like this. I've seen so many system design videos but none of them had the clarity of the mind-map you gave. kudos!!!",
+    name: "tenaciousbali",
+    role: "YouTube · Course comments",
+  },
+  {
+    id: "yt-fyyyii",
+    quote:
+      "Dude nice, please keep going this is nice work. It helps me refresh on practices and you provide the material in a refreshing way. SERIOUSLY NICE",
+    name: "fyyyii",
+    role: "YouTube · Course comments",
+  },
+  {
+    id: "yt-q01dHaCkEr",
+    quote:
+      "Thanks for this, I really liked the way you broke this down. The use of the mindmap was very helpful, too.",
+    name: "q01dHaCkEr",
+    role: "YouTube · Course comments",
+  },
+  {
+    id: "yt-divyanshusrivastava5986-1",
+    quote:
+      "As a front-end developer, great video highlights almost all points to be kept in mind while designing a system. Hats off",
+    name: "divyanshusrivastava5986",
+    role: "YouTube · Course comments",
+  },
+  {
+    id: "yt-juj1988",
+    quote:
+      "Excellent discussion. No one talks about normalisations in front end",
+    name: "juj1988",
+    role: "YouTube · Course comments",
+  },
+  {
+    id: "yt-divyanshusrivastava5986-2",
+    quote:
+      "Explanation is great, use cases and examples make this videos exceptional. Thank you, and pls continue <3",
+    name: "divyanshusrivastava5986",
+    role: "YouTube · Course comments",
+  },
+  {
+    id: "yt-trilochansaho3866",
+    quote: "one of the great learning video with clean examples.... Love it",
+    name: "trilochansaho3866",
+    role: "YouTube · Course comments",
+  },
 ];
 
 /** Curated labels for the landing topic cloud (order = display order). */
