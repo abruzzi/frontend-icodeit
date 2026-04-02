@@ -3,4 +3,5 @@ node_modules
 .DS_Store
 *.tsbuildinfo
 .env.example
-channel_comments_2026-04-01T22-38-14.json
+# YouTube comment exports (curate into lib/courses/fsde-landing-data.ts; do not ship)
+channel_comments*.json

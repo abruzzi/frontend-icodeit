@@ -1,6 +1,11 @@
+import soyaAvatarImg from "../../content/courses/frontend-system-design-essentials/soya.webp";
+
 /**
  * Marketing copy and placeholders for the Frontend System Design Essentials landing.
  * Replace testimonial entries when you have real quotes; set video id via env.
+ *
+ * Topic cloud chips (`CourseCurriculumCloud`) use {@link fsdeCurriculumCloudLabels};
+ * `mindmap.md` stays a fuller outline for your own planning, not the cloud source.
  */
 
 export type CourseTestimonial = {
@@ -8,6 +13,8 @@ export type CourseTestimonial = {
   quote: string;
   name: string;
   role: string;
+  /** Optional face for the large featured treatment */
+  avatarSrc?: string;
 };
 
 /** YouTube video ID for the intro embed (optional). */
@@ -16,34 +23,81 @@ export function getCourseIntroVideoId(): string | null {
   return id && id.length > 0 ? id : null;
 }
 
-/** Placeholder quotes — swap for real testimonials when ready. */
-export const fsdeTestimonials: CourseTestimonial[] = [
+/**
+ * Learner voices: course review + YouTube praise for Frontend System Design
+ * Essentials topics. Copy lives only here at runtime — no JSON import.
+ * When refreshing: export comments, pick quotes, edit this array; raw dumps
+ * belong in `channel_comments*.json` (gitignored), not in the bundle.
+ */
+/** Full course review — shown as the large quote under the marquee (not repeated in the strip). */
+export const fsdeFeaturedTestimonial: CourseTestimonial = {
+  id: "soya-course",
+  quote:
+    "Thank you so much, Juntao, for the course — it helped me a lot in my frontend career. It has been really valuable and changed my perspective when I code. I love how you explain every topic. I completed it recently and I am planning to go through it all once again.",
+  name: "Soya",
+  role: "Course learner",
+  avatarSrc: soyaAvatarImg.src,
+};
+
+/** Shorter voices for the scrolling strip only. */
+export const fsdeMarqueeTestimonials: CourseTestimonial[] = [
   {
-    id: "t1",
+    id: "yt-sachin-normalization",
     quote:
-      "Finally a course that connects the UI to the system around it — data, caching, and trade-offs in one thread.",
-    name: "Placeholder A",
-    role: "Senior frontend engineer",
+      "Finally someone spoke about normalisation in the frontend — thank you so much.",
+    name: "Sachin Y.",
+    role: "YouTube · Normalization explained",
   },
   {
-    id: "t2",
+    id: "yt-realtime-headache",
     quote:
-      "The board capstone made pagination and optimistic UI click in a way blog posts never did for me.",
-    name: "Placeholder B",
-    role: "Full-stack developer",
+      "I was making real-time apps the hard way — REST, socket events, state management — you just solved my headache.",
+    name: "hmm8991",
+    role: "YouTube · Real-time updates",
   },
   {
-    id: "t3",
+    id: "yt-raunak-series",
     quote:
-      "Clear framework for interviews: I could explain *why* I’d choose cursor pagination or SSE over guessing buzzwords.",
-    name: "Placeholder C",
-    role: "Staff engineer",
+      "Keep up the good work, Juntao. Really enjoying your frontend system design series.",
+    name: "Raunak R.",
+    role: "YouTube · Normalization explained",
   },
   {
-    id: "t4",
+    id: "yt-normalization-approach",
     quote:
-      "Worth it for the cross-functional modules alone — security, a11y, and failure modes in one place.",
-    name: "Placeholder D",
-    role: "Engineering lead",
+      "I have been using nested structured data until now, but I have come to see that flat, normalized data is a better approach. Applying normalization to frontend data management feels fresh and makes the structure easier to work with.",
+    name: "Gyeongseok",
+    role: "YouTube · Normalization explained",
   },
+  {
+    id: "yt-optimistic-share",
+    quote:
+      "I sent this to one of my friends who is learning frontend. Great help. I was explaining optimistic updates to him yesterday but I am not really a good teacher — I hope this helps him out.",
+    name: "dev_nvK",
+    role: "YouTube · Optimistic updates",
+  },
+];
+
+/** Curated labels for the landing topic cloud (order = display order). */
+export const fsdeCurriculumCloudLabels: readonly string[] = [
+  "State management",
+  "Domain-driven design",
+  "Data Persistence",
+  "Real-time updates",
+  "State sync mechanism",
+  "Optimistic updates",
+  "Accessibility",
+  "Observability",
+  "Infrastructure",
+  "CI/CD",
+  "Security",
+  "Error handling",
+  "Caching + prefetching",
+  "Pagination",
+  "Request optimisation",
+  "Perceived performance",
+  "Code split",
+  "Rendering strategies",
+  "Test-Driven Development",
+  "Lazy loading",
 ];

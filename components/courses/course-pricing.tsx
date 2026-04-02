@@ -10,7 +10,6 @@ const INCLUDES = [
   "Structured modules from data modeling through production concerns",
   "Hands-on capstone aligned with the board application thread",
   "Quizzes and exercises tied to real frontend system design decisions",
-  "100% money-back guarantee if it’s not valuable after the first two modules",
 ] as const;
 
 export function CoursePricing() {

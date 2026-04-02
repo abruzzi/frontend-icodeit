@@ -1,66 +1,72 @@
 "use client";
 
 import { motion } from "framer-motion";
+import Image from "next/image";
 import { useLayoutEffect, useMemo, useRef, useState } from "react";
 
 import type { CourseTestimonial } from "@/lib/courses/fsde-landing-data";
 import { ui } from "@/lib/ui";
 
 type Props = {
-  items: CourseTestimonial[];
+  featured: CourseTestimonial;
+  marqueeItems: CourseTestimonial[];
 };
 
-const FLOAT_SEC = 5.5;
+function FeaturedTestimonial({ item }: { item: CourseTestimonial }) {
+  const initial = item.name.trim().charAt(0).toUpperCase() || "?";
 
-function TestimonialCard({
-  item,
-  delay,
-}: {
-  item: CourseTestimonial;
-  delay: number;
-}) {
   return (
-    <motion.article
-      className="relative w-[min(100vw-2rem,340px)] shrink-0 rounded-2xl border border-slate-200/90 bg-white/80 p-6 shadow-sm backdrop-blur-sm dark:border-slate-600/60 dark:bg-slate-800/70 dark:shadow-black/20 sm:p-7"
-      initial={{ opacity: 0, y: 28 }}
+    <motion.div
+      className="mx-auto max-w-2xl px-2 py-8 text-center sm:px-4 sm:py-10"
+      initial={{ opacity: 0, y: 24 }}
       whileInView={{ opacity: 1, y: 0 }}
-      viewport={{ once: true, margin: "-5%" }}
-      transition={{
-        type: "spring",
-        stiffness: 180,
-        damping: 22,
-        delay,
-      }}
+      viewport={{ once: true, margin: "-8%" }}
+      transition={{ type: "spring", stiffness: 160, damping: 24 }}
     >
-      <div
-        className="absolute -right-2 -top-2 h-16 w-16 rounded-full bg-gradient-to-br from-palette-azure/30 to-palette-magenta/20 blur-2xl"
-        aria-hidden
-      />
-      <motion.div
-        animate={{ y: [0, -6, 0] }}
-        transition={{
-          duration: FLOAT_SEC + delay * 0.6,
-          repeat: Infinity,
-          ease: "easeInOut",
-        }}
-      >
-        <p className="relative text-base leading-relaxed text-slate-700 dark:text-slate-200">
-          &ldquo;{item.quote}&rdquo;
+      <blockquote>
+        <p className="text-base font-normal leading-relaxed text-slate-600 sm:text-[1.0625rem] dark:text-slate-400">
+          {item.quote}
         </p>
-        <footer className="relative mt-5 border-t border-slate-200/80 pt-4 dark:border-slate-600/60">
-          <p className="font-semibold text-slate-900 dark:text-slate-50">
-            {item.name}
-          </p>
-          <p className="mt-0.5 text-sm text-slate-500 dark:text-slate-400">
-            {item.role}
-          </p>
+        <footer className="mt-6 flex flex-col items-center gap-3 sm:mt-7 sm:flex-row sm:items-center sm:justify-center sm:gap-4">
+          {item.avatarSrc ? (
+            <div className="size-10 shrink-0 overflow-hidden rounded-full ring-1 ring-slate-200/90 dark:ring-slate-600/70 sm:size-11">
+              <Image
+                src={item.avatarSrc}
+                alt={`${item.name} — ${item.role}`}
+                width={112}
+                height={112}
+                className="h-full w-full object-cover"
+              />
+            </div>
+          ) : (
+            <div
+              className="flex size-10 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-palette-azure/40 to-palette-magenta/35 text-base font-semibold text-white ring-1 ring-slate-200/90 dark:ring-slate-600/70 sm:size-11 sm:text-lg"
+              aria-hidden
+            >
+              {initial}
+            </div>
+          )}
+          <div className="text-center sm:text-left">
+            <cite className="not-italic text-sm font-medium text-slate-800 dark:text-slate-200">
+              {item.name}
+            </cite>
+            <p className="mt-0.5 text-xs text-slate-500 dark:text-slate-500">
+              {item.role}
+            </p>
+          </div>
         </footer>
-      </motion.div>
-    </motion.article>
+      </blockquote>
+    </motion.div>
   );
 }
 
-function MarqueeRow({ items, duration }: { items: CourseTestimonial[]; duration: number }) {
+function MarqueeRow({
+  items,
+  duration,
+}: {
+  items: CourseTestimonial[];
+  duration: number;
+}) {
   const trackRef = useRef<HTMLDivElement>(null);
   const [loopWidth, setLoopWidth] = useState(0);
 
@@ -111,37 +117,26 @@ function MarqueeRow({ items, duration }: { items: CourseTestimonial[]; duration:
 }
 
 /**
- * Marquee strip + scroll-triggered cards. Replace quotes in
- * `lib/courses/fsde-landing-data.ts` when you have real testimonials.
+ * One marquee of shorter quotes, then a single large featured review (course).
  */
-export function CourseTestimonials({ items }: Props) {
-  const dup = useMemo(() => [...items, ...items], [items]);
-  const dupReversed = useMemo(
-    () => [...dup].reverse(),
-    [dup],
-  );
+export function CourseTestimonials({ featured, marqueeItems }: Props) {
+  const dup = useMemo(() => [...marqueeItems, ...marqueeItems], [marqueeItems]);
 
   return (
     <div className="space-y-10 overflow-hidden">
       <div>
         <h2 className={ui.courseSectionTitle}>What learners say</h2>
         <p className="mt-4 max-w-2xl text-pretty text-slate-600 dark:text-slate-400">
-          Replace the sample quotes in{" "}
-          <code className="rounded bg-slate-200/80 px-1.5 py-0.5 font-mono text-sm dark:bg-slate-700">
-            lib/courses/fsde-landing-data.ts
-          </code>{" "}
-          when you have real testimonials.
+          Snippets from people working through the paid course and from comments
+          on the free Frontend System Design Essentials videos on YouTube —
+          normalization, real-time updates, optimistic UI, and the rest of the
+          thread.
         </p>
       </div>
 
-      <MarqueeRow items={dup} duration={42} />
-      <MarqueeRow items={dupReversed} duration={54} />
+      <MarqueeRow items={dup} duration={48} />
 
-      <div className="grid gap-6 sm:grid-cols-2">
-        {items.map((item, i) => (
-          <TestimonialCard key={item.id} item={item} delay={i * 0.08} />
-        ))}
-      </div>
+      <FeaturedTestimonial item={featured} />
     </div>
   );
 }

@@ -6,21 +6,23 @@ import type { Metadata } from "next";
 import type { MDXComponents } from "mdx/types";
 
 import { CourseHero } from "@/components/courses/course-hero";
-import { CourseMindmap } from "@/components/courses/course-mindmap";
+import { CourseCornerstoneBoard } from "@/components/courses/course-cornerstone-board";
+import { CourseCurriculumCloud } from "@/components/courses/course-curriculum-cloud";
 import { CoursePricing } from "@/components/courses/course-pricing";
 import { CourseScrollReveal } from "@/components/courses/course-scroll-reveal";
 import { CourseTestimonials } from "@/components/courses/course-testimonials";
 import { CourseVideoIntro } from "@/components/courses/course-video-intro";
 import { mdxComponents } from "@/components/mdx/mdx-components";
 import {
-  fsdeTestimonials,
+  fsdeCurriculumCloudLabels,
+  fsdeFeaturedTestimonial,
+  fsdeMarqueeTestimonials,
   getCourseIntroVideoId,
 } from "@/lib/courses/fsde-landing-data";
 import {
   courseHeroTitleFromMdx,
   splitCoursePageMdx,
 } from "@/lib/courses/course-page-mdx";
-import { buildMindmapFlowFromMarkdown } from "@/lib/courses/parse-mindmap-md";
 import { renderMdx } from "@/lib/content/mdx";
 import { ui } from "@/lib/ui";
 
@@ -56,7 +58,6 @@ const COURSE_DIR = path.join(
 );
 
 const COURSE_MDX_PATH = path.join(COURSE_DIR, "index.mdx");
-const COURSE_MINDMAP_MD_PATH = path.join(COURSE_DIR, "mindmap.md");
 
 export async function generateMetadata(): Promise<Metadata> {
   const raw = fs.readFileSync(COURSE_MDX_PATH, "utf8");
@@ -113,10 +114,6 @@ export default async function FrontendSystemDesignEssentialsPage() {
       ? await renderMdx(detailsSource)
       : await renderMdx(content.trim());
 
-  const mindmapRaw = fs.readFileSync(COURSE_MINDMAP_MD_PATH, "utf8");
-  const { content: mindmapBody } = matter(mindmapRaw);
-  const mindmapGraph = buildMindmapFlowFromMarkdown(mindmapBody);
-
   const videoId = getCourseIntroVideoId();
 
   return (
@@ -124,22 +121,18 @@ export default async function FrontendSystemDesignEssentialsPage() {
       <CourseHero heroIntro={heroIntro} />
 
       <CourseScrollReveal id="course-map" className={ui.courseSectionY}>
-        <div className="space-y-6">
+        <div className="space-y-8">
           <div>
-            <p className={ui.courseEyebrow}>Curriculum map</p>
+            <p className={ui.courseEyebrow}>Curriculum</p>
             <h2 className={`mt-3 ${ui.courseSectionTitle}`}>
               What the course covers
             </h2>
             <p className="mt-4 max-w-2xl text-pretty text-slate-600 dark:text-slate-400">
-              Structure is authored in{" "}
-              <code className="rounded bg-slate-200/80 px-1.5 py-0.5 font-mono text-sm dark:bg-slate-700">
-                mindmap.md
-              </code>{" "}
-              and laid out automatically (left → right). Drag nodes to tweak
-              the view; pan and zoom on the grid background.
+              A tight set of core themes — the centre reads loudest; edges soften
+              so the band stays easy to scan.
             </p>
           </div>
-          <CourseMindmap graph={mindmapGraph} />
+          <CourseCurriculumCloud labels={fsdeCurriculumCloudLabels} />
         </div>
       </CourseScrollReveal>
 
@@ -148,11 +141,18 @@ export default async function FrontendSystemDesignEssentialsPage() {
       </CourseScrollReveal>
 
       <CourseScrollReveal className={ui.courseSectionY}>
-        <CourseTestimonials items={fsdeTestimonials} />
+        <CourseTestimonials
+          featured={fsdeFeaturedTestimonial}
+          marqueeItems={fsdeMarqueeTestimonials}
+        />
       </CourseScrollReveal>
 
       <CourseScrollReveal className={ui.courseSectionY}>
         <CoursePricing />
+      </CourseScrollReveal>
+
+      <CourseScrollReveal className={ui.courseSectionY}>
+        <CourseCornerstoneBoard />
       </CourseScrollReveal>
 
       <CourseScrollReveal className={`${ui.courseSectionY} pb-8`}>

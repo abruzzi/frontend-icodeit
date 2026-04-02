@@ -4,16 +4,8 @@ description: "Authoring source for the course map; custom tree UI can parse this
 ---
 
 <!--
-  Authoring contract (for a future structured renderer):
-  - `##` = pillar (main branch from the center concept). The **first three** pillars render on the **left** of the hub, the rest on the **right** (XMind-style).
-  - `###` = topic group under that pillar.
-  - `####` = optional sub-group (e.g. Normalisation under State management).
-  - `-` directly under `###` (before any `####`) = separate small map nodes under that group.
-  - `-` under `####` = tags / pills on that sub-group card.
-  - A `###` or `####` with no bullets = topic title only.
-
-  Alternatives you might migrate to later: YAML/JSON tree, MDX with custom
-  components, or a small schema (Zod) + validated JSON in this repo.
+  Outline for your own planning. The landing **topic cloud** uses a curated list
+  in `lib/courses/fsde-landing-data.ts` (`fsdeCurriculumCloudLabels`), not this file.
 -->
 
 > **Central concept:** Frontend System Design Essentials
@@ -22,33 +14,25 @@ description: "Authoring source for the course map; custom tree UI can parse this
 
 ### State management
 
-#### Normalisation
+#### Data Normalisation
 
 - Nested structure
 - Flattened structure
 
 ### Domain-driven design
 
-- Selectors
 - Memoization
 
 ### Persistence
 
-- localStorage
-- IndexedDB
 
 ### Tools / libraries
 
-- Redux
 - React context
-- Zustand
 
 ## Data Mutation
 
-### Form
-
 - Inline editing
-- Batch update
 
 ### Real-time updates
 
@@ -68,13 +52,7 @@ description: "Authoring source for the course map; custom tree UI can parse this
 
 ### Internationalization
 
-- Translation
-
 ### Observability
-
-- Sentry
-- Reporting
-- In-house solution
 
 ### CDN
 
@@ -84,27 +62,20 @@ description: "Authoring source for the course map; custom tree UI can parse this
 
 - Testing
 - Build pipeline
-- Deploy pipeline
 
 ### Security
 
-- XSS
-- CSP
 - Sanitization
-
-### SEO
 
 ### Error handling
 
 - Error boundary
-- Reporting
 
 ## Data Fetching
 
 ### Caching + prefetching
 
-- In-memory
-- Persistent
+- In-memory cache
 - Stale-while-revalidate
 
 ### Pagination
@@ -139,10 +110,6 @@ description: "Authoring source for the course map; custom tree UI can parse this
 
 #### Static site generation
 
-- Documentation pages
-- Blog posts
-- Marketing campaigns
-
 #### Islands architecture
 
 #### Streaming SSR
@@ -151,8 +118,3 @@ description: "Authoring source for the course map; custom tree UI can parse this
 
 - Preload
 - Lazy loading
-
-### Tools / libraries
-
-- Vite
-- Webpack
