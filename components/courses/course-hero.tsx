@@ -9,6 +9,7 @@ import {
   HERO_DOT_GRID_DARK,
   HERO_DOT_GRID_LIGHT,
 } from "@/components/design-system/hero-dot-layers";
+import { thinkific } from "@/lib/thinkific";
 import { ui } from "@/lib/ui";
 
 type Props = {
@@ -104,7 +105,10 @@ export function CourseHero({ heroIntro }: Props) {
             transition={{ delay: 0.35, duration: 0.5 }}
           >
             <a
-              href="#course-enroll"
+              href={thinkific.indepthCourseCheckout}
+              target="_blank"
+              rel="noopener noreferrer"
+              aria-label="Enroll now — opens Thinkific checkout in a new tab"
               className="inline-flex items-center justify-center rounded-full bg-slate-900 px-8 py-3.5 text-base font-semibold text-white shadow-lg shadow-slate-900/30 transition-transform hover:scale-[1.02] active:scale-[0.99] dark:bg-white dark:text-slate-900 dark:shadow-[0_0_0_1px_rgb(255_255_255/0.08),0_8px_40px_-4px_rgb(255_255_255/0.35)]"
             >
               Enroll now
