@@ -9,6 +9,7 @@ import {
 import Image from "next/image";
 import { useLayoutEffect, useRef } from "react";
 
+import { CourseShinyBorder } from "@/components/courses/course-shiny-border";
 import boardAppScreenshot from "@/content/courses/frontend-system-design-essentials/board-app-ss.png";
 
 import { ui } from "@/lib/ui";
@@ -98,7 +99,10 @@ export function CourseCornerstoneBoard() {
             onPointerMove={reduceMotion ? undefined : onPointerMove}
             onPointerLeave={reduceMotion ? undefined : onPointerLeave}
           >
-            <div className="overflow-hidden rounded-xl border border-slate-200/90 bg-slate-100/90 shadow-[0_22px_50px_-12px_rgba(15,23,42,0.22),0_0_0_1px_rgba(15,23,42,0.04)] ring-1 ring-black/[0.04] dark:border-slate-600/80 dark:bg-slate-800/90 dark:shadow-[0_24px_55px_-14px_rgba(0,0,0,0.55),0_0_0_1px_rgba(255,255,255,0.06)] dark:ring-white/[0.06]">
+            <CourseShinyBorder
+              radius="xl"
+              innerClassName="overflow-hidden border border-slate-200/90 bg-slate-100/90 shadow-[0_22px_50px_-12px_rgba(15,23,42,0.22),0_0_0_1px_rgba(15,23,42,0.04)] ring-1 ring-black/[0.04] dark:border-slate-600/80 dark:bg-slate-800/90 dark:shadow-[0_24px_55px_-14px_rgba(0,0,0,0.55),0_0_0_1px_rgba(255,255,255,0.06)] dark:ring-white/[0.06]"
+            >
               <div className="flex h-9 items-center gap-2 border-b border-slate-200/80 bg-gradient-to-b from-slate-50 to-slate-100/95 px-3 dark:border-slate-600/70 dark:from-slate-800 dark:to-slate-800/95">
                 <span className="flex gap-1.5" aria-hidden>
                   <span className="size-2.5 rounded-full bg-[#ff5f57] shadow-inner ring-1 ring-black/[0.12]" />
@@ -119,7 +123,7 @@ export function CourseCornerstoneBoard() {
                   priority={false}
                 />
               </div>
-            </div>
+            </CourseShinyBorder>
           </motion.div>
         </div>
       </div>

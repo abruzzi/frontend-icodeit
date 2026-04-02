@@ -6,6 +6,7 @@ import type { Metadata } from "next";
 import type { MDXComponents } from "mdx/types";
 
 import { CourseHero } from "@/components/courses/course-hero";
+import { CourseBoardAnnotateSection } from "@/components/courses/course-board-annotate-section";
 import { CourseCornerstoneBoard } from "@/components/courses/course-cornerstone-board";
 import { CourseCurriculumCloud } from "@/components/courses/course-curriculum-cloud";
 import { CoursePricing } from "@/components/courses/course-pricing";
@@ -153,6 +154,13 @@ export default async function FrontendSystemDesignEssentialsPage() {
 
       <CourseScrollReveal className={ui.courseSectionY}>
         <CourseCornerstoneBoard />
+      </CourseScrollReveal>
+
+      <CourseScrollReveal
+        id="course-board-map"
+        className={ui.courseSectionY}
+      >
+        <CourseBoardAnnotateSection />
       </CourseScrollReveal>
 
       <CourseScrollReveal className={`${ui.courseSectionY} pb-8`}>
