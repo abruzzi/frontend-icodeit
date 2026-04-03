@@ -1,16 +1,18 @@
 "use client";
 
 import { useId, useState } from "react";
+import { motion, useReducedMotion } from "framer-motion";
+import { Plus } from "lucide-react";
 
 import { fsdeFaqItems } from "@/lib/courses/fsde-faq";
 import { ui } from "@/lib/ui";
-import { Minus, Plus } from "lucide-react";
 
 /**
  * Two-column FAQ: intro on the left, accordion on the right (collapsed by default).
  */
 export function CourseFaqSection() {
   const baseId = useId();
+  const reduceMotion = useReducedMotion();
   const [openIndices, setOpenIndices] = useState<ReadonlySet<number>>(
     () => new Set(),
   );
@@ -69,16 +71,25 @@ export function CourseFaqSection() {
                   <span className="font-heading text-base font-bold tracking-tight text-slate-900 sm:text-lg dark:text-slate-50">
                     {item.question}
                   </span>
-                  <span
-                    className="mt-0.5 shrink-0 text-slate-500 dark:text-slate-400"
+                  <motion.span
+                    className="mt-0.5 inline-block shrink-0 text-slate-500 dark:text-slate-400"
                     aria-hidden
+                    initial={false}
+                    animate={{ rotate: isOpen ? 45 : 0 }}
+                    transition={
+                      reduceMotion
+                        ? { duration: 0 }
+                        : {
+                            type: "spring",
+                            stiffness: 280,
+                            damping: 26,
+                            mass: 0.85,
+                            delay: isOpen ? 0.07 : 0.04,
+                          }
+                    }
                   >
-                    {isOpen ? (
-                      <Minus className="h-5 w-5 stroke-[2.5]" />
-                    ) : (
-                      <Plus className="h-5 w-5 stroke-[2.5]" />
-                    )}
-                  </span>
+                    <Plus className="h-5 w-5 stroke-[2.5]" />
+                  </motion.span>
                 </button>
                 {isOpen ? (
                   <div
