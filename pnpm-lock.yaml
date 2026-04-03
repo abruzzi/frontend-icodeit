@@ -74,6 +74,9 @@ importers:
       shiki:
         specifier: ^4.0.2
         version: 4.0.2
+      unified:
+        specifier: ^11.0.0
+        version: 11.0.5
       unist-util-visit:
         specifier: ^5.0.0
         version: 5.1.0
