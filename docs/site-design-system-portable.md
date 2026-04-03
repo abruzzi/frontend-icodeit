@@ -221,7 +221,7 @@ Typical stack for a faithful port:
 ## Metadata and env
 
 - **`NEXT_PUBLIC_SITE_URL`** — Defaults to `https://frontend.icodeit.com.au` in `app/layout.tsx` for `metadataBase`, canonical, OG/Twitter images.
-- **Favicon** — `/icon.svg`
+- **Favicon** — `app/favicon.ico` (Next.js [metadata file convention](https://nextjs.org/docs/app/api-reference/file-conventions/metadata/app-icons); no `metadata.icons` needed)
 - **Default social image** — `/assets/juntao.qiu.avatar.webp` (align with footer avatar for consistency)
 
 ---
