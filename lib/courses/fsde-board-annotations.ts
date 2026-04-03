@@ -16,6 +16,12 @@ export type BoardDiagramAnnotation = {
   labelEdge: BoardLabelEdge;
   /** 0–1 along that edge: left/right use top→bottom; top/bottom use left→right. */
   labelAlong: number;
+  /**
+   * After the dot is measured, snap label position to share an axis with the dot so the connector
+   * can be a single straight segment: `y` for left/right edges (horizontal line), `x` for top/bottom
+   * (vertical line).
+   */
+  alignLabelToDot?: "x" | "y";
 };
 
 export const fsdeBoardDiagramAnnotations: readonly BoardDiagramAnnotation[] = [
@@ -29,6 +35,8 @@ export const fsdeBoardDiagramAnnotations: readonly BoardDiagramAnnotation[] = [
     dot: [25, 10.2],
     labelEdge: "left",
     labelAlong: 0.14,
+    /** Same row as the search field → straight connector, no elbow. */
+    alignLabelToDot: "y",
   },
   {
     id: "a11y-menu",
@@ -79,7 +87,8 @@ export const fsdeBoardDiagramAnnotations: readonly BoardDiagramAnnotation[] = [
       "Done, In progress, and Backlog all read the same ticket map by id — no duplicated objects drifting out of sync across columns.",
     dot: [84, 40],
     labelEdge: "right",
-    labelAlong: 0.2,
+    /** Below “Real-time updates” (0.4) so the two right-gutter connectors don’t share one vertical run. */
+    labelAlong: 0.56,
   },
   {
     id: "state-column",
@@ -90,6 +99,8 @@ export const fsdeBoardDiagramAnnotations: readonly BoardDiagramAnnotation[] = [
     dot: [50, 70],
     labelEdge: "bottom",
     labelAlong: 0.5,
+    /** Same column as the dot → one vertical segment, no elbow. */
+    alignLabelToDot: "x",
   },
   {
     id: "optimistic-add-card",

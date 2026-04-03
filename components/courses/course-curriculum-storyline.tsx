@@ -1,15 +1,15 @@
 import { fsdeCurriculumStorylineModules } from "@/lib/courses/fsde-curriculum-storyline";
 
 /**
- * “Curriculum as a journey” block — vertical guide, gold module labels, narrative body.
- * Surface matches `CourseVideoIntro` so it sits naturally on the course page.
+ * “Curriculum as a journey” block — vertical guide, module labels (azure in light, gold in dark).
+ * Light surface is white; dark matches `CourseVideoIntro`-style slate.
  * Use inside course MDX (`not-prose` safe).
  */
 export function CourseCurriculumStoryline() {
   return (
-    <div className="not-prose my-12 overflow-hidden rounded-3xl border border-slate-200/90 bg-slate-900/5 px-6 py-10 shadow-diffuse sm:px-10 sm:py-12 md:px-12 md:py-14 dark:border-slate-600/50 dark:bg-slate-950/40">
+    <div className="not-prose my-12 overflow-hidden rounded-3xl border border-slate-200/90 bg-white px-6 py-10 shadow-diffuse sm:px-10 sm:py-12 md:px-12 md:py-14 dark:border-slate-600/50 dark:bg-slate-950/40">
       <div className="mb-10 max-w-xl md:mb-12">
-        <p className="text-xs font-semibold uppercase tracking-[0.2em] text-palette-gold sm:text-sm">
+        <p className="text-xs font-semibold uppercase tracking-[0.2em] text-palette-azure dark:text-palette-gold sm:text-sm">
           The curriculum
         </p>
         <h2 className="mt-2 font-heading text-3xl font-extrabold tracking-tighter text-slate-900 sm:text-4xl md:text-[2.65rem] md:leading-[1.08] dark:text-slate-50">
@@ -23,7 +23,7 @@ export function CourseCurriculumStoryline() {
 
       <div className="relative">
         <div
-          className="absolute left-[0.65rem] top-3 bottom-3 w-px border-l border-dashed border-slate-300/90 md:left-[0.7rem] dark:border-slate-500/50"
+          className="absolute left-[0.65rem] top-3 bottom-3 w-px -translate-x-1/2 border-l border-dashed border-slate-300/90 md:left-[0.7rem] dark:border-slate-500/50"
           aria-hidden
         />
 
@@ -40,13 +40,13 @@ export function CourseCurriculumStoryline() {
                 ].join(" ")}
               >
                 <span
-                  className="absolute left-0 top-1.5 flex h-[1.125rem] w-[1.125rem] items-center justify-center rounded-full bg-slate-900/5 ring-2 ring-palette-gold/90 md:top-2 md:h-5 md:w-5 dark:bg-slate-950/40"
+                  className="absolute left-[0.65rem] top-1.5 flex h-[1.125rem] w-[1.125rem] -translate-x-1/2 items-center justify-center rounded-full bg-white ring-2 ring-palette-azure/90 dark:bg-slate-950/40 dark:ring-palette-gold/90 md:left-[0.7rem] md:top-2 md:h-5 md:w-5"
                   aria-hidden
                 >
-                  <span className="h-1.5 w-1.5 rounded-full bg-palette-gold md:h-2 md:w-2" />
+                  <span className="h-1.5 w-1.5 rounded-full bg-palette-azure md:h-2 md:w-2 dark:bg-palette-gold" />
                 </span>
 
-                <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-palette-gold sm:text-xs">
+                <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-palette-azure dark:text-palette-gold sm:text-xs">
                   Module {n}
                 </p>
                 <h3 className="mt-1.5 font-heading text-xl font-bold tracking-tight text-slate-900 sm:text-2xl md:text-[1.65rem] md:leading-snug dark:text-slate-50">

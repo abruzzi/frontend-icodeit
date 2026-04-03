@@ -12,12 +12,14 @@ import { ui } from "@/lib/ui";
 
 const ENTER_DELAY_MS = 340;
 const LEAVE_MS = 200;
-/** Slightly brighter than `red-500` so connectors read on light + dark surrounds. */
-const LINE_STROKE = "#ff5a5a";
-const LINE_STROKE_WIDTH = 1.5;
-/** Hollow anchor ring (px); stroke matches the connector. */
-const DOT_RADIUS = 4;
-const DOT_STROKE_WIDTH = 1.75;
+const LINE_STROKE_WIDTH = 1.35;
+/** Filled callout dot (px). */
+const DOT_RADIUS = 3.5;
+/** Connector + dot idle opacity; stroke/fill use `currentColor` from the SVG (azure light, gold-tinted dark). */
+const CONNECTOR_IDLE_OPACITY = 0.38;
+
+/** If label and dot align on an axis within this (px), use a single straight segment. */
+const STRAIGHT_EPS = 4;
 
 type MeasuredItem = {
   id: string;
@@ -25,63 +27,145 @@ type MeasuredItem = {
   labelY: number;
   dotX: number;
   dotY: number;
-  /** Horizontal + vertical segments only (one elbow when needed). */
+  /** Horizontal + vertical segments only (max one 90° bend). */
   pathD: string;
 };
 
-const CONNECTOR_TRIM =
-  DOT_RADIUS + DOT_STROKE_WIDTH / 2 + LINE_STROKE_WIDTH / 2;
-
-/** End of connector on the segment approaching the dot, inset so the ring isn’t crossed. */
-function trimTowardDot(
-  dotX: number,
-  dotY: number,
-  fromX: number,
-  fromY: number,
-): { x: number; y: number } {
-  const vx = dotX - fromX;
-  const vy = dotY - fromY;
-  const len = Math.hypot(vx, vy) || 1;
-  return {
-    x: dotX - (vx / len) * CONNECTOR_TRIM,
-    y: dotY - (vy / len) * CONNECTOR_TRIM,
-  };
-}
+type CornerPreference = "auto" | "flip";
 
 /**
- * Orthogonal path: only horizontal and vertical segments (max one 90° bend).
- * Left/right labels: horizontal toward dot x, then vertical to dot.
- * Top/bottom labels: vertical toward dot y, then horizontal to dot.
+ * Orthogonal path to the dot **center**. Circles render on top so the ring meets the line cleanly.
+ * With `auto`, picks H-first vs V-first from geometry (`|Δx|` vs `|Δy|`) so the shorter leg of the L
+ * is as long as possible — avoids tiny “jog” elbows when one axis is almost aligned.
  */
 function orthogonalConnectorPath(
   lx: number,
   ly: number,
   dotX: number,
   dotY: number,
-  edge: BoardLabelEdge,
+  corner: CornerPreference = "auto",
 ): string {
-  const eps = 0.8;
-
-  if (Math.abs(lx - dotX) < eps) {
-    const end = trimTowardDot(dotX, dotY, lx, ly);
-    return `M${lx},${ly} L${end.x},${end.y}`;
-  }
-  if (Math.abs(ly - dotY) < eps) {
-    const end = trimTowardDot(dotX, dotY, lx, ly);
-    return `M${lx},${ly} L${end.x},${end.y}`;
+  if (
+    Math.abs(lx - dotX) < STRAIGHT_EPS ||
+    Math.abs(ly - dotY) < STRAIGHT_EPS
+  ) {
+    return `M${lx},${ly} L${dotX},${dotY}`;
   }
 
-  if (edge === "left" || edge === "right") {
-    const mx = dotX;
-    const my = ly;
-    const end = trimTowardDot(dotX, dotY, mx, my);
-    return `M${lx},${ly} L${mx},${my} L${end.x},${end.y}`;
+  const dx = Math.abs(lx - dotX);
+  const dy = Math.abs(ly - dotY);
+  let hFirst = dx >= dy;
+  if (corner === "flip") {
+    hFirst = !hFirst;
   }
 
-  const mx = lx;
-  const my = dotY;
-  const end = trimTowardDot(dotX, dotY, mx, my);
-  return `M${lx},${ly} L${mx},${my} L${end.x},${end.y}`;
+  if (hFirst) {
+    return `M${lx},${ly} L${dotX},${ly} L${dotX},${dotY}`;
+  }
+  return `M${lx},${ly} L${lx},${dotY} L${dotX},${dotY}`;
+}
+
+type HSeg = { y: number; x1: number; x2: number };
+type VSeg = { x: number; y1: number; y2: number };
+
+/** Split an M…L…L orthogonal path into axis-aligned segments. */
+function pathAxisSegments(d: string): { h: HSeg[]; v: VSeg[] } {
+  const h: HSeg[] = [];
+  const v: VSeg[] = [];
+  const coords = d.match(/-?\d*\.?\d+/g);
+  if (!coords || coords.length < 4) return { h, v };
+  const n = coords.map(Number);
+  let x = n[0];
+  let y = n[1];
+  for (let i = 2; i < n.length; i += 2) {
+    const nx = n[i];
+    const ny = n[i + 1];
+    if (Math.abs(y - ny) < 1) {
+      h.push({ y, x1: x, x2: nx });
+    } else if (Math.abs(x - nx) < 1) {
+      v.push({ x, y1: y, y2: ny });
+    }
+    x = nx;
+    y = ny;
+  }
+  return { h, v };
+}
+
+/** Ignore incidental touches; flag only meaningful parallel overlap (px). */
+const AXIS_OVERLAP_MIN = 18;
+
+function hSegConflict(a: HSeg, b: HSeg): boolean {
+  if (Math.abs(a.y - b.y) > 3) return false;
+  const al = Math.min(a.x1, a.x2);
+  const ar = Math.max(a.x1, a.x2);
+  const bl = Math.min(b.x1, b.x2);
+  const br = Math.max(b.x1, b.x2);
+  return Math.min(ar, br) - Math.max(al, bl) > AXIS_OVERLAP_MIN;
+}
+
+function vSegConflict(a: VSeg, b: VSeg): boolean {
+  if (Math.abs(a.x - b.x) > 3) return false;
+  const al = Math.min(a.y1, a.y2);
+  const ar = Math.max(a.y1, a.y2);
+  const bl = Math.min(b.y1, b.y2);
+  const br = Math.max(b.y1, b.y2);
+  return Math.min(ar, br) - Math.max(al, bl) > AXIS_OVERLAP_MIN;
+}
+
+function segmentsConflict(
+  s1: { h: HSeg[]; v: VSeg[] },
+  s2: { h: HSeg[]; v: VSeg[] },
+): boolean {
+  for (const a of s1.h) {
+    for (const b of s2.h) {
+      if (hSegConflict(a, b)) return true;
+    }
+  }
+  for (const a of s1.v) {
+    for (const b of s2.v) {
+      if (vSegConflict(a, b)) return true;
+    }
+  }
+  return false;
+}
+
+type RawConnector = {
+  lx: number;
+  ly: number;
+  dotX: number;
+  dotY: number;
+};
+
+/**
+ * Greedy pass: keep the default corner when possible; if it shares a long collinear run with an
+ * earlier line, try the opposite elbow so routes separate.
+ */
+function buildConnectorPaths(raw: RawConnector[]): string[] {
+  const pathDs: string[] = [];
+
+  for (let i = 0; i < raw.length; i++) {
+    const r = raw[i];
+    let pathD = orthogonalConnectorPath(r.lx, r.ly, r.dotX, r.dotY, "auto");
+
+    const conflictsWithPrior = (p: string) => {
+      const s = pathAxisSegments(p);
+      for (let j = 0; j < i; j++) {
+        if (segmentsConflict(s, pathAxisSegments(pathDs[j]))) return true;
+      }
+      return false;
+    };
+
+    if (conflictsWithPrior(pathD)) {
+      const alt = orthogonalConnectorPath(r.lx, r.ly, r.dotX, r.dotY, "flip");
+      if (!conflictsWithPrior(alt)) {
+        pathD = alt;
+      }
+    }
+
+    pathDs.push(pathD);
+  }
+
+  return pathDs;
 }
 
 function gutterLabelPoint(
@@ -170,7 +254,7 @@ function AnnotationItem({
       <button
         type="button"
         className={[
-          "max-w-[13.5rem] cursor-help border-0 bg-transparent px-0.5 py-1 text-left text-sm font-medium leading-snug tracking-tight text-slate-700 outline-none transition-colors duration-150 sm:text-[0.9375rem] sm:leading-snug",
+          "max-w-[13.5rem] cursor-help border-0 bg-transparent px-0.5 py-1 text-left text-sm font-semibold leading-snug tracking-tight text-slate-700 outline-none transition-colors duration-150 sm:text-[0.9375rem] sm:leading-snug",
           "hover:text-palette-azure focus-visible:text-palette-azure focus-visible:ring-2 focus-visible:ring-palette-azure/35 focus-visible:ring-offset-2 focus-visible:ring-offset-transparent",
           "dark:text-slate-300 dark:hover:text-palette-azure dark:focus-visible:ring-offset-transparent",
           textAlign,
@@ -209,6 +293,9 @@ function AnnotationItem({
 
 export function CourseBoardAnnotateSection() {
   const [activeId, setActiveId] = useState<string | null>(null);
+  const [hoveredConnectorId, setHoveredConnectorId] = useState<string | null>(
+    null,
+  );
   const leaveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const enterTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const diagramRef = useRef<HTMLDivElement>(null);
@@ -233,6 +320,7 @@ export function CourseBoardAnnotateSection() {
 
   const onEnterLabel = useCallback(
     (id: string) => {
+      setHoveredConnectorId(id);
       if (leaveTimer.current) {
         clearTimeout(leaveTimer.current);
         leaveTimer.current = null;
@@ -249,6 +337,7 @@ export function CourseBoardAnnotateSection() {
   );
 
   const onLeaveLabel = useCallback(() => {
+    setHoveredConnectorId(null);
     if (enterTimer.current) {
       clearTimeout(enterTimer.current);
       enterTimer.current = null;
@@ -270,29 +359,56 @@ export function CourseBoardAnnotateSection() {
     const shell = shellEl.getBoundingClientRect();
     if (dr.width < 8 || dr.height < 8) return;
 
-    const items: MeasuredItem[] = fsdeBoardDiagramAnnotations.map((ann) => {
-      const { x: lx, y: ly } = gutterLabelPoint(dr, fr, ann.labelEdge, ann.labelAlong);
-      const callout = drEl.querySelector(
-        `[data-board-callout="${ann.id}"]`,
-      ) as HTMLElement | null;
-      let dotX: number;
-      let dotY: number;
-      if (callout) {
-        const er = callout.getBoundingClientRect();
-        dotX = er.left + er.width / 2 - dr.left;
-        dotY = er.top + er.height / 2 - dr.top;
-      } else {
-        dotX = shell.left - dr.left + (ann.dot[0] / 100) * shell.width;
-        dotY = shell.top - dr.top + (ann.dot[1] / 100) * shell.height;
-      }
-      const pathD = orthogonalConnectorPath(
-        lx,
-        ly,
-        dotX,
-        dotY,
-        ann.labelEdge,
-      );
-      return { id: ann.id, labelX: lx, labelY: ly, dotX, dotY, pathD };
+    const rawConnectors: RawConnector[] = fsdeBoardDiagramAnnotations.map(
+      (ann) => {
+        const { x: lx, y: ly } = gutterLabelPoint(
+          dr,
+          fr,
+          ann.labelEdge,
+          ann.labelAlong,
+        );
+        const callout = drEl.querySelector(
+          `[data-board-callout="${ann.id}"]`,
+        ) as HTMLElement | null;
+        let dotX: number;
+        let dotY: number;
+        if (callout) {
+          const er = callout.getBoundingClientRect();
+          dotX = er.left + er.width / 2 - dr.left;
+          dotY = er.top + er.height / 2 - dr.top;
+        } else {
+          dotX = shell.left - dr.left + (ann.dot[0] / 100) * shell.width;
+          dotY = shell.top - dr.top + (ann.dot[1] / 100) * shell.height;
+        }
+
+        let adjLx = lx;
+        let adjLy = ly;
+        if (ann.alignLabelToDot === "y") {
+          if (ann.labelEdge === "left" || ann.labelEdge === "right") {
+            adjLy = dotY;
+          }
+        } else if (ann.alignLabelToDot === "x") {
+          if (ann.labelEdge === "top" || ann.labelEdge === "bottom") {
+            adjLx = dotX;
+          }
+        }
+
+        return { lx: adjLx, ly: adjLy, dotX, dotY };
+      },
+    );
+
+    const pathDs = buildConnectorPaths(rawConnectors);
+
+    const items: MeasuredItem[] = fsdeBoardDiagramAnnotations.map((ann, i) => {
+      const r = rawConnectors[i]!;
+      return {
+        id: ann.id,
+        labelX: r.lx,
+        labelY: r.ly,
+        dotX: r.dotX,
+        dotY: r.dotY,
+        pathD: pathDs[i]!,
+      };
     });
 
     setLayout({ w: dr.width, h: dr.height, items });
@@ -369,34 +485,32 @@ export function CourseBoardAnnotateSection() {
 
         {layout && layout.items.length > 0 ? (
           <svg
-            className="pointer-events-none absolute left-0 top-0 z-[12] overflow-visible"
+            className="pointer-events-none absolute left-0 top-0 z-[12] overflow-visible text-palette-azure dark:text-[#f7d24d]"
             width={layout.w}
             height={layout.h}
             aria-hidden
           >
-            {layout.items.map((m) => (
-              <path
-                key={`line-${m.id}`}
-                d={m.pathD}
-                fill="none"
-                stroke={LINE_STROKE}
-                strokeWidth={LINE_STROKE_WIDTH}
-                strokeLinecap="square"
-                strokeLinejoin="miter"
-                strokeMiterlimit={2.5}
-              />
-            ))}
-            {layout.items.map((m) => (
-              <circle
-                key={`dot-${m.id}`}
-                cx={m.dotX}
-                cy={m.dotY}
-                r={DOT_RADIUS}
-                fill="none"
-                stroke={LINE_STROKE}
-                strokeWidth={DOT_STROKE_WIDTH}
-              />
-            ))}
+            {layout.items.map((m) => {
+              const full =
+                hoveredConnectorId === m.id ? 1 : CONNECTOR_IDLE_OPACITY;
+              return (
+                <g
+                  key={m.id}
+                  className="transition-opacity duration-200 ease-out"
+                  style={{ opacity: full }}
+                >
+                  <path
+                    d={m.pathD}
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth={LINE_STROKE_WIDTH}
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  />
+                  <circle cx={m.dotX} cy={m.dotY} r={DOT_RADIUS} fill="currentColor" />
+                </g>
+              );
+            })}
           </svg>
         ) : null}
 
