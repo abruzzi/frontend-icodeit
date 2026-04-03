@@ -1,6 +1,14 @@
 ---
 title: "Board Application Architecture"
-summary: "How to model, API-shape, and harden a kanban-style board: columns, ordered cards, moves, and multi-user sync."
+summary: >
+  A deep frontend walkthrough of a kanban-style board—cards in columns, moves, and multi-user
+  sync—using a steel thread from fixture data and faithful UI through client-side ordering and
+  persistence before layering on realtime and conflict behavior. The core model is normalized
+  entities with ordered card ids per column and idempotent move operations at the API boundary;
+  the guide also stresses what to observe in production (duplicate applies, out-of-order updates,
+  optimistic rollbacks) and why keyboard- and screen-reader-first flows matter as much as
+  drag-and-drop polish.
+lastEdited: "2026-04-02"
 kind: "case-study"
 status: "published"
 scenario: "board-app"

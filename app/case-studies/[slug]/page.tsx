@@ -16,6 +16,8 @@ import { ui } from "@/lib/ui";
 import { extractTocHeadings } from "@/lib/content/toc-headings";
 import { ArticleToc } from "@/components/content/article-toc";
 import { AuthorBio } from "@/components/content/author-bio";
+import { ArticleShareFooter } from "@/components/content/article-share-footer";
+import { absoluteUrl } from "@/lib/site-url";
 
 type Props = {
   params: { slug: string };
@@ -81,18 +83,19 @@ export default async function CaseStudyDetailPage({ params }: Props) {
     <>
       <article className={ui.section}>
         <h1 className={ui.pageTitle}>{entry.frontmatter.title}</h1>
-        <p>{entry.frontmatter.summary}</p>
-        <p>
-          <strong className={ui.inlineLabel}>Quick take:</strong>{" "}
-          {entry.frontmatter.quickTake.join(" / ")}
+        <p className="text-pretty text-[0.95rem] leading-relaxed text-slate-600 sm:text-base italic dark:text-slate-400">
+          {entry.frontmatter.summary}
         </p>
-        <p>
-          <strong className={ui.inlineLabel}>Production notes:</strong>{" "}
-          {entry.frontmatter.productionNotes.join(" / ")}
-        </p>
+        <ArticleShareFooter
+          lastEdited={entry.frontmatter.lastEdited}
+          shareUrl={absoluteUrl(routes.caseStudy(params.slug))}
+          shareTitle={entry.frontmatter.title}
+        />
       </article>
 
-      <article className={ui.proseArticleBody}>{mdx}</article>
+      <article className={`${ui.proseArticleBody} mt-3 pt-6 sm:mt-4 sm:pt-8`}>
+        {mdx}
+      </article>
 
       <AuthorBio />
 

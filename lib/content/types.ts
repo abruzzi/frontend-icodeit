@@ -43,6 +43,8 @@ export type BaseFrontmatter = {
   kind: ContentKind;
   tags: CrossCuttingTag[];
   status?: ContentStatus;
+  /** ISO date (`YYYY-MM-DD`) shown as “Last edited” under the intro block. */
+  lastEdited?: string;
 };
 
 export type CaseStudyFrontmatter = BaseFrontmatter & {

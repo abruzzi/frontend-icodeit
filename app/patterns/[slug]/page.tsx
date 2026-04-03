@@ -17,6 +17,8 @@ import { routes } from "@/lib/routes";
 import { ui } from "@/lib/ui";
 import { ArticleToc } from "@/components/content/article-toc";
 import { AuthorBio } from "@/components/content/author-bio";
+import { ArticleShareFooter } from "@/components/content/article-share-footer";
+import { absoluteUrl } from "@/lib/site-url";
 
 type Props = {
   params: { slug: string };
@@ -85,11 +87,18 @@ export default async function PatternDetailPage({ params }: Props) {
     <>
       <article className={ui.section}>
         <h1 className={ui.pageTitle}>{entry.frontmatter.title}</h1>
-        <p>{entry.frontmatter.summary}</p>
-        <p>
+        <p className="text-pretty text-[0.95rem] leading-relaxed text-slate-600 sm:text-base dark:text-slate-400">
+          {entry.frontmatter.summary}
+        </p>
+        <p className="text-pretty text-lg leading-relaxed text-slate-800 dark:text-slate-200">
           <strong className={ui.inlineLabel}>Pattern level:</strong>{" "}
           {entry.frontmatter.level}
         </p>
+        <ArticleShareFooter
+          lastEdited={entry.frontmatter.lastEdited}
+          shareUrl={absoluteUrl(routes.pattern(params.slug))}
+          shareTitle={entry.frontmatter.title}
+        />
       </article>
 
       <article className={ui.proseArticleBody}>{mdx}</article>
