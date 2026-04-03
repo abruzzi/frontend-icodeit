@@ -35,6 +35,8 @@ Let's **start with something we can touch.** The widget below shows **columns** 
 This demo does not call an API. Later sections cover idempotent **move** operations and reconciling on ack or rollback—see **API design** and **Data modeling**.
 </Callout>
 
+<FsdeCaseStudyCourseCard />
+
 From here on, it helps to split what you're building into two buckets: **functionality** (the features users see) and **cross-functional** requirements (how the system behaves under pressure).
 
 Functionality is the main feature of the application. For our case, we need to render a board, let users create and edit cards, and move cards across columns. We also need to support **multiple users** working on the same board at the same time.

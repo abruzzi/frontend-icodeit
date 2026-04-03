@@ -15,6 +15,7 @@ import { TradeoffMatrix } from "@/components/explainers/TradeoffMatrix";
 import { ChevronRight } from "lucide-react";
 import { CourseCurriculumStoryline } from "@/components/courses/course-curriculum-storyline";
 import { CourseFaqSection } from "@/components/courses/course-faq-section";
+import { FsdeCaseStudyCourseCard } from "@/components/courses/fsde-case-study-promo-card";
 import { CoursePricingCompact } from "@/components/courses/course-pricing-compact";
 import { Callout } from "./Callout";
 import { Highlight } from "./Highlight";
@@ -27,6 +28,7 @@ export const mdxComponents: MDXComponents = {
   CourseCurriculumStoryline,
   CourseFaqSection,
   CoursePricingCompact,
+  FsdeCaseStudyCourseCard,
   BoardDataModelDiagram,
   BoardDndDemo,
   BoardEmptyStateDemo,
