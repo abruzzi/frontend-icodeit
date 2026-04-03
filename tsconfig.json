@@ -16,7 +16,9 @@
     "plugins": [{ "name": "next" }],
     "baseUrl": ".",
     "paths": {
-      "@/*": ["./*"]
+      "@/*": ["./*"],
+      "mdx/types": ["./node_modules/@types/mdx/types.d.ts"],
+      "mdx/types.js": ["./node_modules/@types/mdx/types.d.ts"]
     }
   },
   "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx", ".next/types/**/*.ts"],
