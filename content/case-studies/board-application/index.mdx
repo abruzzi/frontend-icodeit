@@ -346,21 +346,39 @@ app.post("/boards/:boardId/cards", () => {
 });
 ```
 
-What I like to do next is take the operations you already named in **Collect constraints**—what must exist for v1, how big things can get, whether multiple people are in the same board at once—and **map them straight onto endpoints** while you are still allowed to be boring. The interesting work is not the first happy-path sketch; it is what happens when **retries**, **concurrency**, and a **suddenly enormous backlog** show up and your innocent `GET` is no longer innocent.
+What I like to do next is take the operations you already named in **Collect constraints**—what must exist for v1, how big things can get, whether multiple people are in the same board at once—and **map them straight onto endpoints**. The interesting work is not the first happy-path sketch; it is what happens when **retries**, **concurrency**, and a **suddenly enormous backlog** show up and your innocent `GET` is no longer innocent.
 
 ### Transports
 
-**HTTP** is still the spine: load the snapshot, submit mutations, stare at status codes in DevTools without needing a second mental model. When the product truly needs other people to **see** moves without hammering refresh, you add something parallel—usually **WebSocket**, sometimes **SSE**—where the server can push “this operation landed” or a small **patch** after the fact.
+**HTTP** is still the spine: load the snapshot, submit mutations, stare at status codes in DevTools without needing a second mental model. When the product truly needs other people to **see** moves without hammering refresh, you add something parallel—usually **WebSocket**, sometimes **SSE** (Server-Sent-Event) —where the server can push “this operation landed” or a small **patch** after the fact.
 
-I am completely fine shipping v1 on **HTTP only** with periodic refresh; realtime is as much a **product** bet as an engineering one, and pretending otherwise is how you inherit a socket layer you did not need yet.
+Generally speaking, a periodic refresh with a simple `setInterval` and polling if some status has changed by other user is sufficient. However, in our board application case, that would be not suitable as we don't know whether or when other user would update the board. 
+
+So we'll need to setup a listener and let it callback us. We can do that with either WebSocket or SSE, as in here we don't really want to send event back to server side, we can rely on SSE first.
+
+```ts
+const es = new EventSource(`/api/board/${boardId}/events`);
+
+es.addEventListener("card-assigned", (event) => {
+  //... logic to handle card is assgiend to or unassigned from a user
+});
+
+es.addEventListener("card-updated", (event) => {
+  //... logic to handle card updated event
+});
+
+es.onerror = (error) => {
+  console.log(`sse error: ${error}`);
+};
+```
+
+Behind the scenes, all these event related machnism are based on Observer pattern, and you can read the [interactive version of the explanation](https://www.icodeit.com.au/posts/understanding-observer-pattern) in here.
 
 ### Read: board snapshot
 
 Picture the first load of the board page. A natural first contract is:
 
-`GET /boards/:boardId`
-
-If your gateway prefixes everything with `/api`, that is fine—the **payload** is what you and the client will live with for months.
+`GET /api/boards/:boardId`
 
 For **200**, the body should resemble what you already committed to in **Data modeling**. Returning a **nested** columns-with-cards snapshot early on is not a moral failure; it is often the fastest way to ship, as long as you know how you might evolve toward maps and ordered id lists later.
 
@@ -380,7 +398,7 @@ For **200**, the body should resemble what you already committed to in **Data mo
 }
 ```
 
-I would treat errors with the same care as loading and empty states in **Designing the UI**: decide what **timeouts**, **5xx**, and validation failures look like in **JSON**, not only as bare status codes, so the client can retry or explain instead of showing a generic “something broke.” A stable **`code`** is worth more than a clever English `message` you will regret string-matching in six months.
+I would treat errors with the same care as loading and empty states in **Designing the UI**: decide what **timeouts**, **5xx**, and validation failures look like in **JSON**, not only as bare status codes, so the client can retry or explain instead of showing a generic “something went wrong.” A stable **`code`** is worth more than a clever English `message` you will regret string-matching in six months.
 
 ```json show
 {
@@ -389,17 +407,30 @@ I would treat errors with the same care as loading and empty states in **Designi
 }
 ```
 
+Note here the error object come back with the HTTP status like a generic `500` or `429`, you might also want to be more specific on what is actually going on.
+
+To summarise a bit here, for a fetch endpoint, we need to think of not only the happy-path with 200 and data returned, but also edge cases like 404, 429, 500 or some gateway timeout cases. 
+
+If you're in a interview, demonstrate the consideration of these edge cases are a good signal to the interviewers. :smile:
+
 ### Pagination and large columns
 
-If you are somewhere under “a few dozen to low hundreds” of cards, **one round trip** that pulls the whole board is often totally reasonable—I would not paginate for ceremony. Where life gets noisy is the **monster backlog**: years of cards, a single column that never shrinks, or many teams sharing one huge surface. Then you want enough to paint the screen quickly, and more as the user scrolls or digs into a lane.
+Now you have a basic version of the fetching API, let's move on the the next level of the requirement, the scalibility.
 
-**Cursor-based** pagination tends to survive reality better than naive page numbers when new items keep landing **at the top** of a column while someone is paging. You might extend the board read with something shaped like:
+The scaliblity is another dimision of thinking, it means the basic functiaonlity (include the unhappy paths) are all properly handled, but the amount of data is simiply too much, and we need to plan for these cases.
+
+If you are somewhere under “a few dozen to low hundreds” of cards, **one round trip** that pulls the whole board is often totally reasonable—I would not paginate for the sake of doing it. However, if you have to working on a project that has hugu backlog: years of cards, a single column that never shrinks (the **Done** column), or many teams sharing one huge surface. Then you want enough to paint the screen quickly, and more as the user scrolls or digs into a lane.
+
+For pagination itself, I'm putting together another interactive explanaiton article on this pattern page, you can check out the details and the trade-offs there there.
+
+That said, in our particular case in a board application, **Cursor-based** pagination fits better than offset-based pagination as new items might keep landing **at the top** of a column while someone is paging. You might extend the board read with something shaped like:
 
 ```json show
 {
-  "board": { "id": "board-1", "title": "Board 1", "version": 42 },
-  "columns": [],
-  "cards": [],
+  "data": [
+    {},
+    {},
+  ],
   "pageInfo": {
     "endCursor": "eyJjIjoiLi4uIn0",
     "hasNextPage": true
@@ -409,9 +440,11 @@ If you are somewhere under “a few dozen to low hundreds” of cards, **one rou
 
 When **one column** can hold **thousands** of cards, I would seriously consider splitting reads:
 
-`GET /boards/:boardId/columns/:columnId/cards?cursor=&limit=`
+`GET /boards/:boardId/columns/:columnId/cards?cursor=eyJjIjoiLi4uIn0&limit=10`
 
-—and then write down, in actual prose in your doc or spec, **how the cursor behaves** when inserts happen above the user’s window. That sounds pedantic until the frontend and backend quietly disagree about what “next page” means.
+And as the user scrolls, you typically watch a **sentinel** node with `IntersectionObserver` (or debounced scroll) so the next cursor-backed batch loads when the sentinel enters the column viewport.
+
+<IntersectionPaginationDemo />
 
 ### Writes, idempotency, and retries
 
