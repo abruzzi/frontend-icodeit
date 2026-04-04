@@ -9,6 +9,8 @@ import {
   useState,
 } from "react";
 
+import { mdxHastClassString } from "./mdx-hast-classname";
+
 const LINE_HEIGHT_EM = 1.65;
 const CODE_FONT_REM = 0.875;
 
@@ -85,7 +87,11 @@ export function ShikiCodeBlockShell({
   const [copied, setCopied] = useState(false);
 
   const codeEl = findCodeElement(children);
-  const langId = languageIdFromFenceClass(codeEl?.props?.className);
+  const langId = languageIdFromFenceClass(
+    mdxHastClassString(
+      codeEl?.props as { className?: unknown; class?: unknown },
+    ),
+  );
   const label = formatLangLabel(langId);
 
   useLayoutEffect(() => {

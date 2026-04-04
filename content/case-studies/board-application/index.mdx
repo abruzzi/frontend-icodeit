@@ -372,6 +372,10 @@ es.onerror = (error) => {
 };
 ```
 
+One mental model: **one browser tab** performs the REST mutation; **the server** commits it, then **every other tab** that holds an open SSE connection receives a push. The diagram below runs a toy timeline—solid line for the HTTP write, dashed listeners for long-lived streams, then a pulse when the fan-out fires.
+
+<BoardSseBroadcastDemo />
+
 Behind the scenes, all these event related machnism are based on Observer pattern, and you can read the [interactive version of the explanation](https://www.icodeit.com.au/posts/understanding-observer-pattern) in here.
 
 ### Read: board snapshot

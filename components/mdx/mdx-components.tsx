@@ -8,6 +8,7 @@ import { BoardLoadingSkeletonDemo } from "@/components/case-studies/board-applic
 import { IntersectionPaginationDemo } from "@/components/case-studies/board-application/IntersectionPaginationDemo";
 import { BoardNetworkFailureDemo } from "@/components/case-studies/board-application/BoardNetworkFailureDemo";
 import { BoardNormalisationStepperDemo } from "@/components/case-studies/board-application/BoardNormalisationStepperDemo";
+import { BoardSseBroadcastDemo } from "@/components/case-studies/board-application/BoardSseBroadcastDemo";
 import { CcdaoFlowDiagram } from "@/components/explainers/CcdaoFlowDiagram";
 import { FailureModeStepper } from "@/components/explainers/FailureModeStepper";
 import { PaginationMotionDemo } from "@/components/explainers/PaginationMotionDemo";
@@ -37,6 +38,7 @@ export const mdxComponents: MDXComponents = {
   BoardLoadingSkeletonDemo,
   IntersectionPaginationDemo,
   BoardNormalisationStepperDemo,
+  BoardSseBroadcastDemo,
   CcdaoFlowDiagram,
   PaginationMotionDemo,
   TradeoffMatrix,

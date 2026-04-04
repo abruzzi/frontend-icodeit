@@ -10,6 +10,7 @@ import { ChevronRight } from "lucide-react";
 
 import { MDX_JSON_EXPANDED_CLASS } from "@/lib/content/shiki-transformer-mdx-json-expand";
 
+import { mdxHastClassString } from "./mdx-hast-classname";
 import { ShikiCodeBlockShell } from "./ShikiCodeBlockShell";
 
 function findCodeElement(children: ReactNode): ReactElement | null {
@@ -51,24 +52,32 @@ function renderPre(
  * Shiki blocks: toolbar, line numbers, copy. JSON / JSONC: `<details>` by default; add fence meta
  * `expanded`, `expand`, `open`, `inline`, or `show` to render expanded (see `shikiTransformerMdxJsonExpand`).
  */
-export function MdxPre(props: ComponentPropsWithoutRef<"pre">) {
-  const { children, className, ...rest } = props;
+type MdxPreProps = ComponentPropsWithoutRef<"pre"> & { class?: string };
+
+export function MdxPre(props: MdxPreProps) {
+  const { children, className, class: classHast, ...rest } = props;
+  const preClass = mdxHastClassString({ className, class: classHast });
   const codeEl = findCodeElement(children);
-  const isShiki = isShikiPre(className);
+  const codeClass = mdxHastClassString(
+    codeEl?.props as { className?: unknown; class?: unknown },
+  );
+  const isShiki = isShikiPre(preClass);
 
   if (!isShiki) {
     return (
-      <pre className={className} {...rest}>
+      <pre className={preClass || undefined} {...rest}>
         {children}
       </pre>
     );
   }
 
-  const preEl = renderPre({ children, className, ...rest });
-  const isJsonFence =
-    codeEl != null && isJsonLanguageClass(codeEl.props.className);
-  const collapse =
-    isJsonFence && !isJsonExpandedPre(className);
+  const preEl = renderPre({
+    children,
+    className: preClass || undefined,
+    ...rest,
+  });
+  const isJsonFence = codeEl != null && isJsonLanguageClass(codeClass);
+  const collapse = isJsonFence && !isJsonExpandedPre(preClass);
 
   if (collapse) {
     return (
@@ -81,7 +90,7 @@ export function MdxPre(props: ComponentPropsWithoutRef<"pre">) {
             <ChevronRight size={14} strokeWidth={2.25} />
           </span>
           <span className="notranslate rounded-md bg-white/55 px-2 py-0.5 font-mono text-[0.65rem] font-semibold uppercase tracking-wide text-slate-700 shadow-sm shadow-slate-900/[0.06] backdrop-blur-sm dark:bg-slate-900/35 dark:text-slate-200 dark:shadow-none">
-            {/\blanguage-jsonc\b/.test(String(codeEl?.props?.className ?? ""))
+            {/\blanguage-jsonc\b/.test(codeClass)
               ? "JSONC"
               : "JSON"}
           </span>
