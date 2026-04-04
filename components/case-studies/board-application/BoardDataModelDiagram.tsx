@@ -21,6 +21,10 @@ import "@xyflow/react/dist/style.css";
 import { useTheme } from "next-themes";
 import { useCallback, useEffect, useMemo, useState } from "react";
 
+import {
+  BOARD_REACT_FLOW_PANE_OUTER,
+  boardReactFlowPaneDotStyle,
+} from "@/components/case-studies/board-application/board-demo-shared";
 import { ui } from "@/lib/ui";
 
 type ErEntityKind = "board" | "column" | "card" | "user";
@@ -328,18 +332,8 @@ export function BoardDataModelDiagram() {
     [],
   );
 
-  /** Same dot grid as `icodeit-next` FlowDiagram — CSS radial-gradient, not `<Background />`. */
   const paneDotStyle = useMemo(
-    () =>
-      ({
-        backgroundImage: `radial-gradient(circle, ${
-          colorMode === "dark"
-            ? "rgba(148,163,184,0.22)"
-            : "rgba(148,163,184,0.25)"
-        } 1px, transparent 1px)`,
-        backgroundSize: "16px 16px",
-        backgroundPosition: "0 0",
-      }) as const,
+    () => boardReactFlowPaneDotStyle(colorMode === "dark"),
     [colorMode],
   );
 
@@ -354,7 +348,9 @@ export function BoardDataModelDiagram() {
         <strong className="text-slate-800 dark:text-slate-200">0..1 : 1</strong> on the link). Drag entities
         to rearrange; pan the canvas by dragging empty space (or scroll / controls).
       </p>
-      <div className="relative h-[620px] w-full min-h-0 overflow-hidden rounded-xl border border-slate-200/60 bg-slate-50/80 dark:border-slate-600/40 dark:bg-slate-900/40">
+      <div
+        className={`${BOARD_REACT_FLOW_PANE_OUTER} h-[620px] w-full min-h-0`}
+      >
         <div className="pointer-events-none absolute inset-0 z-0" style={paneDotStyle} aria-hidden />
         <ReactFlow
           className="relative z-[1] h-full w-full !bg-transparent"

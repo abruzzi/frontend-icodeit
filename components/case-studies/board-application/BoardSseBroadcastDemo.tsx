@@ -17,6 +17,11 @@ import { Ban, Monitor, Play, Radio, Zap } from "lucide-react";
 import { useTheme } from "next-themes";
 import { useCallback, useEffect, useId, useMemo, useRef, useState } from "react";
 
+import {
+  BOARD_DEMO_OUTLINE_BUTTON,
+  BOARD_REACT_FLOW_PANE_OUTER,
+  boardReactFlowPaneDotStyle,
+} from "@/components/case-studies/board-application/board-demo-shared";
 import { ui } from "@/lib/ui";
 
 type Phase =
@@ -644,18 +649,8 @@ export function BoardSseBroadcastDemo() {
             ? "Listeners show Patched + Active; Client 1 keeps SSE ignored (same tab)."
             : "Done. SSE segments stay perfectly horizontal; POST is the only U-shaped route.";
 
-  /** Same pane + dot grid as `BoardDataModelDiagram` (slate canvas, not zinc). */
   const paneDotStyle = useMemo(
-    () =>
-      ({
-        backgroundImage: `radial-gradient(circle, ${
-          colorMode === "dark"
-            ? "rgba(148,163,184,0.22)"
-            : "rgba(148,163,184,0.25)"
-        } 1px, transparent 1px)`,
-        backgroundSize: "16px 16px",
-        backgroundPosition: "0 0",
-      }) as const,
+    () => boardReactFlowPaneDotStyle(colorMode === "dark"),
     [colorMode],
   );
 
@@ -687,7 +682,7 @@ export function BoardSseBroadcastDemo() {
           type="button"
           onClick={play}
           disabled={sequenceBusy}
-          className="inline-flex shrink-0 items-center gap-1.5 self-start rounded-lg border border-slate-200/90 bg-white px-3 py-2 text-sm font-semibold text-slate-700 shadow-sm transition-colors hover:border-slate-300 hover:bg-slate-50 disabled:pointer-events-none disabled:opacity-50 dark:border-slate-600/60 dark:bg-slate-800/85 dark:text-slate-200 dark:hover:border-slate-500 dark:hover:bg-slate-800"
+          className={BOARD_DEMO_OUTLINE_BUTTON}
         >
           <Play className="h-3.5 w-3.5 opacity-90" aria-hidden />
           Play sequence
@@ -695,7 +690,7 @@ export function BoardSseBroadcastDemo() {
       </div>
 
       <div
-        className="relative h-[min(480px,72vw)] w-full min-h-[400px] overflow-hidden rounded-xl border border-slate-200/60 bg-slate-50/80 dark:border-slate-600/40 dark:bg-slate-900/40"
+        className={`${BOARD_REACT_FLOW_PANE_OUTER} h-[min(480px,72vw)] w-full min-h-[400px]`}
         role="img"
         aria-labelledby={`${titleId}-diagram-title`}
       >

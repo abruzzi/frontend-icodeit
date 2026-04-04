@@ -29,7 +29,7 @@ This guide walks through a <Highlight variant="underline3">kanban-style board</H
 
 We'll focus mainly on **frontend concerns**: how to manage state, how to shape data and APIs, and where things break in production—written for **depth**. You can use it to prepare for a system design interview, but it also helps you develop a feel for how systems are designed and how to make decisions when you have many options.
 
-## Introducing board application
+## Introducing the board application
 
 In practice, a board is a **shared place** where work is represented as **cards** in **columns**. People create and edit cards, and they **move** them—reordering within a lane or jumping across columns. When **several people** share a board, you also have to think about concurrent edits, how moves propagate, and what “correct order” means when two gestures land close together.
 
@@ -350,21 +350,23 @@ What I like to do next is take the operations you already named in **Collect con
 
 ### Transports
 
-**HTTP** is still the spine: load the snapshot, submit mutations, stare at status codes in DevTools without needing a second mental model. When the product truly needs other people to **see** moves without hammering refresh, you add something parallel—usually **WebSocket**, sometimes **SSE** (Server-Sent-Event) —where the server can push “this operation landed” or a small **patch** after the fact.
+**HTTP** is still the spine: load the snapshot, submit mutations, and read status codes in DevTools without needing a second mental model. When the product truly needs other people to **see** moves without hammering refresh, you add something parallel—usually a **WebSocket**, sometimes **server-sent events (SSE)**—where the server can push “this operation landed” or a small **patch** after the fact.
 
-Generally speaking, a periodic refresh with a simple `setInterval` and polling if some status has changed by other user is sufficient. However, in our board application case, that would be not suitable as we don't know whether or when other user would update the board. 
+<Callout tone="note">
+**Server-sent events (SSE)** are a one-way channel from server to browser over HTTP: the client opens a long-lived connection and receives a stream of text events. **WebSockets** are bidirectional—often a better fit when the client must send a high volume of messages to the server. On the web, SSE is exposed as [`EventSource`](https://developer.mozilla.org/en-US/docs/Web/API/EventSource); see MDN on [using server-sent events](https://developer.mozilla.org/en-US/docs/Web/API/Server-sent_events) and the [WebSockets API](https://developer.mozilla.org/en-US/docs/Web/API/WebSockets_API).
+</Callout>
 
-So we'll need to setup a listener and let it callback us. We can do that with either WebSocket or SSE, as in here we don't really want to send event back to server side, we can rely on SSE first.
+Polling on a timer can be enough when changes are rare and latency is loose. For a shared board, you usually do not know **when** another collaborator will change something, so you want a **push** subscription instead of guessing with `setInterval`. If the client mostly **listens** and still uses HTTP for writes, **SSE** is a simple first step; reach for **WebSockets** when you need symmetric, low-latency messaging both ways.
 
 ```ts
 const es = new EventSource(`/api/board/${boardId}/events`);
 
 es.addEventListener("card-assigned", (event) => {
-  //... logic to handle card is assgiend to or unassigned from a user
+  // … handle assignee changes
 });
 
 es.addEventListener("card-updated", (event) => {
-  //... logic to handle card updated event
+  // … handle card field updates
 });
 
 es.onerror = (error) => {
@@ -376,7 +378,7 @@ One mental model: **one browser tab** performs the REST mutation; **the server**
 
 <BoardSseBroadcastDemo />
 
-Behind the scenes, all these event related machnism are based on Observer pattern, and you can read the [interactive version of the explanation](https://www.icodeit.com.au/posts/understanding-observer-pattern) in here.
+Behind the scenes, these push-style APIs line up with the **observer** idea: subscribe once, react when the source emits. For a longer walkthrough (with diagrams), see [Understanding the observer pattern](https://www.icodeit.com.au/posts/understanding-observer-pattern) on this site.
 
 ### Read: board snapshot
 
@@ -411,29 +413,29 @@ I would treat errors with the same care as loading and empty states in **Designi
 }
 ```
 
-Note here the error object come back with the HTTP status like a generic `500` or `429`, you might also want to be more specific on what is actually going on.
+Note that the error **body** should pair with the HTTP status—whether it is a generic `500`, a `429`, or something more specific—so the client can branch on a stable **`code`** instead of parsing English prose.
 
-To summarise a bit here, for a fetch endpoint, we need to think of not only the happy-path with 200 and data returned, but also edge cases like 404, 429, 500 or some gateway timeout cases. 
+For any read endpoint, plan beyond the **`200` + body** path: **`404`** when the resource is missing or hidden, **`429`** under throttle, **`5xx`** and **gateway timeouts** when dependencies fail—each with a shape the UI can branch on. 
 
-If you're in a interview, demonstrate the consideration of these edge cases are a good signal to the interviewers. :smile:
+In an interview, showing that you think about those edge cases—not only `200`—is a strong signal. :smile:
 
 ### Pagination and large columns
 
-Now you have a basic version of the fetching API, let's move on the the next level of the requirement, the scalibility.
+Once the basic fetch contract is clear, the next lens is **scalability**: the happy and unhappy paths are handled, but **volume** forces different tactics.
 
-The scaliblity is another dimision of thinking, it means the basic functiaonlity (include the unhappy paths) are all properly handled, but the amount of data is simiply too much, and we need to plan for these cases.
+**Scale** is a separate dimension from correctness. It assumes core behaviour (including failure modes) is solid, yet the **amount** of data is large enough that loading everything at once stops being acceptable.
 
-If you are somewhere under “a few dozen to low hundreds” of cards, **one round trip** that pulls the whole board is often totally reasonable—I would not paginate for the sake of doing it. However, if you have to working on a project that has hugu backlog: years of cards, a single column that never shrinks (the **Done** column), or many teams sharing one huge surface. Then you want enough to paint the screen quickly, and more as the user scrolls or digs into a lane.
+If you are somewhere under “a few dozen to low hundreds” of cards, **one round trip** that pulls the whole board is often totally reasonable—I would not paginate for the sake of doing it. If you are building for a **huge** backlog—years of cards, a **Done** column that never shrinks, or many teams on one enormous surface—you want enough to paint the screen quickly, then load more as the user scrolls or drills into a lane.
 
-For pagination itself, I'm putting together another interactive explanaiton article on this pattern page, you can check out the details and the trade-offs there there.
+A dedicated interactive note on pagination patterns and trade-offs is planned for the patterns section; until then, the sketch below stays focused on **how** infinite scroll fits a column.
 
 That said, in our particular case in a board application, **Cursor-based** pagination fits better than offset-based pagination as new items might keep landing **at the top** of a column while someone is paging. You might extend the board read with something shaped like:
 
 ```json show
 {
   "data": [
-    {},
-    {},
+    { "id": "card-100", "title": "…" },
+    { "id": "card-101", "title": "…" }
   ],
   "pageInfo": {
     "endCursor": "eyJjIjoiLi4uIn0",
@@ -446,23 +448,27 @@ When **one column** can hold **thousands** of cards, I would seriously consider 
 
 `GET /boards/:boardId/columns/:columnId/cards?cursor=eyJjIjoiLi4uIn0&limit=10`
 
-And as the user scrolls, you typically watch a **sentinel** node with `IntersectionObserver` (or debounced scroll) so the next cursor-backed batch loads when the sentinel enters the column viewport.
+As the user scrolls, you typically watch a **sentinel** node with `IntersectionObserver` (or a debounced scroll handler) so the next cursor-backed batch loads when the sentinel enters the column viewport.
+
+<Callout tone="note">
+[`IntersectionObserver`](https://developer.mozilla.org/en-US/docs/Web/API/Intersection_Observer_API) tells you when an element enters or leaves a root region (often the scrollable column or the viewport). It is a common, battery-friendlier alternative to firing on every `scroll` event when you only need “has the user reached the bottom?”.
+</Callout>
 
 <IntersectionPaginationDemo />
 
 ### Writes, idempotency, and retries
 
-Reads are socially cheap and easily to implement; **writes**, on the other hand, are where you discover you were never alone in the system—other users, and your own **double submits**, flaky Wi‑Fi, multiple tabs, and all the ways a response can vanish after the server already committed.
+Reads are socially cheap and easy to implement; **writes**, on the other hand, are where you discover you were never alone in the system—other users, your own **double submits**, flaky Wi‑Fi, multiple tabs, and all the ways a response can vanish after the server already committed.
 
-You will need to consider conflicts, things like you're editing an item that others also are about to change, or even deleted by others. You'll need strategies to handle such cases. In most cases, these operations are not what engineers to decide, but more a product question to ask.
+You still need a story for **conflicts**: editing something someone else is changing, or acting on a row another client already deleted. Those resolutions are often **product** decisions first; engineering implements the contract you agree on.
 
-Let's start with the simplest case, where one user commited a change, and then found the network failed to response (even the backend has done the change into database), so he has to retry the action. Now that's a valid change and we don't want to treat it as a failure, as the user's intent was to save the change (which has already done).
+Start with the simplest case: a user **commits** a change, the network drops before the response arrives (even though the server already persisted), and they **retry** the same action. That retry is still the **same intent**—you do not want a duplicate irreversible effect just because the acknowledgement was lost.
 
 <Callout tone="note">
 **Idempotency** is the promise that the **same logical action**, retried, does not become **two** irreversible effects. If I save a title twice, I still want one sensible outcome; if I delete a card someone else already removed, I want a **predictable** response—`200` with no-op, `204`, whatever you pick—more than I want a theatrical error.
 </Callout>
 
-These are mainly the backend concerns rather than frontend, but it might makes more sense to disable the action temporarily to avoid mutiple retries before the server responses.
+Idempotency is mainly a **backend** contract, but the UI can still **disable** or debounce a control until an in-flight mutation settles so you are not spamming retries before the first response returns.
 
 Let's now talk about the **move card** operation in our board application. There are many cases for such seemingly simple operation:
 
@@ -470,7 +476,7 @@ Let's now talk about the **move card** operation in our board application. There
 - move card into a empty column
 - move card into another column that has card already
 
-Usually we want to maintain the position, for the detailed explanation we'll dicuss in the next section. Let's stick with the simiplest solution for now, use a integer as position. 
+We still care about **stable ordering**; the next section goes deeper. For now, stick with the simplest mental model: an **integer `position`** per card within a column. 
 
 For example, there are 5 cards in column "To do", and we want to move the bottom one to the second.
 
@@ -513,7 +519,7 @@ PATCH /api/cards/card-5
 }
 ```
 
-I'm just showing a example here to demonstrate a seemingly simple operation might be not as simple. That applies to other application as well, these domain specific challenge are the critical part of the system design, the core algorithm, and when you do well it can make your application much more efficient that your competitors.
+This is only an example to show how a seemingly simple gesture can imply a lot of server work. That applies to other application as well, these domain specific challenge are the critical part of the system design, the core algorithm, and when you do well it can make your application much more efficient that your competitors.
 
 <WorkingInProgress
   href="https://juntao.substack.com/"
@@ -585,7 +591,11 @@ For learning, **explicit index + server normalizes** is enough; optimize when pr
 
 ### LexoRank: easy to hand-wave until it hurts
 
-**LexoRank** is Atlassian’s open, battle-tested take on fractional / lexicographic ordering—Jira boards are the usual reference implementation people point to. Conceptually it is still “a string sort key between neighbors,” but the **details** (how you bucket, rebalance when strings get too long, and keep inserts cheap under concurrency) are where toy implementations diverge from production.
+<Callout tone="note">
+**LexoRank** is Atlassian’s **lexicographic rank** scheme for keeping ordered lists cheap to insert under load (fewer rows rewritten than naive integer positions). The [LexoRank reference implementation](https://bitbucket.org/atlassian/lexorank/src/main/) and Jira’s behaviour are the usual production anchors—not something you must memorize in an interview, but useful when **write amplification** shows up.
+</Callout>
+
+Conceptually it is still “a string sort key between neighbors,” but the **details** (how you bucket, rebalance when strings get too long, and keep inserts cheap under concurrency) are where toy implementations diverge from production.
 
 Teams often **start with integer `position`**, ship, and only later notice **write amplification** (many rows touched on one insert), **hot spots** in the index, or painful **migrations** when two clients resolve “move after card X” differently under load. LexoRank is the pattern many mature products adopt **before** those fires; it is also easy to **skip in interviews and greenfield code** because “just use an index” sounds sufficient until scale and collaboration show up.
 

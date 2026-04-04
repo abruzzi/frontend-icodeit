@@ -1,5 +1,9 @@
 "use client";
 
+import {
+  BOARD_DEMO_OUTLINE_BUTTON,
+  BOARD_DEMO_SCROLL_STAGE_OUTER,
+} from "@/components/case-studies/board-application/board-demo-shared";
 import { ui } from "@/lib/ui";
 import { LayoutGrid, Loader2, RotateCcw } from "lucide-react";
 import { useCallback, useEffect, useId, useRef, useState } from "react";
@@ -164,7 +168,7 @@ export function IntersectionPaginationDemo() {
         <button
           type="button"
           onClick={resetDemo}
-          className="inline-flex shrink-0 items-center justify-center gap-1.5 self-start rounded-lg border border-slate-200/90 bg-white px-3 py-2 text-sm font-semibold text-slate-700 shadow-sm transition-colors hover:border-slate-300 hover:bg-slate-50 dark:border-slate-600/60 dark:bg-slate-800/85 dark:text-slate-200 dark:hover:border-slate-500 dark:hover:bg-slate-800"
+          className={BOARD_DEMO_OUTLINE_BUTTON}
         >
           <RotateCcw className="h-3.5 w-3.5 opacity-80" aria-hidden />
           Reset
@@ -172,18 +176,18 @@ export function IntersectionPaginationDemo() {
       </div>
 
       <div
-        className="relative rounded-xl border border-slate-200/90 bg-slate-100/70 dark:border-slate-600/50 dark:bg-slate-900/50"
+        className={BOARD_DEMO_SCROLL_STAGE_OUTER}
         aria-labelledby={`${uid}-caption`}
       >
         <p id={`${uid}-caption`} className="sr-only">
           Scrollable column demonstrating infinite scroll with IntersectionObserver
         </p>
         <div
-          className="pointer-events-none absolute inset-x-0 top-0 z-10 h-10 rounded-t-xl bg-gradient-to-b from-slate-100/95 from-30% to-transparent dark:from-slate-900/90"
+          className="pointer-events-none absolute inset-x-0 top-0 z-10 h-10 rounded-t-xl bg-gradient-to-b from-slate-50/95 from-30% to-transparent dark:from-slate-900/90"
           aria-hidden
         />
         <div
-          className="pointer-events-none absolute inset-x-0 bottom-0 z-10 h-12 rounded-b-xl bg-gradient-to-t from-slate-100/95 from-25% to-transparent dark:from-slate-900/90"
+          className="pointer-events-none absolute inset-x-0 bottom-0 z-10 h-12 rounded-b-xl bg-gradient-to-t from-slate-50/95 from-25% to-transparent dark:from-slate-900/90"
           aria-hidden
         />
 
