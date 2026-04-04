@@ -452,20 +452,68 @@ And as the user scrolls, you typically watch a **sentinel** node with `Intersect
 
 ### Writes, idempotency, and retries
 
-Reads are socially cheap; **writes** are where you discover you were never alone in the system—other users, and your own **double submits**, flaky Wi‑Fi, tab sleep, and all the ways a response can vanish after the server already committed. **Idempotency** is the promise that the **same logical action**, retried, does not become **two** irreversible effects. If I save a title twice, I still want one sensible outcome; if I delete a card someone else already removed, I want a **predictable** response—`200` with no-op, `204`, whatever you pick—more than I want a theatrical error.
+Reads are socially cheap and easily to implement; **writes**, on the other hand, are where you discover you were never alone in the system—other users, and your own **double submits**, flaky Wi‑Fi, multiple tabs, and all the ways a response can vanish after the server already committed.
 
-A **resource-style** move is still a good teaching shape:
+You will need to consider conflicts, things like you're editing an item that others also are about to change, or even deleted by others. You'll need strategies to handle such cases. In most cases, these operations are not what engineers to decide, but more a product question to ask.
 
-`PATCH /cards/:cardId`
+Let's start with the simplest case, where one user commited a change, and then found the network failed to response (even the backend has done the change into database), so he has to retry the action. Now that's a valid change and we don't want to treat it as a failure, as the user's intent was to save the change (which has already done).
+
+<Callout tone="note">
+**Idempotency** is the promise that the **same logical action**, retried, does not become **two** irreversible effects. If I save a title twice, I still want one sensible outcome; if I delete a card someone else already removed, I want a **predictable** response—`200` with no-op, `204`, whatever you pick—more than I want a theatrical error.
+</Callout>
+
+These are mainly the backend concerns rather than frontend, but it might makes more sense to disable the action temporarily to avoid mutiple retries before the server responses.
+
+Let's now talk about the **move card** operation in our board application. There are many cases for such seemingly simple operation:
+
+- move card inside a column (drag one to the top)
+- move card into a empty column
+- move card into another column that has card already
+
+Usually we want to maintain the position, for the detailed explanation we'll dicuss in the next section. Let's stick with the simiplest solution for now, use a integer as position. 
+
+For example, there are 5 cards in column "To do", and we want to move the bottom one to the second.
+
+Let's say the position now is 
 
 ```json show
 {
-  "columnId": "col-2",
-  "afterCardId": null
+  "cards": [
+    { "id": "card-1", "position": 1},
+    { "id": "card-2", "position": 2},
+    { "id": "card-3", "position": 3},
+    { "id": "card-4", "position": 4},
+    { "id": "card-5", "position": 5},
+  ]
 }
 ```
 
-It is easy to explain to product and easy to mock—but the failure mode that actually hurts is not the happy path; it is the request that **succeeded on the server** and whose response **never came back**, so you still want a **client-generated id** or an **`Idempotency-Key`** before you call that “done.”
+And we want it to be:
+
+```jsonc show
+{
+  "cards": [
+    { "id": "card-1", "position": 1},
+    { "id": "card-5", "position": 2}, //here is the card-5
+    { "id": "card-2", "position": 3},
+    { "id": "card-3", "position": 4},
+    { "id": "card-4", "position": 5},
+  ]
+}
+```
+
+As you have noticed, to make this change, we'll need to update all the cards after "card-1", the worst case will be we send out 5 update requests to the backend and hope for the best.
+
+```
+PATCH /api/cards/card-5
+
+{
+  "position": 2,
+  "columnId": "col-1"
+}
+```
+
+I'm just showing a example here to demonstrate a seemingly simple operation might be not as simple. That applies to other application as well, these domain specific challenge are the critical part of the system design, the core algorithm, and when you do well it can make your application much more efficient that your competitors.
 
 <WorkingInProgress
   href="https://juntao.substack.com/"
@@ -484,11 +532,11 @@ On boards I usually push people past “PATCH three fields” and toward an **op
   "cardId": "card-1",
   "fromColumnId": "col-1",
   "toColumnId": "col-2",
-  "afterCardId": "card-2" // or toIndex: 3 — pick one convention and stick to it
+  "afterCardId": "card-2"
 }
 ```
 
-**`operationId`** is the one you **reuse** when the user retries the **same gesture**—not a fresh UUID every time the transport blinks. **`afterCardId`** (or an index; pick **one** story and be honest about the trade-off) carries **intent**; the server is allowed to **adjust** if the neighbour card moved, and it should return enough **truth**—final order, **version**—that the client is not guessing in the dark.
+**`operationId`** is the one you **reuse** when the user retries the **same gesture**—not a fresh UUID every time the action is triggered. **`afterCardId`** carries **intent**; the server is allowed to **adjust** if the neighbour card moved, and it should return enough **truth**—final order, **version**—that the client is not guessing in the dark.
 
 `POST /boards/:boardId/operations` with `Idempotency-Key: <operationId>` (or uniqueness enforced on `operationId` in the body) is boring on purpose; boring is what saves you at 2 a.m.
 
