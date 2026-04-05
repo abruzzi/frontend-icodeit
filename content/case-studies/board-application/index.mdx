@@ -576,6 +576,8 @@ The most direct approach is a numeric **position** per item: `1, 2, 3, 4, 5`. Re
 
 Now drag the **last** item **between** the first and the second. Its new position becomes `2`, so the old `2` becomes `3`, then `4`, then `5`—**cascade reindexing**. With five items you might touch four rows; with **five thousand** you might touch **4,999**. The logic is correct; the problem is **scalability**: write cost grows **linearly** with list size. That can be fine for small surfaces; in large, collaborative boards it is usually unacceptable.
 
+<BoardCascadeReindexDemo />
+
 ### Sparse indexing (gaps between numbers)
 
 A common mitigation is to **stop using consecutive integers**. Store something like `1000, 2000, 3000, 4000, 5000`. To insert between `1000` and `2000`, assign a value in the gap—e.g. `1500`—and **only one row** changes. No full cascade.
