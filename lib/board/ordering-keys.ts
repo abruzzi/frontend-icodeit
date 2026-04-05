@@ -1,10 +1,24 @@
 /**
  * Tiny helpers for board ordering demos (lex keys + sparse integers).
  * Lex keys use the fractional-indexing scheme so prefix cases (e.g. `a0` vs `a1`)
- * and “between neighbours” stay well-defined — see fractional-indexing on npm.
+ * stay well-defined. The Lex demo maps those starter keys to labels `a`…`e` in the UI.
  */
 
 import { generateKeyBetween } from "fractional-indexing";
+
+/**
+ * Comparator for fractional-index keys — must match the library’s use of JavaScript
+ * string order (`<` / `>`), not `localeCompare` (which can reorder e.g. `a000EV` vs `a000El`).
+ */
+export function compareFractionalIndexKeys(a: string, b: string): number {
+  if (a < b) {
+    return -1;
+  }
+  if (a > b) {
+    return 1;
+  }
+  return 0;
+}
 
 /**
  * New key strictly between two valid fractional-index keys (`lower < upper`).

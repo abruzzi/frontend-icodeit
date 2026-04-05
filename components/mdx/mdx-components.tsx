@@ -23,38 +23,41 @@ import { CourseFaqSection } from "@/components/courses/course-faq-section";
 import { FsdeCaseStudyCourseCard } from "@/components/courses/fsde-case-study-promo-card";
 import { CoursePricingCompact } from "@/components/courses/course-pricing-compact";
 import { Callout } from "./Callout";
+import { withDemoErrorBoundary } from "./with-demo-error-boundary";
 import { Highlight } from "./Highlight";
 import { MdxPre } from "./MdxPre";
 import { TestingRubric } from "./TestingRubric";
 import { Token } from "./Token";
 import { WorkingInProgress } from "./WorkingInProgress";
 
+const wrap = withDemoErrorBoundary;
+
 export const mdxComponents: MDXComponents = {
-  CourseCurriculumStoryline,
-  CourseFaqSection,
-  CoursePricingCompact,
-  FsdeCaseStudyCourseCard,
-  BoardCascadeReindexDemo,
-  BoardLexRankDemo,
-  BoardSparseGapDemo,
-  BoardDataModelDiagram,
-  BoardDndDemo,
-  BoardEmptyStateDemo,
-  BoardNetworkFailureDemo,
-  BoardLoadingSkeletonDemo,
-  IntersectionPaginationDemo,
-  BoardNormalisationStepperDemo,
-  BoardSseBroadcastDemo,
-  CcdaoFlowDiagram,
-  PaginationMotionDemo,
-  TradeoffMatrix,
-  ProtocolChooser,
-  FailureModeStepper,
-  TestingRubric,
-  Callout,
-  Highlight,
-  Token,
-  WorkingInProgress,
+  CourseCurriculumStoryline: wrap(CourseCurriculumStoryline, "Course curriculum"),
+  CourseFaqSection: wrap(CourseFaqSection, "Course FAQ"),
+  CoursePricingCompact: wrap(CoursePricingCompact, "Course pricing"),
+  FsdeCaseStudyCourseCard: wrap(FsdeCaseStudyCourseCard, "Course promo card"),
+  BoardCascadeReindexDemo: wrap(BoardCascadeReindexDemo, "Cascade reindex demo"),
+  BoardLexRankDemo: wrap(BoardLexRankDemo, "Lex rank ordering demo"),
+  BoardSparseGapDemo: wrap(BoardSparseGapDemo, "Sparse integer ranks demo"),
+  BoardDataModelDiagram: wrap(BoardDataModelDiagram, "Board data model diagram"),
+  BoardDndDemo: wrap(BoardDndDemo, "Board drag and drop demo"),
+  BoardEmptyStateDemo: wrap(BoardEmptyStateDemo, "Board empty state demo"),
+  BoardNetworkFailureDemo: wrap(BoardNetworkFailureDemo, "Board network failure demo"),
+  BoardLoadingSkeletonDemo: wrap(BoardLoadingSkeletonDemo, "Board loading skeleton demo"),
+  IntersectionPaginationDemo: wrap(IntersectionPaginationDemo, "Intersection pagination demo"),
+  BoardNormalisationStepperDemo: wrap(BoardNormalisationStepperDemo, "Board normalisation demo"),
+  BoardSseBroadcastDemo: wrap(BoardSseBroadcastDemo, "Board live updates demo"),
+  CcdaoFlowDiagram: wrap(CcdaoFlowDiagram, "CCDAO flow diagram"),
+  PaginationMotionDemo: wrap(PaginationMotionDemo, "Pagination motion demo"),
+  TradeoffMatrix: wrap(TradeoffMatrix, "Tradeoff matrix"),
+  ProtocolChooser: wrap(ProtocolChooser, "Protocol chooser"),
+  FailureModeStepper: wrap(FailureModeStepper, "Failure mode stepper"),
+  TestingRubric: wrap(TestingRubric, "Testing rubric"),
+  Callout: wrap(Callout, "Callout"),
+  Highlight: wrap(Highlight, "Highlight"),
+  Token: wrap(Token, "Token"),
+  WorkingInProgress: wrap(WorkingInProgress, "Working in progress notice"),
   pre: MdxPre,
   // Bullet lists: icon marker + `.mdx-icon-li-marker` offset in `globals.css` (uses `lh`, not `line-height: 1`).
   ul: ({ className, ...props }) => {

@@ -368,7 +368,11 @@ export function BoardSparseGapDemo() {
       <code className="rounded bg-slate-100/90 px-1 font-mono text-[0.8em] dark:bg-slate-800/90">2000</code>
       )—you should land on a single midpoint (e.g.{" "}
       <code className="rounded bg-slate-100/90 px-1 font-mono text-[0.8em] dark:bg-slate-800/90">1500</code>
-      ). Keep splitting the same gap until no integer fits to see the exhaustion message.
+      ). Moving Card 4 between Card 2 and Card 3 only changes Card 4 (e.g. to{" "}
+      <code className="rounded bg-slate-100/90 px-1 font-mono text-[0.8em] dark:bg-slate-800/90">2500</code>
+      )—Card 5 stays at{" "}
+      <code className="rounded bg-slate-100/90 px-1 font-mono text-[0.8em] dark:bg-slate-800/90">5000</code> because the list order is still valid.
+      Keep splitting the same gap until no integer fits to see the exhaustion message.
     </span>
   );
 

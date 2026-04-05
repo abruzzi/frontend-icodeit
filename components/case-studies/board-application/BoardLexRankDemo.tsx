@@ -15,6 +15,7 @@ import {
   BOARD_DEMO_SCROLL_STAGE_OUTER,
 } from "@/components/case-studies/board-application/board-demo-shared";
 import {
+  compareFractionalIndexKeys,
   lexRankAfter,
   lexRankBeforeFirst,
   lexRankBetween,
@@ -40,8 +41,19 @@ type LexCard = {
   rank: string;
 };
 
-/** Valid fractional-index keys (`a0`…`a4`); bare `a` is invalid in this scheme. */
-const INITIAL: LexCard[] = generateNKeysBetween(null, null, 5).map((rank, i) => ({
+/** Underlying order keys from fractional-indexing (bare `a` is invalid in that scheme). */
+const INITIAL_RANKS = generateNKeysBetween(null, null, 5);
+
+/** Friendly default labels for the starter keys only (`a0`→`a`, …, `a4`→`e`). */
+const LEX_STARTER_LABEL: Record<string, string> = Object.fromEntries(
+  INITIAL_RANKS.map((rank, i) => [rank, String.fromCharCode(97 + i)]),
+);
+
+function lexPosDisplay(rank: string): string {
+  return LEX_STARTER_LABEL[rank] ?? rank;
+}
+
+const INITIAL: LexCard[] = INITIAL_RANKS.map((rank, i) => ({
   id: `lx-${i + 1}`,
   label: `Card ${i + 1}`,
   rank,
@@ -50,7 +62,7 @@ const INITIAL: LexCard[] = generateNKeysBetween(null, null, 5).map((rank, i) => 
 const FLASH_MS = 2400;
 
 function sortByRank(list: LexCard[]): LexCard[] {
-  return [...list].sort((x, y) => x.rank.localeCompare(y.rank));
+  return [...list].sort((x, y) => compareFractionalIndexKeys(x.rank, y.rank));
 }
 
 function isCardPayload(data: Record<string, unknown>): data is CardPayload {
@@ -173,7 +185,7 @@ function LexCardRow({
       />
       <span className="min-w-[3.25rem] font-mono text-xs tabular-nums text-slate-500 dark:text-slate-400">
         pos{" "}
-        <span className="font-medium text-slate-700 dark:text-slate-200">{card.rank}</span>
+        <span className="font-medium text-slate-700 dark:text-slate-200">{lexPosDisplay(card.rank)}</span>
       </span>
       <span className="min-w-0 flex-1 truncate font-medium tracking-tight">
         {card.label}
@@ -318,11 +330,11 @@ export function BoardLexRankDemo() {
     ) : (
       <span>
         Try dragging <strong className="font-semibold text-slate-700 dark:text-slate-200">Card 5</strong> (
-        <code className="rounded bg-slate-100/90 px-1 font-mono text-[0.8em] dark:bg-slate-800/90">pos a4</code>
+        <code className="rounded bg-slate-100/90 px-1 font-mono text-[0.8em] dark:bg-slate-800/90">pos e</code>
         ) before <strong className="font-semibold text-slate-700 dark:text-slate-200">Card 2</strong> (
-        <code className="rounded bg-slate-100/90 px-1 font-mono text-[0.8em] dark:bg-slate-800/90">pos a1</code>
-        )—its new neighbours are <code className="rounded bg-slate-100/90 px-1 font-mono text-[0.8em] dark:bg-slate-800/90">a0</code> and{" "}
-        <code className="rounded bg-slate-100/90 px-1 font-mono text-[0.8em] dark:bg-slate-800/90">a1</code>, so it gets a fresh{" "}
+        <code className="rounded bg-slate-100/90 px-1 font-mono text-[0.8em] dark:bg-slate-800/90">pos b</code>
+        )—its new neighbours sort as <code className="rounded bg-slate-100/90 px-1 font-mono text-[0.8em] dark:bg-slate-800/90">a</code> and{" "}
+        <code className="rounded bg-slate-100/90 px-1 font-mono text-[0.8em] dark:bg-slate-800/90">b</code>, so it gets a fresh{" "}
         <code className="rounded bg-slate-100/90 px-1 font-mono text-[0.8em] dark:bg-slate-800/90">0–9a–z</code> key strictly between them (this demo uses{" "}
         <a
           href="https://www.npmjs.com/package/fractional-indexing"
@@ -330,7 +342,8 @@ export function BoardLexRankDemo() {
         >
           fractional-indexing
         </a>
-        ; e.g. <code className="rounded bg-slate-100/90 px-1 font-mono text-[0.8em] dark:bg-slate-800/90">a0V</code>
+        ; you may see the raw string, e.g.{" "}
+        <code className="rounded bg-slate-100/90 px-1 font-mono text-[0.8em] dark:bg-slate-800/90">a0V</code>
         ).
       </span>
     );
@@ -347,9 +360,9 @@ export function BoardLexRankDemo() {
           </p>
           <p className="text-sm leading-relaxed text-slate-600 dark:text-slate-400">
             Sort order follows string <code className="rounded bg-slate-100/90 px-1 py-0.5 font-mono text-[0.8em] dark:bg-slate-800/90">pos</code>{" "}
-            keys (<code className="rounded bg-slate-100/90 px-1 font-mono text-[0.75em] dark:bg-slate-800/90">a0…a4</code>
-            ). Moving an item assigns a new key <strong className="font-medium text-slate-700 dark:text-slate-200">between</strong> its new
-            neighbours—only that card&apos;s row changes.
+            keys (<code className="rounded bg-slate-100/90 px-1 font-mono text-[0.75em] dark:bg-slate-800/90">a…e</code>{" "}
+            for the starter ranks; subdivided keys show the full string). Moving an item assigns a new key{" "}
+            <strong className="font-medium text-slate-700 dark:text-slate-200">between</strong> its new neighbours—only that card&apos;s row changes.
           </p>
         </div>
         <button type="button" onClick={reset} className={BOARD_DEMO_OUTLINE_BUTTON}>

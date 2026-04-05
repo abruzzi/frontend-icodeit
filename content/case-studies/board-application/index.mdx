@@ -592,7 +592,7 @@ The catch is **local exhaustion**. A common tactic is to keep picking a value **
 
 Integers, even spaced out, still live in a **finite** space per gap. Another step is to grow the **ordering space** itself: use **strings** as rank keys and compare them in **lexicographic** (dictionary) order.
 
-A typical alphabet is **base36** (`0–9`, `a–z`): each character has 36 values, and a rank is a string built from that alphabet. Real implementations use a **well-formed** key space (the interactive demo below uses [fractional-indexing](https://www.npmjs.com/package/fractional-indexing) keys like `"a0"`, `"a1"`) so string order stays consistent when keys have different lengths—naive single-letter examples (`"a"`, `"b"`) skip that detail. To insert between two neighbours, pick a string **between** them lexicographically instead of squeezing another integer into a gap.
+A typical alphabet is **base36** (`0–9`, `a–z`): each character has 36 values, and a rank is a string built from that alphabet. Real implementations use a **well-formed** key space (the interactive demo below uses [fractional-indexing](https://www.npmjs.com/package/fractional-indexing) under the hood and shows the starter ranks as **`a`–`e`**) so string order stays consistent when keys have different lengths—naive single-letter examples alone skip that detail. To insert between two neighbours, pick a string **between** them lexicographically instead of squeezing another integer into a gap.
 
 <BoardLexRankDemo />
 
