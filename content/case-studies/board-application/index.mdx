@@ -450,7 +450,7 @@ When **one column** can hold **thousands** of cards, I would seriously consider 
 
 As the user scrolls, you typically watch a **sentinel** node with `IntersectionObserver` (or a debounced scroll handler) so the next cursor-backed batch loads when the sentinel enters the column viewport.
 
-<Callout tone="note">
+<Callout tone="aside">
 [`IntersectionObserver`](https://developer.mozilla.org/en-US/docs/Web/API/Intersection_Observer_API) tells you when an element enters or leaves a root region (often the scrollable column or the viewport). It is a common, battery-friendlier alternative to firing on every `scroll` event when you only need “has the user reached the bottom?”.
 </Callout>
 
@@ -563,7 +563,6 @@ On **Success (200 OK)**, the server returns the new `version` (or seq) of the bo
 
 On **Conflict (409 Conflict)**, the server rejects the intent because the "world moved" while the user was dragging (e.g., the `afterCardId` was deleted). Instead of a generic error, the 409 response should carry the current server truth for that column. This allows the client to perform a smart reconciliation: it can roll back the optimistic move or "re-base" the card to a valid position without forcing the user to refresh the entire page.
 
-
 ## Optimization strategies
 
 Optimisation on a board is a wide topic; **ordering** is the piece that usually becomes expensive first. We already touched moves and positions in **API design**—here we zoom in on *how* you store order so one drag does not rewrite half the database.
@@ -608,7 +607,7 @@ In the demo, starter ranks are labelled **`a`–`e`**; the real stored values lo
 
 As rank strings **grow**, the space of possible keys grows quickly; **rebalance** is still needed when a region gets tight or keys get unwieldy—Jira’s buckets exist partly for that. The demo does not model bucket migration or server-side conflict policy.
 
-<Callout tone="note">
+<Callout tone="aside">
 **Production LexoRank** adds rules this article skips (buckets, concurrent edits, segment rebalance policy). **Alternative algorithms** for ordered lists include **fractional indexing** ([Figma article](https://www.figma.com/blog/realtime-editing-of-ordered-sequences/)) and libraries such as [`fractional-indexing`](https://www.npmjs.com/package/fractional-indexing). A **LexoRank for card ordering** pattern card is on [Patterns](/patterns/lexorank-card-ordering).
 </Callout>
 
@@ -636,10 +635,21 @@ The trade-off is familiar: **simpler storage** versus **ranking machinery** in e
 
 ## Performance, reliability, and accessibility
 
-- **Drag performance**: prefer **transform**-based dragging and avoid **layout thrash**; virtualize columns only when profiling proves you need it.
-- **Realtime bursts**: **batch** UI updates per animation frame; dedupe by `operationId`.
-- **Keyboard**: explicit **move to column** / **move up-down** commands; **roving tabindex** inside the board; **announce** column changes for screen readers.
-- **Retries**: exponential backoff on **5xx** / network; never assign a **new** `operationId` for the **same user gesture**.
+### Deep dive: Realtime bursts & state reconciliation
+
+**Why:** On a collaborative board, if several people are moving cards at once, the frontend can **jitter**: it tries to apply every WebSocket message as it lands—sometimes many per second—and the DOM never gets a stable frame.
+
+**Recommendation — requestAnimationFrame (rAF) batching:** The UI does **not** have to paint on every inbound message. Instead, **gather** updates in a short-lived buffer (per column, per board, or keyed by concern) and **flush once per visual tick** inside **`requestAnimationFrame`**. That way multiple logical updates collapse into **one layout pass** for that frame, which cuts **layout thrash** and makes motion feel calm. Combine that with **deduping** by `operationId` (or equivalent) so retries and duplicates do not double-apply the same intent.
+
+### Brief: Drag performance
+
+Senior engineers usually already know **`transform: translate3d`** (compositor-friendly) versus animating **`top` / `left`** (layout). Keep this section short: profile first, then optimize. For the mechanics of read/write interleaving, see Web.dev on [**layout thrashing**](https://web.dev/articles/avoid-large-complex-layouts-and-layout-thrashing/); for motion-library ergonomics and performance notes, see [**Framer Motion** documentation](https://www.framer.com/motion/).
+
+### Deep dive: Keyboard & accessibility (the “move menu” pattern)
+
+**Why:** Boards are **notoriously hard** for screen readers and keyboard-only users. Treating “make drag accessible” as the primary plan often yields fragile UX.
+
+**Recommendation — action menu over accessible drag:** Prefer an **action menu** (sometimes called a **move menu**): e.g. focus a card and press **`M`** (or use a **⋯** menu) to open **“Move to…”** — a dialog or list of columns with clear labels. The user confirms a **destination**; the app sends the same **move operation** the pointer path would have triggered. That pattern is **more reliable** than exposing drag-and-drop as the main accessible path. Still add **roving tabindex** within the board, **live region** announcements when focus or column context changes, and **retries** with exponential backoff on **5xx** / network—**never** mint a **new** `operationId` for the **same** user gesture.
 
 ## Trade-offs (when you evolve past the first slice)
 
@@ -649,13 +659,27 @@ The trade-off is familiar: **simpler storage** versus **ranking machinery** in e
 | Transport | Poll + refetch | WebSocket push | Sub-second multi-user updates |
 | Optimism | Wait for server | Optimistic + rollback | Drag-and-drop UX expectations |
 | Column size | Load all cards | Paginate in column | Very large backlogs |
+| **Data fetching** | **Thin records** — IDs + minimal metadata | **Fat records** — full card body, labels, avatars | **Offline-first** apps or **low-latency** column paint where fewer round-trips beat slim payloads |
 
-## Common failure modes
+## Common failure modes (expert section)
 
-- **Duplicate cards** after a retry → **idempotency** on `operationId` + server dedupe.
-- **Corrupt order** after tab sleep → **resync** from `version` / `seq`, not patch stacking forever.
-- **Ghost moves** (UI shows move, server never got it) → **pending** timeout + user-visible retry or revert.
-- **Accessibility gaps** → treat keyboard and SR as **v1**, not a later pass.
+- **Ghost moves** — The UI shows a move, but the server never persisted it.  
+  **Solution:** A **pending timeout**. If the operation is not **acked** within a bounded window (e.g. **5–10 seconds**), **snap the card back** to its pre-move position and surface a **Retry** toast (or inline action). Pair with **idempotency** on `operationId` so a retry does not create duplicates.
+
+- **The “double-jump” bug** — Two users move the **same** card to the **same** column at nearly the same time.  
+  **Solution:** The **server is the serializing authority**. The first operation to commit wins; the second should get a **`409 Conflict`** (or equivalent) carrying **authoritative board state** so the client **reconciles** local UI instead of guessing.
+
+- **Duplicate cards after a retry** — Same gesture retried with a **new** idempotency key.  
+  **Solution:** Stable **`operationId`** per user gesture + **server-side dedupe** on that key.
+
+- **Corrupt order after tab sleep** — A classic **senior-level** failure: the laptop sleeps, the **WebSocket** drops, hours pass, and local state is **stale** while the user still sees an old board.  
+  **Solution — resync on reconnect:** When the socket is healthy again, the client must not only **listen** for new events. It should ask: **“What is the current `version` / `seq`?”** If the server is more than **`X` revisions** ahead (your threshold is product-specific), **discard** the local replica for that scope and **refetch** the affected column or full board—then replay or drop queued ops under a clear policy. **Patch stacking forever** without a version check is how order silently diverges.
+
+- **Accessibility gaps** — Treat **keyboard + screen reader** paths as **v1**, not a polish pass after launch.
+
+<Callout tone="aside">
+In a board application, treat the **client as a database cache**. Your local state layer (Redux, Zustand, TanStack Query’s cache, etc.) is not just a bag of UI flags—it is a **replica** of the server’s truth. Every operation—**pending**, **succeeded**, or **failed**—is a **transaction** against that replica; reconciliation and retries should preserve that mental model.
+</Callout>
 
 ## Testing
 
@@ -666,6 +690,9 @@ The trade-off is familiar: **simpler storage** versus **ranking machinery** in e
 - **Steel threads** (thin vertical slice, integration from day one): [Jade Rubick — *Steel threads are a technique that will make you a better engineer*](https://www.rubick.com/steel-threads/).
 - CCDAO framing and more scenarios: [juntao.substack.com](https://juntao.substack.com).
 - **LexoRank (Jira):** [*Reordering Lists at Scale*](https://www.youtube.com/watch?v=Z6c7txCqsu8), [Atlassian source](https://bitbucket.org/atlassian/lexorank/src/main/), [LexoRank for card ordering](/patterns/lexorank-card-ordering). **Demo library:** [`@dalet-oss/lexorank`](https://www.npmjs.com/package/@dalet-oss/lexorank). **Other ordered-list approaches:** [Figma — *Realtime editing of ordered sequences*](https://www.figma.com/blog/realtime-editing-of-ordered-sequences/) (fractional indexing); [Greenspan — *Implementing fractional indexing*](https://observablehq.com/@dgreensp/implementing-fractional-indexing); [`fractional-indexing` (npm)](https://www.npmjs.com/package/fractional-indexing).
-- As this series grows, **optimistic UI**, **realtime transport**, and **a11y for dynamic UIs** will get dedicated pattern pages tied back to this board walkthrough.
+- **Local-first & CRDTs** — If you outgrow “apply operations in order” and want **automatic merging** and offline edits, explore [**Automerge**](https://automerge.org/) and [**Yjs**](https://yjs.dev/) as representative **CRDT** stacks (different trade-offs than OT or server-serialized moves).
+- **Pragmatic drag and drop (this walkthrough’s stack)** — The board demos use Atlassian’s [**Pragmatic drag and drop**](https://atlassian.design/components/pragmatic-drag-and-drop/) ([`@atlaskit/pragmatic-drag-and-drop`](https://www.npmjs.com/package/@atlaskit/pragmatic-drag-and-drop), [GitHub](https://github.com/atlassian/pragmatic-drag-and-drop)). For **accessibility**, their docs are explicit that **pointer drag alone is not enough**: pair it with visible controls (**buttons**, **menus**) that achieve the **same outcomes**, then **confirm what happened** and keep the user unblocked—see [**Accessibility guidelines**](https://atlassian.design/components/pragmatic-drag-and-drop/accessibility-guidelines) and the broader [**Design guidelines**](https://atlassian.design/components/pragmatic-drag-and-drop/design-guidelines) for how they expect experiences to be structured.
+
+As this series grows, **optimistic UI**, **realtime transport**, and **a11y for dynamic UIs** will get dedicated pattern pages tied back to this board walkthrough.
 
 </WorkingInProgress>

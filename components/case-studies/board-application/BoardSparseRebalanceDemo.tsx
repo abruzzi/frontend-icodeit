@@ -100,7 +100,7 @@ export function BoardSparseRebalanceDemo() {
             className={REBALANCE_PRIMARY_BUTTON}
           >
             <Sparkles className="h-3.5 w-3.5 opacity-90" aria-hidden />
-            Rebalance segment
+            Rebalance
           </button>
           <button type="button" onClick={reset} className={BOARD_DEMO_OUTLINE_BUTTON}>
             <RotateCcw className="h-3.5 w-3.5 opacity-80" aria-hidden />
