@@ -6,6 +6,7 @@ import {
   monitorForElements,
 } from "@atlaskit/pragmatic-drag-and-drop/element/adapter";
 import { GripVertical, RotateCcw } from "lucide-react";
+import { generateKeyBetween, generateNKeysBetween } from "fractional-indexing";
 import { Fragment, useCallback, useEffect, useId, useRef, useState } from "react";
 
 import { BoardOrderingInsertLine } from "@/components/case-studies/board-application/BoardOrderingInsertLine";
@@ -13,12 +14,16 @@ import {
   BOARD_DEMO_OUTLINE_BUTTON,
   BOARD_DEMO_SCROLL_STAGE_OUTER,
 } from "@/components/case-studies/board-application/board-demo-shared";
+import {
+  lexRankAfter,
+  lexRankBeforeFirst,
+  lexRankBetween,
+} from "@/lib/board/ordering-keys";
 import { ui } from "@/lib/ui";
 
-const DRAG_TYPE = "cascade-reindex-card" as const;
-const DROP_TYPE = "cascade-reindex-drop" as const;
+const DRAG_TYPE = "lex-rank-card" as const;
+const DROP_TYPE = "lex-rank-drop" as const;
 
-/** `beforeId === null` means append at end of column. */
 type DropPayload = {
   type: typeof DROP_TYPE;
   beforeId: string | null;
@@ -29,20 +34,24 @@ type CardPayload = {
   cardId: string;
 };
 
-type Card = {
+type LexCard = {
   id: string;
   label: string;
+  rank: string;
 };
 
-const INITIAL_CARDS: Card[] = [
-  { id: "cr-1", label: "Card 1" },
-  { id: "cr-2", label: "Card 2" },
-  { id: "cr-3", label: "Card 3" },
-  { id: "cr-4", label: "Card 4" },
-  { id: "cr-5", label: "Card 5" },
-];
+/** Valid fractional-index keys (`a0`…`a4`); bare `a` is invalid in this scheme. */
+const INITIAL: LexCard[] = generateNKeysBetween(null, null, 5).map((rank, i) => ({
+  id: `lx-${i + 1}`,
+  label: `Card ${i + 1}`,
+  rank,
+}));
 
 const FLASH_MS = 2400;
+
+function sortByRank(list: LexCard[]): LexCard[] {
+  return [...list].sort((x, y) => x.rank.localeCompare(y.rank));
+}
 
 function isCardPayload(data: Record<string, unknown>): data is CardPayload {
   return data.type === DRAG_TYPE && typeof data.cardId === "string";
@@ -55,61 +64,66 @@ function isDropPayload(data: Record<string, unknown>): data is DropPayload {
   );
 }
 
-/** Immutable insert — avoids mutating React state in place. */
-function insertBeforeImmutable(
-  list: Card[],
-  dragId: string,
-  beforeId: string | null,
-): Card[] {
-  if (beforeId !== null && beforeId === dragId) {
-    return list;
-  }
-  const dragIdx = list.findIndex((c) => c.id === dragId);
-  if (dragIdx === -1) {
-    return list;
-  }
-  const item = list[dragIdx];
-  const without = list.filter((c) => c.id !== dragId);
-  if (beforeId === null) {
-    return [...without, item];
-  }
-  const ins = without.findIndex((c) => c.id === beforeId);
-  if (ins === -1) {
-    return list;
-  }
-  return [...without.slice(0, ins), item, ...without.slice(ins)];
-}
-
-/** Where the dragged card would land if released now. */
 type InsertPreview =
   | { mode: "before"; beforeId: string }
   | { mode: "append" };
 
-function impactedIds(prev: Card[], next: Card[]): Set<string> {
-  const prevIds = prev.map((c) => c.id);
-  const nextIds = next.map((c) => c.id);
-  if (prevIds.join(",") === nextIds.join(",")) {
-    return new Set();
+function applyLexDrop(
+  cards: LexCard[],
+  dragId: string,
+  beforeId: string | null,
+): { next: LexCard[]; flashIds: Set<string> } {
+  const sorted = sortByRank(cards);
+  const moved = sorted.find((c) => c.id === dragId);
+  if (!moved) {
+    return { next: cards, flashIds: new Set() };
   }
-  const out = new Set<string>();
-  const universe = new Set([...prevIds, ...nextIds]);
-  for (const id of universe) {
-    const pi = prevIds.indexOf(id);
-    const ni = nextIds.indexOf(id);
-    if (pi !== ni) {
-      out.add(id);
+  const rest = sorted.filter((c) => c.id !== dragId);
+
+  let leftRank: string | null = null;
+  let rightRank: string | null = null;
+
+  if (beforeId === null) {
+    if (rest.length === 0) {
+      return { next: cards, flashIds: new Set() };
     }
+    leftRank = rest[rest.length - 1]!.rank;
+    rightRank = null;
+  } else {
+    const idx = rest.findIndex((c) => c.id === beforeId);
+    if (idx === -1) {
+      return { next: cards, flashIds: new Set() };
+    }
+    rightRank = rest[idx]!.rank;
+    leftRank = idx > 0 ? rest[idx - 1]!.rank : null;
   }
-  return out;
+
+  let newRank: string;
+  if (leftRank !== null && rightRank !== null) {
+    newRank = lexRankBetween(leftRank, rightRank);
+  } else if (leftRank !== null) {
+    newRank = lexRankAfter(leftRank);
+  } else if (rightRank !== null) {
+    newRank = lexRankBeforeFirst(rightRank);
+  } else {
+    newRank = generateKeyBetween(null, null);
+  }
+
+  if (newRank === moved.rank) {
+    return { next: cards, flashIds: new Set() };
+  }
+
+  const next = cards.map((c) =>
+    c.id === dragId ? { ...c, rank: newRank } : c,
+  );
+  return { next, flashIds: new Set([dragId]) };
 }
 
-function CascadeCardRow({
+function LexCardRow({
   card,
-  positionOneBased,
   flashing,
 }: {
-  card: Card;
-  positionOneBased: number;
+  card: LexCard;
   flashing: boolean;
 }) {
   const ref = useRef<HTMLDivElement | null>(null);
@@ -157,8 +171,9 @@ function CascadeCardRow({
         aria-hidden
         strokeWidth={2.25}
       />
-      <span className="min-w-[2.75rem] font-mono text-xs tabular-nums text-slate-500 dark:text-slate-400">
-        pos {positionOneBased}
+      <span className="min-w-[3.25rem] font-mono text-xs tabular-nums text-slate-500 dark:text-slate-400">
+        pos{" "}
+        <span className="font-medium text-slate-700 dark:text-slate-200">{card.rank}</span>
       </span>
       <span className="min-w-0 flex-1 truncate font-medium tracking-tight">
         {card.label}
@@ -167,7 +182,7 @@ function CascadeCardRow({
   );
 }
 
-function AppendDropZone({ previewAppend }: { previewAppend: boolean }) {
+function LexAppendZone({ previewAppend }: { previewAppend: boolean }) {
   const ref = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
@@ -200,12 +215,14 @@ function AppendDropZone({ previewAppend }: { previewAppend: boolean }) {
   );
 }
 
-export function BoardCascadeReindexDemo() {
+export function BoardLexRankDemo() {
   const uid = useId();
-  const [cards, setCards] = useState<Card[]>(() => [...INITIAL_CARDS]);
+  const [cards, setCards] = useState<LexCard[]>(() => [...INITIAL]);
   const [flashing, setFlashing] = useState<Set<string>>(() => new Set());
   const [insertPreview, setInsertPreview] = useState<InsertPreview | null>(null);
   const flashTimerRef = useRef<number | null>(null);
+
+  const displayCards = sortByRank(cards);
 
   const clearFlashTimer = useCallback(() => {
     if (flashTimerRef.current != null) {
@@ -236,9 +253,7 @@ export function BoardCascadeReindexDemo() {
   useEffect(() => {
     return monitorForElements({
       canMonitor: ({ source }) => isCardPayload(source.data),
-      onDragStart: () => {
-        setInsertPreview(null);
-      },
+      onDragStart: () => setInsertPreview(null),
       onDropTargetChange: ({ source, location }) => {
         const src = source.data;
         if (!isCardPayload(src)) {
@@ -273,16 +288,11 @@ export function BoardCascadeReindexDemo() {
           return;
         }
         setCards((prev) => {
-          const next = insertBeforeImmutable(prev, src.cardId, d.beforeId);
-          const prevKey = prev.map((c) => c.id).join();
-          const nextKey = next.map((c) => c.id).join();
-          if (prevKey === nextKey) {
+          const { next, flashIds } = applyLexDrop(prev, src.cardId, d.beforeId);
+          if (flashIds.size === 0) {
             return prev;
           }
-          const hit = impactedIds(prev, next);
-          if (hit.size > 0) {
-            queueMicrotask(() => scheduleFlash(hit));
-          }
+          queueMicrotask(() => scheduleFlash(flashIds));
           return next;
         });
       },
@@ -293,52 +303,53 @@ export function BoardCascadeReindexDemo() {
     clearFlashTimer();
     setFlashing(new Set());
     setInsertPreview(null);
-    setCards([...INITIAL_CARDS]);
+    setCards([...INITIAL]);
   }, [clearFlashTimer]);
 
   const statusText =
     flashing.size > 0 ? (
       <span>
-        <span className="font-semibold text-slate-700 dark:text-slate-200">
-          {flashing.size}
-        </span>{" "}
-        {"card"}
-        {flashing.size === 1 ? "" : "s"} would rewrite{" "}
+        Only the moved card gets a new{" "}
         <code className="rounded bg-slate-100/90 px-1 py-0.5 font-mono text-[0.85em] dark:bg-slate-800/90">
-          position
+          pos
         </code>{" "}
-        in a dense integer model (highlighted).
+        key (highlighted)—neighbours keep theirs.
       </span>
     ) : (
       <span>
-        Try dragging{" "}
-        <strong className="font-semibold text-slate-700 dark:text-slate-200">Card 5</strong> onto{" "}
-        <strong className="font-semibold text-slate-700 dark:text-slate-200">Card 2</strong>
-        {" — "}
-        every card whose slot changes flashes red briefly.
+        Try dragging <strong className="font-semibold text-slate-700 dark:text-slate-200">Card 5</strong> (
+        <code className="rounded bg-slate-100/90 px-1 font-mono text-[0.8em] dark:bg-slate-800/90">pos a4</code>
+        ) before <strong className="font-semibold text-slate-700 dark:text-slate-200">Card 2</strong> (
+        <code className="rounded bg-slate-100/90 px-1 font-mono text-[0.8em] dark:bg-slate-800/90">pos a1</code>
+        )—its new neighbours are <code className="rounded bg-slate-100/90 px-1 font-mono text-[0.8em] dark:bg-slate-800/90">a0</code> and{" "}
+        <code className="rounded bg-slate-100/90 px-1 font-mono text-[0.8em] dark:bg-slate-800/90">a1</code>, so it gets a fresh{" "}
+        <code className="rounded bg-slate-100/90 px-1 font-mono text-[0.8em] dark:bg-slate-800/90">0–9a–z</code> key strictly between them (this demo uses{" "}
+        <a
+          href="https://www.npmjs.com/package/fractional-indexing"
+          className="font-medium text-slate-700 underline decoration-slate-400/70 underline-offset-2 hover:text-slate-900 dark:text-slate-200 dark:hover:text-white"
+        >
+          fractional-indexing
+        </a>
+        ; e.g. <code className="rounded bg-slate-100/90 px-1 font-mono text-[0.8em] dark:bg-slate-800/90">a0V</code>
+        ).
       </span>
     );
 
   return (
     <div
       className={`${ui.caseStudyDemoShell} p-4 sm:p-6`}
-      data-board-cascade-reindex-demo
+      data-board-lex-rank-demo
     >
       <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
         <div className="min-w-0">
           <p className="mb-1 text-base font-medium text-slate-800 dark:text-slate-100">
-            Naive integer positions — cascade reindex
+            Lexicographic rank keys — one row update
           </p>
           <p className="text-sm leading-relaxed text-slate-600 dark:text-slate-400">
-            One narrow column, five cards. Positions are implicit in sort order (like{" "}
-            <code className="rounded bg-slate-100/90 px-1 py-0.5 font-mono text-[0.8em] dark:bg-slate-800/90">
-              1…5
-            </code>
-            ). After a drop, any card that moved to a new slot is highlighted—what a naive per-row{" "}
-            <code className="rounded bg-slate-100/90 px-1 py-0.5 font-mono text-[0.8em] dark:bg-slate-800/90">
-              position
-            </code>{" "}
-            update would touch.
+            Sort order follows string <code className="rounded bg-slate-100/90 px-1 py-0.5 font-mono text-[0.8em] dark:bg-slate-800/90">pos</code>{" "}
+            keys (<code className="rounded bg-slate-100/90 px-1 font-mono text-[0.75em] dark:bg-slate-800/90">a0…a4</code>
+            ). Moving an item assigns a new key <strong className="font-medium text-slate-700 dark:text-slate-200">between</strong> its new
+            neighbours—only that card&apos;s row changes.
           </p>
         </div>
         <button type="button" onClick={reset} className={BOARD_DEMO_OUTLINE_BUTTON}>
@@ -348,11 +359,11 @@ export function BoardCascadeReindexDemo() {
       </div>
 
       <div
-        className={`${BOARD_DEMO_SCROLL_STAGE_OUTER} mx-auto w-full max-w-[240px] px-3 py-4 sm:max-w-[260px]`}
+        className={`${BOARD_DEMO_SCROLL_STAGE_OUTER} mx-auto w-full max-w-[240px] px-3 py-4 sm:max-w-[280px]`}
         aria-labelledby={`${uid}-caption`}
       >
         <p id={`${uid}-caption`} className="sr-only">
-          Single column with five draggable cards; dropped order shows naive position rewrites
+          Lexicographic rank ordering demo with drag and drop
         </p>
         <div className="pointer-events-none absolute inset-x-0 top-0 z-10 h-8 rounded-t-xl bg-gradient-to-b from-slate-50/95 from-25% to-transparent dark:from-slate-900/90" />
         <div className="pointer-events-none absolute inset-x-0 bottom-0 z-10 h-8 rounded-b-xl bg-gradient-to-t from-slate-50/95 from-25% to-transparent dark:from-slate-900/90" />
@@ -361,20 +372,16 @@ export function BoardCascadeReindexDemo() {
           <p className="mb-1 text-center text-[0.65rem] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
             To do
           </p>
-          {cards.map((card, idx) => (
+          {displayCards.map((card) => (
             <Fragment key={card.id}>
               {insertPreview?.mode === "before" && insertPreview.beforeId === card.id ? (
                 <BoardOrderingInsertLine />
               ) : null}
-              <CascadeCardRow
-                card={card}
-                positionOneBased={idx + 1}
-                flashing={flashing.has(card.id)}
-              />
+              <LexCardRow card={card} flashing={flashing.has(card.id)} />
             </Fragment>
           ))}
           {insertPreview?.mode === "append" ? <BoardOrderingInsertLine /> : null}
-          <AppendDropZone previewAppend={insertPreview?.mode === "append"} />
+          <LexAppendZone previewAppend={insertPreview?.mode === "append"} />
         </div>
       </div>
 

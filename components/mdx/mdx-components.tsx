@@ -2,6 +2,8 @@ import type { MDXComponents } from "mdx/types";
 import type { CSSProperties } from "react";
 
 import { BoardCascadeReindexDemo } from "@/components/case-studies/board-application/BoardCascadeReindexDemo";
+import { BoardLexRankDemo } from "@/components/case-studies/board-application/BoardLexRankDemo";
+import { BoardSparseGapDemo } from "@/components/case-studies/board-application/BoardSparseGapDemo";
 import { BoardDataModelDiagram } from "@/components/case-studies/board-application/BoardDataModelDiagram";
 import { BoardDndDemo } from "@/components/case-studies/board-application/BoardDndDemo";
 import { BoardEmptyStateDemo } from "@/components/case-studies/board-application/BoardEmptyStateDemo";
@@ -33,6 +35,8 @@ export const mdxComponents: MDXComponents = {
   CoursePricingCompact,
   FsdeCaseStudyCourseCard,
   BoardCascadeReindexDemo,
+  BoardLexRankDemo,
+  BoardSparseGapDemo,
   BoardDataModelDiagram,
   BoardDndDemo,
   BoardEmptyStateDemo,

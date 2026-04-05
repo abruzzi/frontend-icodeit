@@ -584,13 +584,17 @@ A common mitigation is to **stop using consecutive integers**. Store something l
 
 This is often called **sparse indexing** or **gap-based** ordering: leave room so future inserts stay cheap. Many real systems stop here and do well.
 
-The catch is **local exhaustion**. If users keep inserting in the same neighbourhood you eventually get `1000, 1500, 1501, 1502…` until **no integer sits between two neighbours**. Then you **rebalance** that segment—e.g. spread back to `1000, 2000, 3000, 4000`—which is a **batch update**. Frequent hot spots mean frequent rebalancing, so you are trading cascades on every move for **periodic** segment work.
+The catch is **local exhaustion**. A common tactic is to keep picking a value **between** two neighbours—often the integer **midpoint**: between `1000` and `2000` you might use `1500`, then between `1000` and `1500` you get `1250`, then `1125`, and so on. In one busy stretch the ranks look like `1000, …, 1125, 1250, 1500, …, 2000` rather than a long run of `+1` steps. **Integers are still discrete**, so after enough inserts in the same gap **two neighbours become consecutive** (e.g. `1500` and `1501`) and there is **no** integer strictly **between** them anymore. Then you **rebalance** that segment—e.g. spread back to `1000, 2000, 3000, 4000`—which is a **batch update**. Frequent hot spots mean frequent rebalancing, so you are trading cascades on every move for **periodic** segment work.
+
+<BoardSparseGapDemo />
 
 ### String-based ranking (LexoRank)
 
 Integers, even spaced out, still live in a **finite** space per gap. Another step is to grow the **ordering space** itself: use **strings** as rank keys and compare them in **lexicographic** (dictionary) order.
 
-A typical alphabet is **base36** (`0–9`, `a–z`): each character has 36 values, and a rank is a string built from that alphabet. Example ranks: `"a"`, `"b"`, `"c"`. To insert between `"a"` and `"b"`, pick a string **between** them lexicographically—e.g. `"am"`—instead of squeezing another integer between two neighbours.
+A typical alphabet is **base36** (`0–9`, `a–z`): each character has 36 values, and a rank is a string built from that alphabet. Real implementations use a **well-formed** key space (the interactive demo below uses [fractional-indexing](https://www.npmjs.com/package/fractional-indexing) keys like `"a0"`, `"a1"`) so string order stays consistent when keys have different lengths—naive single-letter examples (`"a"`, `"b"`) skip that detail. To insert between two neighbours, pick a string **between** them lexicographically instead of squeezing another integer into a gap.
+
+<BoardLexRankDemo />
 
 As strings **grow in length**, the number of possible ranks grows roughly like **36^length**, so the space expands **fast**. Inserts stay **one write** most of the time; **rebalance** becomes rare compared with sparse integers—though it does not disappear.
 
