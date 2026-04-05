@@ -4,6 +4,7 @@ import type { CSSProperties } from "react";
 import { BoardCascadeReindexDemo } from "@/components/case-studies/board-application/BoardCascadeReindexDemo";
 import { BoardLexRankDemo } from "@/components/case-studies/board-application/BoardLexRankDemo";
 import { BoardSparseGapDemo } from "@/components/case-studies/board-application/BoardSparseGapDemo";
+import { BoardSparseRebalanceDemo } from "@/components/case-studies/board-application/BoardSparseRebalanceDemo";
 import { BoardDataModelDiagram } from "@/components/case-studies/board-application/BoardDataModelDiagram";
 import { BoardDndDemo } from "@/components/case-studies/board-application/BoardDndDemo";
 import { BoardEmptyStateDemo } from "@/components/case-studies/board-application/BoardEmptyStateDemo";
@@ -38,8 +39,9 @@ export const mdxComponents: MDXComponents = {
   CoursePricingCompact: wrap(CoursePricingCompact, "Course pricing"),
   FsdeCaseStudyCourseCard: wrap(FsdeCaseStudyCourseCard, "Course promo card"),
   BoardCascadeReindexDemo: wrap(BoardCascadeReindexDemo, "Cascade reindex demo"),
-  BoardLexRankDemo: wrap(BoardLexRankDemo, "Lex rank ordering demo"),
+  BoardLexRankDemo: wrap(BoardLexRankDemo, "LexoRank ordering demo"),
   BoardSparseGapDemo: wrap(BoardSparseGapDemo, "Sparse integer ranks demo"),
+  BoardSparseRebalanceDemo: wrap(BoardSparseRebalanceDemo, "Sparse segment rebalance demo"),
   BoardDataModelDiagram: wrap(BoardDataModelDiagram, "Board data model diagram"),
   BoardDndDemo: wrap(BoardDndDemo, "Board drag and drop demo"),
   BoardEmptyStateDemo: wrap(BoardEmptyStateDemo, "Board empty state demo"),

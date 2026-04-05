@@ -1,40 +1,39 @@
 /**
- * Tiny helpers for board ordering demos (lex keys + sparse integers).
- * Lex keys use the fractional-indexing scheme so prefix cases (e.g. `a0` vs `a1`)
- * stay well-defined. The Lex demo maps those starter keys to labels `a`…`e` in the UI.
+ * Helpers for board ordering demos: LexoRank-style string keys (see {@link lexoRankBetween})
+ * and sparse integers.
  */
 
-import { generateKeyBetween } from "fractional-indexing";
+import { LexoRank } from "@dalet-oss/lexorank";
 
-/**
- * Comparator for fractional-index keys — must match the library’s use of JavaScript
- * string order (`<` / `>`), not `localeCompare` (which can reorder e.g. `a000EV` vs `a000El`).
- */
-export function compareFractionalIndexKeys(a: string, b: string): number {
-  if (a < b) {
-    return -1;
-  }
-  if (a > b) {
-    return 1;
-  }
-  return 0;
+/** `count` evenly spaced LexoRank strings from middle toward max (typical starter list). */
+export function initialLexoRankKeys(count: number): string[] {
+  const mid = LexoRank.middle();
+  return mid.multipleBetween(LexoRank.max(), count).map((r) => r.toString());
 }
 
-/**
- * New key strictly between two valid fractional-index keys (`lower < upper`).
- */
-export function lexRankBetween(lower: string, upper: string): string {
-  return generateKeyBetween(lower, upper);
+/** Comparator for LexoRank strings (matches Jira-style lexicographic order). */
+export function compareLexoRankKeys(a: string, b: string): number {
+  return LexoRank.parse(a).compareTo(LexoRank.parse(b));
+}
+
+/** New key strictly between two LexoRanks (`left < right`). */
+export function lexoRankBetween(left: string, right: string): string {
+  return LexoRank.parse(left).between(LexoRank.parse(right)).toString();
 }
 
 /** New key after `last` (append at end of sorted list). */
-export function lexRankAfter(last: string): string {
-  return generateKeyBetween(last, null);
+export function lexoRankAfter(last: string): string {
+  return LexoRank.parse(last).genNext().toString();
 }
 
 /** New key before `first` (insert at start). */
-export function lexRankBeforeFirst(first: string): string {
-  return generateKeyBetween(null, first);
+export function lexoRankBeforeFirst(first: string): string {
+  return LexoRank.min().between(LexoRank.parse(first)).toString();
+}
+
+/** Fallback when no neighbours exist (should be rare in the demo). */
+export function lexoRankMiddle(): string {
+  return LexoRank.middle().toString();
 }
 
 /** Integer strictly between `lo` and `hi`, or `null` if none exists. */
@@ -52,4 +51,9 @@ export function intMidpointExclusive(lo: number, hi: number): number | null {
 /** Next rank after the last item when using fixed steps (sparse baseline). */
 export function intSparseAfterLast(last: number, step: number): number {
   return last + step;
+}
+
+/** `count` evenly spaced ranks starting at `start`, stepping by `step` (typical post-rebalance slice). */
+export function evenlySpacedRanks(count: number, start: number, step: number): number[] {
+  return Array.from({ length: count }, (_, i) => start + i * step);
 }

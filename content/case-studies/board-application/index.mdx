@@ -374,7 +374,7 @@ es.onerror = (error) => {
 };
 ```
 
-One mental model: **one browser tab** performs the REST mutation; **the server** commits it, then **every other tab** that holds an open SSE connection receives a push. The diagram below runs a toy timeline—solid line for the HTTP write, dashed listeners for long-lived streams, then a pulse when the fan-out fires.
+One mental model: **one browser tab** performs the REST mutation; **the server** commits it, then **every other tab** that holds an open SSE connection receives a push. The diagram below runs a simplified timeline—solid line for the HTTP write, dashed listeners for long-lived streams, then a pulse when the fan-out fires.
 
 <BoardSseBroadcastDemo />
 
@@ -588,27 +588,35 @@ The catch is **local exhaustion**. A common tactic is to keep picking a value **
 
 <BoardSparseGapDemo />
 
-### String-based ranking (LexoRank)
+The gap demo lets you **subdivide** until a midpoint no longer exists. When neighbours are **consecutive** integers, the usual fix is a **segment rebalance**: rewrite every rank in that slice in one batch so gaps are wide again—same card order, multiple `pos` updates.
 
-Integers, even spaced out, still live in a **finite** space per gap. Another step is to grow the **ordering space** itself: use **strings** as rank keys and compare them in **lexicographic** (dictionary) order.
+<BoardSparseRebalanceDemo />
 
-A typical alphabet is **base36** (`0–9`, `a–z`): each character has 36 values, and a rank is a string built from that alphabet. Real implementations use a **well-formed** key space (the interactive demo below uses [fractional-indexing](https://www.npmjs.com/package/fractional-indexing) under the hood and shows the starter ranks as **`a`–`e`**) so string order stays consistent when keys have different lengths—naive single-letter examples alone skip that detail. To insert between two neighbours, pick a string **between** them lexicographically instead of squeezing another integer into a gap.
+### LexoRank-style string keys (demo)
+
+Integers, even spaced out, still live in a **finite** space per gap. Another step is to grow the **ordering space** itself: store a **lexicographic rank string** per item (often with a **bucket** prefix and a variable-length fractional part), sort by plain string order, and assign a new token **between** two neighbours when something moves—usually **one row update**, like sparse integers, but with much more headroom before you must rebalance.
+
+**LexoRank** is the name most people know from **Jira**: Atlassian’s concrete format, **three buckets** for large rebalance moves, concurrency rules, and production hardening. The canonical references are their [LexoRank source](https://bitbucket.org/atlassian/lexorank/src/main/) and [*Reordering Lists at Scale (Without Breaking Everything)*](https://www.youtube.com/watch?v=Z6c7txCqsu8).
+
+The interactive demo below uses **[`@dalet-oss/lexorank`](https://www.npmjs.com/package/@dalet-oss/lexorank)**—an open-source **LexoRank-style** TypeScript implementation (fork of the older `lexorank-ts` project). It follows the same **idea** as Jira’s approach (lexicographic keys, `between` / `genNext`-style operations); it is **not** Atlassian’s shipping binary, so treat it as **educational**, not a compatibility guarantee.
+
+For contrast, **other products chose different encodings** for the same underlying problem (ordered sequences under concurrency). Figma, for example, describes **fractional indexing** with arbitrary-precision fractions kept as strings—see [Realtime editing of ordered sequences](https://www.figma.com/blog/realtime-editing-of-ordered-sequences/). Same goal—cheap inserts, sortable keys—**different algorithm and string shape**. [Rocicorp’s `fractional-indexing`](https://www.npmjs.com/package/fractional-indexing) (Greenspan’s [Observable note](https://observablehq.com/@dgreensp/implementing-fractional-indexing)) is another popular string-key generator in that family.
+
+In the demo, starter ranks are labelled **`a`–`e`**; the real stored values look like **`0|…:`** (bucket, body, sentinel). After you subdivide, the full string is shown.
 
 <BoardLexRankDemo />
 
-As strings **grow in length**, the number of possible ranks grows roughly like **36^length**, so the space expands **fast**. Inserts stay **one write** most of the time; **rebalance** becomes rare compared with sparse integers—though it does not disappear.
-
-This family of techniques is widely associated with the name **LexoRank** (lexicographic **rank** keys). The label matters less than the principle: **exponentially larger** ordering space so ordinary inserts rarely force a global rewrite.
+As rank strings **grow**, the space of possible keys grows quickly; **rebalance** is still needed when a region gets tight or keys get unwieldy—Jira’s buckets exist partly for that. The demo does not model bucket migration or server-side conflict policy.
 
 <Callout tone="note">
-**LexoRank** in production (Jira-style boards) adds bucketing, concurrency rules, and rebalance policies that toy examples skip. The [Atlassian LexoRank reference implementation](https://bitbucket.org/atlassian/lexorank/src/main/) and [*Reordering Lists at Scale (Without Breaking Everything)*](https://www.youtube.com/watch?v=Z6c7txCqsu8) are the usual deep dives. A focused **LexoRank for card ordering** pattern card is also listed on [Patterns](/patterns).
+**Production LexoRank** adds rules this article skips (buckets, concurrent edits, segment rebalance policy). **Alternative algorithms** for ordered lists include **fractional indexing** ([Figma article](https://www.figma.com/blog/realtime-editing-of-ordered-sequences/)) and libraries such as [`fractional-indexing`](https://www.npmjs.com/package/fractional-indexing). A **LexoRank for card ordering** pattern card is on [Patterns](/patterns/lexorank-card-ordering).
 </Callout>
 
-### When strings get crowded
+### When LexoRank strings get crowded
 
-Even with lexicographic ranks, a **local** region can still get tight—neighbours like `"aa"`, `"ab"` with no convenient midpoint under your constraints. Then you **rebalance that segment** only: assign a fresh set of evenly spaced string ranks (the exact tokens are implementation detail; the **intent** is to open room again with a bounded batch of updates).
+A **local** region can still run out of comfortable midpoints—neighbours too close under the numeral rules, or strings longer than you want. Then you **rebalance that segment** (in Jira, often involving **bucket** moves): assign a fresh spread of ranks in a bounded batch. The exact mechanics are implementation-specific; the **intent** is to open room again without rewriting the whole board.
 
-Compared with sparse integers, string rebalancing tends to hit **less often** and stay **local**, because base36 strings buy a much larger space before you need it.
+Compared with sparse integers, LexoRank-style strings usually buy **more inserts** before that pain, but they do not remove rebalance entirely.
 
 ### System design takeaway
 
@@ -616,7 +624,7 @@ From a system perspective this is not a party trick—it is **write amplificatio
 
 - **Dense integers** — simplest, but **cascade reindexing** hurts at scale.  
 - **Sparse integers** — fewer writes per insert, but **gaps close** and **rebalance** returns.  
-- **Lexicographic / LexoRank-style strings** — more logic in client and server, but **most moves stay O(1) writes** and rebalance is comparatively rare.
+- **LexoRank-style strings** (this demo: **`@dalet-oss/lexorank`**) — more logic in client and server, but **most moves stay O(1) writes** and rebalance is comparatively rare. **Other** string-key schemes (e.g. **fractional indexing** in [Figma’s write-up](https://www.figma.com/blog/realtime-editing-of-ordered-sequences/)) trade different details on interleaving, key length, and implementation cost.
 
 The trade-off is familiar: **simpler storage** versus **ranking machinery** in exchange for **scalability** when lists and collaboration grow.
 
@@ -657,7 +665,7 @@ The trade-off is familiar: **simpler storage** versus **ranking machinery** in e
 
 - **Steel threads** (thin vertical slice, integration from day one): [Jade Rubick — *Steel threads are a technique that will make you a better engineer*](https://www.rubick.com/steel-threads/).
 - CCDAO framing and more scenarios: [juntao.substack.com](https://juntao.substack.com).
-- **LexoRank** (ordering at scale): [YouTube walkthrough](https://www.youtube.com/watch?v=Z6c7txCqsu8), [Atlassian LexoRank source](https://bitbucket.org/atlassian/lexorank/src/main/), and the **LexoRank for card ordering** pattern card on [Patterns](/patterns).
+- **LexoRank (Jira):** [*Reordering Lists at Scale*](https://www.youtube.com/watch?v=Z6c7txCqsu8), [Atlassian source](https://bitbucket.org/atlassian/lexorank/src/main/), [LexoRank for card ordering](/patterns/lexorank-card-ordering). **Demo library:** [`@dalet-oss/lexorank`](https://www.npmjs.com/package/@dalet-oss/lexorank). **Other ordered-list approaches:** [Figma — *Realtime editing of ordered sequences*](https://www.figma.com/blog/realtime-editing-of-ordered-sequences/) (fractional indexing); [Greenspan — *Implementing fractional indexing*](https://observablehq.com/@dgreensp/implementing-fractional-indexing); [`fractional-indexing` (npm)](https://www.npmjs.com/package/fractional-indexing).
 - As this series grows, **optimistic UI**, **realtime transport**, and **a11y for dynamic UIs** will get dedicated pattern pages tied back to this board walkthrough.
 
 </WorkingInProgress>

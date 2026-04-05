@@ -6,7 +6,6 @@ import {
   monitorForElements,
 } from "@atlaskit/pragmatic-drag-and-drop/element/adapter";
 import { GripVertical, RotateCcw } from "lucide-react";
-import { generateKeyBetween, generateNKeysBetween } from "fractional-indexing";
 import { Fragment, useCallback, useEffect, useId, useRef, useState } from "react";
 
 import { BoardOrderingInsertLine } from "@/components/case-studies/board-application/BoardOrderingInsertLine";
@@ -15,15 +14,17 @@ import {
   BOARD_DEMO_SCROLL_STAGE_OUTER,
 } from "@/components/case-studies/board-application/board-demo-shared";
 import {
-  compareFractionalIndexKeys,
-  lexRankAfter,
-  lexRankBeforeFirst,
-  lexRankBetween,
+  compareLexoRankKeys,
+  initialLexoRankKeys,
+  lexoRankAfter,
+  lexoRankBeforeFirst,
+  lexoRankBetween,
+  lexoRankMiddle,
 } from "@/lib/board/ordering-keys";
 import { ui } from "@/lib/ui";
 
-const DRAG_TYPE = "lex-rank-card" as const;
-const DROP_TYPE = "lex-rank-drop" as const;
+const DRAG_TYPE = "lexo-rank-card" as const;
+const DROP_TYPE = "lexo-rank-drop" as const;
 
 type DropPayload = {
   type: typeof DROP_TYPE;
@@ -41,10 +42,9 @@ type LexCard = {
   rank: string;
 };
 
-/** Underlying order keys from fractional-indexing (bare `a` is invalid in that scheme). */
-const INITIAL_RANKS = generateNKeysBetween(null, null, 5);
+const INITIAL_RANKS = initialLexoRankKeys(5);
 
-/** Friendly default labels for the starter keys only (`a0`→`a`, …, `a4`→`e`). */
+/** Friendly labels for the five starter keys only (`a`–`e`). */
 const LEX_STARTER_LABEL: Record<string, string> = Object.fromEntries(
   INITIAL_RANKS.map((rank, i) => [rank, String.fromCharCode(97 + i)]),
 );
@@ -62,7 +62,7 @@ const INITIAL: LexCard[] = INITIAL_RANKS.map((rank, i) => ({
 const FLASH_MS = 2400;
 
 function sortByRank(list: LexCard[]): LexCard[] {
-  return [...list].sort((x, y) => compareFractionalIndexKeys(x.rank, y.rank));
+  return [...list].sort((x, y) => compareLexoRankKeys(x.rank, y.rank));
 }
 
 function isCardPayload(data: Record<string, unknown>): data is CardPayload {
@@ -111,14 +111,18 @@ function applyLexDrop(
   }
 
   let newRank: string;
-  if (leftRank !== null && rightRank !== null) {
-    newRank = lexRankBetween(leftRank, rightRank);
-  } else if (leftRank !== null) {
-    newRank = lexRankAfter(leftRank);
-  } else if (rightRank !== null) {
-    newRank = lexRankBeforeFirst(rightRank);
-  } else {
-    newRank = generateKeyBetween(null, null);
+  try {
+    if (leftRank !== null && rightRank !== null) {
+      newRank = lexoRankBetween(leftRank, rightRank);
+    } else if (leftRank !== null) {
+      newRank = lexoRankAfter(leftRank);
+    } else if (rightRank !== null) {
+      newRank = lexoRankBeforeFirst(rightRank);
+    } else {
+      newRank = lexoRankMiddle();
+    }
+  } catch {
+    return { next: cards, flashIds: new Set() };
   }
 
   if (newRank === moved.rank) {
@@ -148,19 +152,23 @@ function LexCardRow({
     }
     const cleanDrag = draggable({
       element: el,
-      getInitialData: (): CardPayload => ({
-        type: DRAG_TYPE,
-        cardId: card.id,
-      }),
+      getInitialData(): CardPayload {
+        return {
+          type: DRAG_TYPE,
+          cardId: card.id,
+        };
+      },
       onDragStart: () => setDragging(true),
       onDrop: () => setDragging(false),
     });
     const cleanDrop = dropTargetForElements({
       element: el,
-      getData: (): DropPayload => ({
-        type: DROP_TYPE,
-        beforeId: card.id,
-      }),
+      getData(): DropPayload {
+        return {
+          type: DROP_TYPE,
+          beforeId: card.id,
+        };
+      },
       getIsSticky: () => true,
     });
     return () => {
@@ -168,6 +176,8 @@ function LexCardRow({
       cleanDrop();
     };
   }, [card.id]);
+
+  const shown = lexPosDisplay(card.rank);
 
   return (
     <div
@@ -183,9 +193,12 @@ function LexCardRow({
         aria-hidden
         strokeWidth={2.25}
       />
-      <span className="min-w-[3.25rem] font-mono text-xs tabular-nums text-slate-500 dark:text-slate-400">
+      <span
+        className="min-w-0 max-w-[11.5rem] shrink-0 font-mono text-[0.65rem] leading-snug text-slate-500 dark:text-slate-400"
+        title={card.rank}
+      >
         pos{" "}
-        <span className="font-medium text-slate-700 dark:text-slate-200">{lexPosDisplay(card.rank)}</span>
+        <span className="break-all font-medium text-slate-700 dark:text-slate-200">{shown}</span>
       </span>
       <span className="min-w-0 flex-1 truncate font-medium tracking-tight">
         {card.label}
@@ -204,10 +217,12 @@ function LexAppendZone({ previewAppend }: { previewAppend: boolean }) {
     }
     return dropTargetForElements({
       element: el,
-      getData: (): DropPayload => ({
-        type: DROP_TYPE,
-        beforeId: null,
-      }),
+      getData(): DropPayload {
+        return {
+          type: DROP_TYPE,
+          beforeId: null,
+        };
+      },
       getIsSticky: () => true,
     });
   }, []);
@@ -325,7 +340,7 @@ export function BoardLexRankDemo() {
         <code className="rounded bg-slate-100/90 px-1 py-0.5 font-mono text-[0.85em] dark:bg-slate-800/90">
           pos
         </code>{" "}
-        key (highlighted)—neighbours keep theirs.
+        LexoRank string (highlighted)—neighbours keep theirs.
       </span>
     ) : (
       <span>
@@ -333,36 +348,40 @@ export function BoardLexRankDemo() {
         <code className="rounded bg-slate-100/90 px-1 font-mono text-[0.8em] dark:bg-slate-800/90">pos e</code>
         ) before <strong className="font-semibold text-slate-700 dark:text-slate-200">Card 2</strong> (
         <code className="rounded bg-slate-100/90 px-1 font-mono text-[0.8em] dark:bg-slate-800/90">pos b</code>
-        )—its new neighbours sort as <code className="rounded bg-slate-100/90 px-1 font-mono text-[0.8em] dark:bg-slate-800/90">a</code> and{" "}
-        <code className="rounded bg-slate-100/90 px-1 font-mono text-[0.8em] dark:bg-slate-800/90">b</code>, so it gets a fresh{" "}
-        <code className="rounded bg-slate-100/90 px-1 font-mono text-[0.8em] dark:bg-slate-800/90">0–9a–z</code> key strictly between them (this demo uses{" "}
+        )—the library computes a new rank <strong className="font-semibold text-slate-700 dark:text-slate-200">between</strong> its
+        neighbours (you will see the full <code className="rounded bg-slate-100/90 px-1 font-mono text-[0.8em] dark:bg-slate-800/90">bucket|decimal:</code>{" "}
+        string). Implemented with{" "}
         <a
-          href="https://www.npmjs.com/package/fractional-indexing"
+          href="https://www.npmjs.com/package/@dalet-oss/lexorank"
           className="font-medium text-slate-700 underline decoration-slate-400/70 underline-offset-2 hover:text-slate-900 dark:text-slate-200 dark:hover:text-white"
         >
-          fractional-indexing
-        </a>
-        ; you may see the raw string, e.g.{" "}
-        <code className="rounded bg-slate-100/90 px-1 font-mono text-[0.8em] dark:bg-slate-800/90">a0V</code>
-        ).
+          @dalet-oss/lexorank
+        </a>{" "}
+        (open-source LexoRank-style algorithm; not Atlassian&apos;s binary).
       </span>
     );
 
   return (
     <div
       className={`${ui.caseStudyDemoShell} p-4 sm:p-6`}
-      data-board-lex-rank-demo
+      data-board-lexo-rank-demo
     >
       <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
         <div className="min-w-0">
           <p className="mb-1 text-base font-medium text-slate-800 dark:text-slate-100">
-            Lexicographic rank keys — one row update
+            LexoRank-style keys — one row update
           </p>
           <p className="text-sm leading-relaxed text-slate-600 dark:text-slate-400">
-            Sort order follows string <code className="rounded bg-slate-100/90 px-1 py-0.5 font-mono text-[0.8em] dark:bg-slate-800/90">pos</code>{" "}
-            keys (<code className="rounded bg-slate-100/90 px-1 font-mono text-[0.75em] dark:bg-slate-800/90">a…e</code>{" "}
-            for the starter ranks; subdivided keys show the full string). Moving an item assigns a new key{" "}
-            <strong className="font-medium text-slate-700 dark:text-slate-200">between</strong> its new neighbours—only that card&apos;s row changes.
+            Sort order follows lexicographic <code className="rounded bg-slate-100/90 px-1 py-0.5 font-mono text-[0.8em] dark:bg-slate-800/90">pos</code>{" "}
+            strings (<code className="rounded bg-slate-100/90 px-1 font-mono text-[0.75em] dark:bg-slate-800/90">a…e</code> label the five
+            starter ranks; after a move you see the real key). Same pattern Jira popularised; other products use different encodings (e.g.{" "}
+            <a
+              href="https://www.figma.com/blog/realtime-editing-of-ordered-sequences/"
+              className="font-medium text-slate-700 underline decoration-slate-400/70 underline-offset-2 hover:text-slate-900 dark:text-slate-200 dark:hover:text-white"
+            >
+              Figma&apos;s fractional indexing
+            </a>
+            ).
           </p>
         </div>
         <button type="button" onClick={reset} className={BOARD_DEMO_OUTLINE_BUTTON}>
@@ -372,11 +391,11 @@ export function BoardLexRankDemo() {
       </div>
 
       <div
-        className={`${BOARD_DEMO_SCROLL_STAGE_OUTER} mx-auto w-full max-w-[240px] px-3 py-4 sm:max-w-[280px]`}
+        className={`${BOARD_DEMO_SCROLL_STAGE_OUTER} mx-auto w-full max-w-[280px] px-3 py-4 sm:max-w-[300px]`}
         aria-labelledby={`${uid}-caption`}
       >
         <p id={`${uid}-caption`} className="sr-only">
-          Lexicographic rank ordering demo with drag and drop
+          LexoRank-style ordering demo with drag and drop
         </p>
         <div className="pointer-events-none absolute inset-x-0 top-0 z-10 h-8 rounded-t-xl bg-gradient-to-b from-slate-50/95 from-25% to-transparent dark:from-slate-900/90" />
         <div className="pointer-events-none absolute inset-x-0 bottom-0 z-10 h-8 rounded-b-xl bg-gradient-to-t from-slate-50/95 from-25% to-transparent dark:from-slate-900/90" />
