@@ -508,33 +508,44 @@ And we want it to be:
 }
 ```
 
-As you have noticed, to make this change, we'll need to update all the cards after "card-1", the worst case will be we send out 5 update requests to the backend and hope for the best.
+A naive implementation might require updating 5 records in the database, even if the user only moved one card `PATCH /api/cards/card-5`.
 
-```
-PATCH /api/cards/card-5
-
+```json show
 {
   "position": 2,
+  "cardId": "card-5",
   "columnId": "col-1"
 }
 ```
 
+And the backend then need to figure out what rows need to be updated with this move. We can add a new API endpoint `/api/columns/col-1/reorder`, and pass the full order of the IDs to the server side:
+
+```json show
+{ 
+  "columnId": "col-1",
+  "cardOrder": ["card-1", "card-5", "card-2", "card-3", "card-4"] }
+```
+
 This is only an example to show how a seemingly simple gesture can imply a lot of server work. That applies to other application as well, these domain specific challenge are the critical part of the system design, the core algorithm, and when you do well it can make your application much more efficient that your competitors.
 
-<WorkingInProgress
-  href="https://juntao.substack.com/"
-  actionLabel="Follow the issue"
-  description="We’re still validating examples for this part."
->
+### Moves as operations
 
-### Moves as operations (recommended mental model)
+The above resource based API works, but there are some limits with it. Either way the frontend can be quite complicated to maintain that order list-think of we have 200 cards in column "Testing". Another tricky scenario to think of is if User A moves a card to the top and User B moves a different card to the bottom at the same time, the person whose request arrives last will completely overwrite the other person's move.
 
-On boards I usually push people past “PATCH three fields” and toward an **operation** the server can **validate**, **order**, and **dedupe**—because a move is an **intent**, and the world moves between your gesture and the commit.
+In comparasion, we could change the perspective a bit, instead of thinking the change as a resource, we could also think it as an operation, like a *command* in the Command Pattern.
+
+You aren't telling the server what the state is; you are telling it what the user did. Meaning we can design the move (or other user action as a command that indicate the user intention)
+
+```json show
+{ "type": "MOVE_CARD", "cardId": "card-5", "afterCardId": "card-1" }
+```
+
+In more realistic usage, we might also add a few more details like "operationId", or "fromColumnId" and "toColumnId" when it's a move cross two different columns: 
 
 ```jsonc show
 {
   "operationId": "uuid-client-generated",
-  "type": "move_card",
+  "type": "MOVE_CARD",
   "cardId": "card-1",
   "fromColumnId": "col-1",
   "toColumnId": "col-2",
@@ -542,64 +553,72 @@ On boards I usually push people past “PATCH three fields” and toward an **op
 }
 ```
 
-**`operationId`** is the one you **reuse** when the user retries the **same gesture**—not a fresh UUID every time the action is triggered. **`afterCardId`** carries **intent**; the server is allowed to **adjust** if the neighbour card moved, and it should return enough **truth**—final order, **version**—that the client is not guessing in the dark.
+By sending an operationId, you enable the server to be idempotent: if the client retries a failed network request, the server recognizes the ID and ensures the move isn't processed twice. The **`afterCardId`** carries **intent**; the server is allowed to **adjust** if the neighbour card moved, and it should return enough **truth**—final order, **version**—that the client is not guessing in the dark.
 
-`POST /boards/:boardId/operations` with `Idempotency-Key: <operationId>` (or uniqueness enforced on `operationId` in the body) is boring on purpose; boring is what saves you at 2 a.m.
+And in client side we can simply `POST /boards/:boardId/operations`, and then the server receives the "intent" and calculates the new position based on the current state of the database at that exact millisecond.
 
-On **success**, you hand back a bumped **`version`** (or **`seq`**) and either a **full snapshot**—blunt but clear—or a **minimal patch** (`{ affectedColumnIds, cards, order }`) if you are trying to be kind to bandwidth. **4xx** should carry something the UI can show; **409** should carry enough **server truth** that optimistic UI can roll back or reconcile without a mystery full refresh. Until the ack lands, the client is usually tracking **pending** somewhere—queue, flags, whatever matches your state library.
+When the client calls `POST /boards/:boardId/operations`, it enters a state of Optimistic Uncertainty. To provide a "snappy" experience, the UI moves the card immediately, but it must track this action as pending (via a local queue or status flag) until the server acknowledges it.
 
-### Concurrency: version or sequence
+On **Success (200 OK)**, the server returns the new `version` (or seq) of the board. To keep the client in sync, the response should include a minimal patch—the updated order array and any affected ranks—rather than a full, expensive board snapshot.
 
-Somewhere in the snapshot or the stream there has to be a number the client can compare: a **`version`** on the board (or per column), or a monotonic **`seq`** on applied operations if you are logging them that way. When paths cross, **server wins** plus **`409`** and a fresh fragment is the usual hammer for **whole-card moves**; **merge** becomes interesting when two people edit the **same card body** at once—that is a different problem than two drags racing.
+On **Conflict (409 Conflict)**, the server rejects the intent because the "world moved" while the user was dragging (e.g., the `afterCardId` was deleted). Instead of a generic error, the 409 response should carry the current server truth for that column. This allows the client to perform a smart reconciliation: it can roll back the optimistic move or "re-base" the card to a valid position without forcing the user to refresh the entire page.
 
-Track **`lastSeenVersion`** or **`lastAppliedSeq`** on the client and learn to ignore **stale** noise.
-
-### Realtime: event stream (optional)
-
-When you add push, keep the payload small and the rules strict. Something like:
-
-```json show
-{
-  "seq": 1001,
-  "type": "move_applied",
-  "payload": { "operationId": "…", "…final positions…" }
-}
-```
-
-Order events by **`seq`**, reconnect with **`afterSeq`**, resync if you detect a gap, and treat duplicate **`operationId`** as ignorable on the client too—**idempotency** is not only a server problem.
-
-### Hot paths
-
-If you are only allowed to care about a few routes: **initial load** in one round trip (or paginated per column when you must), **move** as one mutation plus whatever broadcast you promised, and **in-board search**—if it exists—probably deserves its **own** read path instead of pretending the browser cache is a database.
-
-### Auth
-
-Thread **workspace / user** through the whole surface. On **403 vs 404** for “you cannot see this board,” pick a story that matches your privacy product and **stick to it**—consistency matters more than winning an argument on HTTP pedantry.
 
 ## Optimization strategies
 
-By the time APIs are on the table, ordering is not an abstract exercise anymore—it shows up in **write amplification**, conflict behaviour, and how painful migrations become when you change your mind. That is why these next pieces sit here, right after **API design**, instead of being tucked away as a footnote.
+Optimisation on a board is a wide topic; **ordering** is the piece that usually becomes expensive first. We already touched moves and positions in **API design**—here we zoom in on *how* you store order so one drag does not rewrite half the database.
 
-### Ordering: index vs sort key
+If you have shipped drag-and-drop before—Kanban like Jira or Trello, a playlist, or a sortable list in React—the gesture feels trivial: drag, drop, the UI updates. Persistence is where the real question appears: **how do you store positions efficiently when the list gets large?**
 
-Two common patterns:
+### Sequential integer indexing
 
-1. **Integer index** per column (`position: 0..n-1`). Simple to reason about; **every insert in the middle** can force **many rows** to update on the server unless you use fractional indexing or another trick.
-2. **Lexicographic / fractional rank** string between neighbors (`rank` between `"a"` and `"b"`). Fewer row updates on insert; slightly more complexity in the client when computing “between.”
+The most direct approach is a numeric **position** per item: `1, 2, 3, 4, 5`. Render by sorting on that field; easy to implement and to reason about.
 
-For learning, **explicit index + server normalizes** is enough; optimize when profiling shows write amplification.
+Now drag the **last** item **between** the first and the second. Its new position becomes `2`, so the old `2` becomes `3`, then `4`, then `5`—**cascade reindexing**. With five items you might touch four rows; with **five thousand** you might touch **4,999**. The logic is correct; the problem is **scalability**: write cost grows **linearly** with list size. That can be fine for small surfaces; in large, collaborative boards it is usually unacceptable.
 
-### LexoRank: easy to hand-wave until it hurts
+### Sparse indexing (gaps between numbers)
+
+A common mitigation is to **stop using consecutive integers**. Store something like `1000, 2000, 3000, 4000, 5000`. To insert between `1000` and `2000`, assign a value in the gap—e.g. `1500`—and **only one row** changes. No full cascade.
+
+This is often called **sparse indexing** or **gap-based** ordering: leave room so future inserts stay cheap. Many real systems stop here and do well.
+
+The catch is **local exhaustion**. If users keep inserting in the same neighbourhood you eventually get `1000, 1500, 1501, 1502…` until **no integer sits between two neighbours**. Then you **rebalance** that segment—e.g. spread back to `1000, 2000, 3000, 4000`—which is a **batch update**. Frequent hot spots mean frequent rebalancing, so you are trading cascades on every move for **periodic** segment work.
+
+### String-based ranking (LexoRank)
+
+Integers, even spaced out, still live in a **finite** space per gap. Another step is to grow the **ordering space** itself: use **strings** as rank keys and compare them in **lexicographic** (dictionary) order.
+
+A typical alphabet is **base36** (`0–9`, `a–z`): each character has 36 values, and a rank is a string built from that alphabet. Example ranks: `"a"`, `"b"`, `"c"`. To insert between `"a"` and `"b"`, pick a string **between** them lexicographically—e.g. `"am"`—instead of squeezing another integer between two neighbours.
+
+As strings **grow in length**, the number of possible ranks grows roughly like **36^length**, so the space expands **fast**. Inserts stay **one write** most of the time; **rebalance** becomes rare compared with sparse integers—though it does not disappear.
+
+This family of techniques is widely associated with the name **LexoRank** (lexicographic **rank** keys). The label matters less than the principle: **exponentially larger** ordering space so ordinary inserts rarely force a global rewrite.
 
 <Callout tone="note">
-**LexoRank** is Atlassian’s **lexicographic rank** scheme for keeping ordered lists cheap to insert under load (fewer rows rewritten than naive integer positions). The [LexoRank reference implementation](https://bitbucket.org/atlassian/lexorank/src/main/) and Jira’s behaviour are the usual production anchors—not something you must memorize in an interview, but useful when **write amplification** shows up.
+**LexoRank** in production (Jira-style boards) adds bucketing, concurrency rules, and rebalance policies that toy examples skip. The [Atlassian LexoRank reference implementation](https://bitbucket.org/atlassian/lexorank/src/main/) and [*Reordering Lists at Scale (Without Breaking Everything)*](https://www.youtube.com/watch?v=Z6c7txCqsu8) are the usual deep dives. A focused **LexoRank for card ordering** pattern card is also listed on [Patterns](/patterns).
 </Callout>
 
-Conceptually it is still “a string sort key between neighbors,” but the **details** (how you bucket, rebalance when strings get too long, and keep inserts cheap under concurrency) are where toy implementations diverge from production.
+### When strings get crowded
 
-Teams often **start with integer `position`**, ship, and only later notice **write amplification** (many rows touched on one insert), **hot spots** in the index, or painful **migrations** when two clients resolve “move after card X” differently under load. LexoRank is the pattern many mature products adopt **before** those fires; it is also easy to **skip in interviews and greenfield code** because “just use an index” sounds sufficient until scale and collaboration show up.
+Even with lexicographic ranks, a **local** region can still get tight—neighbours like `"aa"`, `"ab"` with no convenient midpoint under your constraints. Then you **rebalance that segment** only: assign a fresh set of evenly spaced string ranks (the exact tokens are implementation detail; the **intent** is to open room again with a bounded batch of updates).
 
-For a walkthrough aimed at implementers, see [*Reordering Lists at Scale (Without Breaking Everything)*](https://www.youtube.com/watch?v=Z6c7txCqsu8) on YouTube. Atlassian publishes a reference implementation in the [**LexoRank** repo](https://bitbucket.org/atlassian/lexorank/src/main/). Roadmap: a focused **LexoRank for card ordering** pattern lives on the [Patterns](/patterns) index; this board guide stays the scenario-shaped home for *when* ordering strategy matters in a kanban model.
+Compared with sparse integers, string rebalancing tends to hit **less often** and stay **local**, because base36 strings buy a much larger space before you need it.
+
+### System design takeaway
+
+From a system perspective this is not a party trick—it is **write amplification** under **insert-heavy** UIs. Boards are constantly “insert between” operations.
+
+- **Dense integers** — simplest, but **cascade reindexing** hurts at scale.  
+- **Sparse integers** — fewer writes per insert, but **gaps close** and **rebalance** returns.  
+- **Lexicographic / LexoRank-style strings** — more logic in client and server, but **most moves stay O(1) writes** and rebalance is comparatively rare.
+
+The trade-off is familiar: **simpler storage** versus **ranking machinery** in exchange for **scalability** when lists and collaboration grow.
+
+<WorkingInProgress
+  href="https://juntao.substack.com/"
+  actionLabel="Follow the issue"
+  description="We’re still validating examples for this part."
+>
 
 ## Performance, reliability, and accessibility
 
