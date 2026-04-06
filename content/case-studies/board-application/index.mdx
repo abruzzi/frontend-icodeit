@@ -316,6 +316,14 @@ Note how each kind of object has **its own** top-level section—`columns`, `car
 There is no duplicated user payload in this normalised shape: when we need to update the avatar for user `2`, we open the `users` section, update that one record, and we do **not** have to touch the `cards` entries except that they already point at the same id.
 </Callout>
 
+### Stale object identity (“zombie card”)
+
+Flattening is not only about avoiding **duplicated embeds** (like the same `avatar_url` on two cards). Another failure mode appears when **two parts of the UI think they are editing the same card**, but a move uses **object spread** (`{ ...card }`) so the column now holds a **new object** while a detail panel or inspector still holds a **reference to the old one**. That old object is no longer in your React state tree for the board, yet mutating it (or binding a form to it) looks like it should work — classic **identity fork**.
+
+This is not an argument that **nested** trees are always wrong: if every surface always **derives** from the latest state (for example by stable `id` and a single lookup), you stay consistent. The bug is real when **identity is split** — often after a clone — and something kept the **pre-fork** reference.
+
+<BoardZombieCardIdentityDemo />
+
 ### Server canonical model vs client view
 
 Even when the client keeps a **normalised** map for rendering, **persistence** still belongs to the **server**. The server decides what is actually stored: which column a card lives in, in what **order**, and what happens when two moves race. The **client** is a mirror—it applies patches, shows optimistic UI, and must be able to reconcile when the server says “here is the truth now.”
@@ -581,6 +589,80 @@ When the client posts to that route, it enters a state of Optimistic Uncertainty
 On **Success (200 OK)**, the server returns the new `version` (or seq) of the board. To keep the client in sync, the response should include a minimal patch—the updated order array and any affected ranks—rather than a full, expensive board snapshot.
 
 On **Conflict (409 Conflict)**, the server rejects the intent because the "world moved" while the user was dragging (e.g., the `afterCardId` was deleted). Instead of a generic error, the 409 response should carry the current server truth for that column. This allows the client to perform a smart reconciliation: it can roll back the optimistic move or "re-base" the card to a valid position without forcing the user to refresh the entire page.
+
+## State management
+
+With data modeling we know how the data looks like, and with API design we know how the data should be fetched from server side. And that is the begining of the frontend data design - state management.
+
+You can think of frontend state management as a sub-system lives under the user interface, it has the source of truth of the current UI: what cards to show, which part of the UI is still pending, etc. And beside these state, there are also APIs - functions that can change the state (usually triggered by user interaction, it also can be system event, like a timer or SSE event listener).
+
+The simplest solution would be a React Context API, it holds a global store object, and the children components listen changes from the store, whenever something changed: a user moved card from column A to B, a user changed it's avatar, another user changed card title from their side, etc. All these change propogate to the children components for a re-render, so UI is consistent.
+
+A typical store implemented with React Context might look like this:
+
+```ts
+export type NormalizedBoard = {
+  usersById: Record<number, User>;
+  cardsById: Record<string, NormalizedCard>;
+  columnsById: Record<string, NormalizedColumn>;
+  columnOrder: string[];
+  selectedAssigneeIds: number[];
+};
+
+type BoardContextType = {
+  state: NormalizedBoard;
+  ingestBoard: (data: BoardPayload) => void;
+  ingestUsers: (users: User[]) => void;
+  upsertUser: (user: User) => void;
+  updateCard: (
+    cardId: string,
+    updates: Partial<{
+      title: string;
+      description?: string;
+      assigneeId?: number;
+    }>,
+  ) => void;
+  removeCard: (cardId: string) => void;
+  addCard: (columnId: string, card: { id: string; title: string }) => void;
+  moveCard: (
+    cardId: string,
+    fromColumnId: string,
+    toColumnId: string,
+    fromIndex: number,
+    toIndex: number,
+  ) => void;
+};
+```
+
+We have used falttend version of the board data in frontend, so we can avoid the problem of duplication (the zombie card issue we discssed earlier) and inconsistent user avatars.
+
+Notice that we not ony have these normalised data, but also the APIs like `moveCard`, `upsertUser`, etc. And then we can call these functions inside user action handler or SSE event handler.
+
+```ts
+const Card = () => {
+    const { removeCard, updateCard, upsertUser, columns, moveCard } =
+    useBoardContext();
+
+    function handleAssignUser(user: User | null) {
+      // Update local state
+      if (user) {
+        upsertUser(user); // Ensure user is in our local state
+        updateCard(id, { assigneeId: user.id });
+      } else {
+        updateCard(id, { assigneeId: undefined });
+      }
+    }
+  
+  return (
+    <>
+          <UserSelect
+        selected={assignee ?? null}
+        handleChange={handleAssignUser}
+      />
+    </>
+  )
+}
+```
 
 ## Optimization strategies
 

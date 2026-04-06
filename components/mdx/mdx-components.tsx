@@ -12,6 +12,7 @@ import { BoardLoadingSkeletonDemo } from "@/components/case-studies/board-applic
 import { IntersectionPaginationDemo } from "@/components/case-studies/board-application/IntersectionPaginationDemo";
 import { BoardNetworkFailureDemo } from "@/components/case-studies/board-application/BoardNetworkFailureDemo";
 import { BoardNormalisationStepperDemo } from "@/components/case-studies/board-application/BoardNormalisationStepperDemo";
+import { BoardZombieCardIdentityDemo } from "@/components/case-studies/board-application/BoardZombieCardIdentityDemo";
 import { BoardSseBroadcastDemo } from "@/components/case-studies/board-application/BoardSseBroadcastDemo";
 import { CcdaoFlowDiagram } from "@/components/explainers/CcdaoFlowDiagram";
 import { FailureModeStepper } from "@/components/explainers/FailureModeStepper";
@@ -54,6 +55,7 @@ export const mdxComponents: MDXComponents = {
   BoardLoadingSkeletonDemo: wrap(BoardLoadingSkeletonDemo, "Board loading skeleton demo"),
   IntersectionPaginationDemo: wrap(IntersectionPaginationDemo, "Intersection pagination demo"),
   BoardNormalisationStepperDemo: wrap(BoardNormalisationStepperDemo, "Board normalisation demo"),
+  BoardZombieCardIdentityDemo: wrap(BoardZombieCardIdentityDemo, "Zombie card identity demo"),
   BoardSseBroadcastDemo: wrap(BoardSseBroadcastDemo, "Board live updates demo"),
   CcdaoFlowDiagram: wrap(CcdaoFlowDiagram, "CCDAO flow diagram"),
   PaginationMotionDemo: wrap(PaginationMotionDemo, "Pagination motion demo"),
