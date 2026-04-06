@@ -1,20 +1,20 @@
 import type { MDXComponents } from "mdx/types";
 import type { CSSProperties } from "react";
 
-import { BoardCommandLifecycleFlow } from "@/components/case-studies/board-application/BoardCommandLifecycleFlow";
 import { BoardCascadeReindexDemo } from "@/components/case-studies/board-application/BoardCascadeReindexDemo";
-import { BoardLexRankDemo } from "@/components/case-studies/board-application/BoardLexRankDemo";
-import { BoardSparseGapDemo } from "@/components/case-studies/board-application/BoardSparseGapDemo";
-import { BoardSparseRebalanceDemo } from "@/components/case-studies/board-application/BoardSparseRebalanceDemo";
+import { BoardCommandLifecycleFlow } from "@/components/case-studies/board-application/BoardCommandLifecycleFlow";
 import { BoardDataModelDiagram } from "@/components/case-studies/board-application/BoardDataModelDiagram";
 import { BoardDndDemo } from "@/components/case-studies/board-application/BoardDndDemo";
 import { BoardEmptyStateDemo } from "@/components/case-studies/board-application/BoardEmptyStateDemo";
+import { BoardLexRankDemo } from "@/components/case-studies/board-application/BoardLexRankDemo";
 import { BoardLoadingSkeletonDemo } from "@/components/case-studies/board-application/BoardLoadingSkeletonDemo";
-import { IntersectionPaginationDemo } from "@/components/case-studies/board-application/IntersectionPaginationDemo";
 import { BoardNetworkFailureDemo } from "@/components/case-studies/board-application/BoardNetworkFailureDemo";
 import { BoardNormalisationStepperDemo } from "@/components/case-studies/board-application/BoardNormalisationStepperDemo";
-import { BoardZombieCardIdentityDemo } from "@/components/case-studies/board-application/BoardZombieCardIdentityDemo";
+import { BoardSparseGapDemo } from "@/components/case-studies/board-application/BoardSparseGapDemo";
+import { BoardSparseRebalanceDemo } from "@/components/case-studies/board-application/BoardSparseRebalanceDemo";
 import { BoardSseBroadcastDemo } from "@/components/case-studies/board-application/BoardSseBroadcastDemo";
+import { BoardZombieCardIdentityDemo } from "@/components/case-studies/board-application/BoardZombieCardIdentityDemo";
+import { IntersectionPaginationDemo } from "@/components/case-studies/board-application/IntersectionPaginationDemo";
 import { CcdaoFlowDiagram } from "@/components/explainers/CcdaoFlowDiagram";
 import { FailureModeStepper } from "@/components/explainers/FailureModeStepper";
 import { PaginationMotionDemo } from "@/components/explainers/PaginationMotionDemo";
@@ -45,20 +45,20 @@ export const mdxComponents: MDXComponents = {
   CourseFaqSection: wrap(CourseFaqSection, "Course FAQ"),
   CoursePricingCompact: wrap(CoursePricingCompact, "Course pricing"),
   FsdeCaseStudyCourseCard: wrap(FsdeCaseStudyCourseCard, "Course promo card"),
-  BoardCommandLifecycleFlow: wrap(BoardCommandLifecycleFlow, "Command lifecycle flow"),
   BoardCascadeReindexDemo: wrap(BoardCascadeReindexDemo, "Cascade reindex demo"),
-  BoardLexRankDemo: wrap(BoardLexRankDemo, "LexoRank ordering demo"),
-  BoardSparseGapDemo: wrap(BoardSparseGapDemo, "Sparse integer ranks demo"),
-  BoardSparseRebalanceDemo: wrap(BoardSparseRebalanceDemo, "Sparse segment rebalance demo"),
+  BoardCommandLifecycleFlow: wrap(BoardCommandLifecycleFlow, "Command lifecycle flow"),
   BoardDataModelDiagram: wrap(BoardDataModelDiagram, "Board data model diagram"),
   BoardDndDemo: wrap(BoardDndDemo, "Board drag and drop demo"),
   BoardEmptyStateDemo: wrap(BoardEmptyStateDemo, "Board empty state demo"),
-  BoardNetworkFailureDemo: wrap(BoardNetworkFailureDemo, "Board network failure demo"),
+  BoardLexRankDemo: wrap(BoardLexRankDemo, "LexoRank ordering demo"),
   BoardLoadingSkeletonDemo: wrap(BoardLoadingSkeletonDemo, "Board loading skeleton demo"),
-  IntersectionPaginationDemo: wrap(IntersectionPaginationDemo, "Intersection pagination demo"),
+  BoardNetworkFailureDemo: wrap(BoardNetworkFailureDemo, "Board network failure demo"),
   BoardNormalisationStepperDemo: wrap(BoardNormalisationStepperDemo, "Board normalisation demo"),
-  BoardZombieCardIdentityDemo: wrap(BoardZombieCardIdentityDemo, "Zombie card identity demo"),
+  BoardSparseGapDemo: wrap(BoardSparseGapDemo, "Sparse integer ranks demo"),
+  BoardSparseRebalanceDemo: wrap(BoardSparseRebalanceDemo, "Sparse segment rebalance demo"),
   BoardSseBroadcastDemo: wrap(BoardSseBroadcastDemo, "Board live updates demo"),
+  BoardZombieCardIdentityDemo: wrap(BoardZombieCardIdentityDemo, "Zombie card identity demo"),
+  IntersectionPaginationDemo: wrap(IntersectionPaginationDemo, "Intersection pagination demo"),
   CcdaoFlowDiagram: wrap(CcdaoFlowDiagram, "CCDAO flow diagram"),
   PaginationMotionDemo: wrap(PaginationMotionDemo, "Pagination motion demo"),
   TradeoffMatrix: wrap(TradeoffMatrix, "Tradeoff matrix"),

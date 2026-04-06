@@ -372,8 +372,8 @@ function SseClientNode({ data }: NodeProps<Node<SseClientData>>) {
               {mutator ? "REST writer · board tab" : "EventSource listener"}
             </p>
             {mutator ? (
-              <p className="mt-0.5 font-mono text-[8px] leading-tight text-sky-700/90 dark:text-sky-300/90">
-                POST /api/cards/:id
+              <p className="mt-0.5 font-mono text-[7px] leading-snug text-sky-700/90 dark:text-sky-300/90">
+                POST /api/boards/:boardId/operations
               </p>
             ) : null}
             {mutator && ignoredSse ? (
@@ -652,7 +652,7 @@ export function BoardSseBroadcastDemo() {
     phase === "idle"
       ? "Press play: cyan U-path for POST, green on flat SSE wires (muted on the writer tab)."
       : phase === "post"
-        ? "Client 1 sends POST /api/cards/:id — cyan pulse runs the U-shaped write path (drops, trough, climb)."
+        ? "Client 1 POSTs to /api/boards/:boardId/operations — cyan pulse runs the U-shaped write path (drops, trough, climb)."
         : phase === "serverAck"
           ? "Server hub lights up with a cyan edge glow (write landed)."
           : phase === "ssePush"

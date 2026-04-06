@@ -8,7 +8,7 @@ summary: >
   the guide also stresses what to observe in production (duplicate applies, out-of-order updates,
   optimistic rollbacks) and why keyboard- and screen-reader-first flows matter as much as
   drag-and-drop polish.
-lastEdited: "2026-04-02"
+lastEdited: "2026-04-03"
 kind: "case-study"
 status: "published"
 scenario: "board-app"
@@ -345,14 +345,16 @@ At some point the board has to talk to a **real backend**, and that is when API 
 Traditionally—and I mean the ordinary, mainstream history of our industry, not an academic detour—most teams still reach for **REST-flavoured HTTP + JSON**: `GET` for reads, `POST` or `PATCH` for writes, routes that read like resources. Every ecosystem has a DSL that makes the first draft look easy.
 
 ```js
-app.get("/boards/:boardId", () => {
+app.get("/api/boards/:boardId", () => {
   /* return snapshot */
 });
 
-app.post("/boards/:boardId/cards", () => {
+app.post("/api/boards/:boardId/cards", () => {
   /* create card */
 });
 ```
+
+Those paths mirror the **`/api/boards/...`** style used in the **Read** and **Write** reference panels later in this section (including **`POST /api/boards/:boardId/operations`** for intent-shaped moves).
 
 What I like to do next is take the operations you already named in **Collect constraints**—what must exist for v1, how big things can get, whether multiple people are in the same board at once—and **map them straight onto endpoints**. The interesting work is not the first happy-path sketch; it is what happens when **retries**, **concurrency**, and a **suddenly enormous backlog** show up and your innocent `GET` is no longer innocent.
 
@@ -367,7 +369,7 @@ What I like to do next is take the operations you already named in **Collect con
 Polling on a timer can be enough when changes are rare and latency is loose. For a shared board, you usually do not know **when** another collaborator will change something, so you want a **push** subscription instead of guessing with `setInterval`. If the client mostly **listens** and still uses HTTP for writes, **SSE** is a simple first step; reach for **WebSockets** when you need symmetric, low-latency messaging both ways.
 
 ```ts
-const es = new EventSource(`/api/board/${boardId}/events`);
+const es = new EventSource(`/api/boards/${boardId}/events`);
 
 es.addEventListener("card-assigned", (event) => {
   // … handle assignee changes
@@ -377,8 +379,8 @@ es.addEventListener("card-updated", (event) => {
   // … handle card field updates
 });
 
-es.onerror = (error) => {
-  console.log(`sse error: ${error}`);
+es.onerror = () => {
+  // Reconnect with backoff, surface a toast, or fall back to polling — production paths vary.
 };
 ```
 
@@ -624,7 +626,12 @@ type BoardContextValue = {
   updateCard: (cardId: string, updates: CardFieldUpdates) => void;
   removeCard: (cardId: string) => void;
   addCard: (columnId: string, card: { id: string; title: string }) => void;
-  moveCard: (cardId: string, toColumnId: string, afterCardId: string) => void;
+  moveCard: (
+    cardId: string,
+    fromColumnId: string,
+    toColumnId: string,
+    afterCardId: string | null,
+  ) => void;
 };
 ```
 
@@ -682,11 +689,11 @@ In practice, if the **server world has moved** (someone else deleted the anchor 
 
 One compact mental model is **“UI as a transaction log”**: the screen shows the result of **base state + pending operations**, not only a mutable blob. **Undo**, **retry**, and **optimistic updates** become properties of how commands **enter**, **apply**, **sync**, and **settle**—not three unrelated features.
 
-A coarse lifecycle runs **Capture → Apply → Buffer → Sync → Settle → Reconcile**. The diagram below lays the same steps out as a left-to-right pipeline (pan and zoom if it feels tight on a narrow viewport).
+A coarse lifecycle runs **Capture → Apply → Buffer → Sync → Settle → Reconcile**. The diagram below is a left-to-right pipeline (pan and zoom on a narrow viewport); the ordered list under the canvas repeats each step in prose.
 
 <BoardCommandLifecycleFlow />
 
-A command can be as simple as a typed object like below, note there is a `undo` to record what need to be rollback if the server fails. 
+A command can be as small as a typed object like the one below. The **`undo`** field (or an equivalent inverse / snapshot) supports client rollback if the API fails before you have fresh server truth—subject to reconciliation if the board has moved underneath you.
 
 ```ts
 type MoveCardCommand = {
