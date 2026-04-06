@@ -49,7 +49,19 @@ const CLIENT_STACK_GAP = 22;
 const U_WRITE_LEG_PX = 44;
 
 const handleCls =
-  "!h-2 !w-2 !rounded-full !border-2 !border-zinc-950 !bg-zinc-500 dark:!border-zinc-950 dark:!bg-zinc-400";
+  "!h-2 !w-2 !rounded-full !border-2 !border-white !bg-slate-400 dark:!border-slate-900 dark:!bg-slate-500";
+
+/** Match `BoardDataModelDiagram` ErEntityNode — tinted border-2 + subtle fill, not solid zinc cards. */
+const sseServerErShell =
+  "border-2 border-brand/35 bg-brand/[0.06] ring-1 ring-brand/20 shadow-sm dark:border-brand/40 dark:bg-brand/[0.1] dark:ring-brand/25 dark:shadow-none";
+
+const sseClientErShell: Record<"sky" | "emerald" | "amber", string> = {
+  sky: "border-2 border-palette-azure/40 bg-palette-azure/[0.08] ring-1 ring-palette-azure/15 shadow-sm dark:border-palette-azure/45 dark:bg-palette-azure/[0.12] dark:ring-palette-azure/20 dark:shadow-none",
+  emerald:
+    "border-2 border-palette-jade/40 bg-palette-jade/[0.08] ring-1 ring-palette-jade/15 shadow-sm dark:border-palette-jade/45 dark:bg-palette-jade/[0.12] dark:ring-palette-jade/20 dark:shadow-none",
+  amber:
+    "border-2 border-palette-gold/50 bg-palette-gold/[0.1] ring-1 ring-palette-gold/25 shadow-sm dark:border-palette-gold/45 dark:bg-palette-gold/[0.14] dark:ring-palette-gold/30 dark:shadow-none",
+};
 
 type SseServerData = {
   phase: Phase;
@@ -217,10 +229,10 @@ function SseServerNode({ data }: NodeProps<Node<SseServerData>>) {
   const pt = data.portTop;
   return (
     <div
-      className={`relative flex w-[172px] flex-col rounded-xl border bg-white shadow-md shadow-zinc-900/10 transition-[box-shadow,transform,border-color] duration-300 dark:bg-zinc-900/95 dark:shadow-black/50 ${
+      className={`relative flex w-[172px] flex-col rounded-xl text-slate-800 transition-[box-shadow,transform,border-color] duration-300 dark:text-slate-100 ${sseServerErShell} ${
         hot
-          ? "scale-[1.02] border-cyan-400/55 shadow-[0_0_0_1px_rgb(34_211_238_/_0.35),0_0_28px_rgb(34_211_238_/_0.22)] dark:border-cyan-400/45"
-          : "border-zinc-200/90 dark:border-zinc-700/60"
+          ? "scale-[1.02] border-cyan-400/55 shadow-[0_0_0_1px_rgb(34_211_238_/_0.35),0_0_28px_rgb(34_211_238_/_0.22)] ring-cyan-400/25 dark:border-cyan-400/45 dark:ring-cyan-400/20"
+          : ""
       }`}
       style={{ height: SERVER_H }}
     >
@@ -260,16 +272,16 @@ function SseServerNode({ data }: NodeProps<Node<SseServerData>>) {
               <Radio className="h-4 w-4" aria-hidden />
             </div>
             <div className="min-w-0 flex-1 text-left">
-              <p className="text-[11px] font-semibold tracking-tight text-zinc-900 dark:text-zinc-50">
+              <p className="text-[11px] font-semibold tracking-tight text-slate-900 dark:text-slate-50">
                 Server
               </p>
-              <p className="mt-0.5 text-[9px] leading-snug text-zinc-500 dark:text-zinc-400">
+              <p className="mt-0.5 text-[9px] leading-snug text-slate-600 dark:text-slate-400">
                 Hub · 3 SSE (side) + REST write (U path)
               </p>
             </div>
           </div>
         </div>
-        <div className="mt-auto flex flex-wrap items-center gap-x-2 gap-y-0.5 border-t border-zinc-200/80 pt-2 text-[9px] text-zinc-500 dark:border-zinc-800 dark:text-zinc-400">
+        <div className="mt-auto flex flex-wrap items-center gap-x-2 gap-y-0.5 border-t border-slate-200/70 pt-2 text-[9px] text-slate-500 dark:border-slate-600/50 dark:text-slate-400">
           <span className="inline-flex items-center gap-1">
             <span
               className="h-1.5 w-1.5 shrink-0 rounded-full bg-cyan-400 shadow-[0_0_8px_rgb(34_211_238_/_0.65)]"
@@ -321,10 +333,10 @@ function SseClientNode({ data }: NodeProps<Node<SseClientData>>) {
 
   return (
     <div
-      className={`relative flex flex-col rounded-xl border bg-white shadow-md shadow-zinc-900/10 transition-[box-shadow,border-color] duration-300 dark:bg-zinc-900/95 dark:shadow-black/50 ${
+      className={`relative flex flex-col rounded-xl text-slate-800 transition-[box-shadow,border-color] duration-300 dark:text-slate-100 ${sseClientErShell[data.accent]} ${
         updated
-          ? "border-cyan-400/55 shadow-[0_0_0_1px_rgb(34_211_238_/_0.35),0_0_24px_rgb(34_211_238_/_0.2)] dark:border-cyan-400/45"
-          : "border-zinc-200/90 dark:border-zinc-700/60"
+          ? "border-cyan-400/55 shadow-[0_0_0_1px_rgb(34_211_238_/_0.35),0_0_24px_rgb(34_211_238_/_0.2)] ring-cyan-400/25 dark:border-cyan-400/45 dark:ring-cyan-400/20"
+          : ""
       }`}
       style={{ height: CLIENT_H, width: CLIENT_W }}
     >
@@ -353,10 +365,10 @@ function SseClientNode({ data }: NodeProps<Node<SseClientData>>) {
             <Icon className="h-3.5 w-3.5" aria-hidden />
           </div>
           <div className="min-w-0 flex-1 text-left">
-            <p className="text-[11px] font-semibold tracking-tight text-zinc-900 dark:text-zinc-50">
+            <p className="text-[11px] font-semibold tracking-tight text-slate-900 dark:text-slate-50">
               {data.label}
             </p>
-            <p className="mt-0.5 text-[9px] leading-snug text-zinc-500 dark:text-zinc-400">
+            <p className="mt-0.5 text-[9px] leading-snug text-slate-600 dark:text-slate-400">
               {mutator ? "REST writer · board tab" : "EventSource listener"}
             </p>
             {mutator ? (
@@ -377,7 +389,7 @@ function SseClientNode({ data }: NodeProps<Node<SseClientData>>) {
             ) : null}
           </div>
         </div>
-        <div className="mt-auto flex items-center gap-1.5 border-t border-zinc-200/80 pt-1 text-[9px] text-zinc-500 dark:border-zinc-800 dark:text-zinc-400">
+        <div className="mt-auto flex items-center gap-1.5 border-t border-slate-200/70 pt-1 text-[9px] text-slate-500 dark:border-slate-600/50 dark:text-slate-400">
           {mutator && ignoredSse ? (
             <>
               <span

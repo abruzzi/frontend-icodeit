@@ -5,19 +5,16 @@ import type { Root as HastRoot } from "hast";
 import remarkGfm from "remark-gfm";
 import rehypeAutolinkHeadings from "rehype-autolink-headings";
 import rehypeSlug from "rehype-slug";
-import { createHighlighter } from "shiki";
 import { visit } from "unist-util-visit";
 
 import type { MDXComponents } from "mdx/types";
 
 import { mdxComponents } from "@/components/mdx/mdx-components";
+import {
+  SHIKI_THEMES,
+  getIcodeitShikiHighlighter,
+} from "@/lib/content/shiki-icodeit-highlighter";
 import { shikiTransformerMdxJsonExpand } from "@/lib/content/shiki-transformer-mdx-json-expand";
-
-/** Same as icodeit-next `lib/rehype-pretty-code.ts` (rehype-pretty-code + shikiji there). */
-const SHIKI_THEMES = {
-  light: "solarized-light",
-  dark: "github-dark-dimmed",
-} as const;
 
 /** `undefined` entries in `children` make `unist-util-visit` throw (`'children' in undefined`). */
 function stripInvalidHastChildren(tree: HastRoot) {
@@ -30,38 +27,6 @@ function stripInvalidHastChildren(tree: HastRoot) {
       (node as { children: typeof ch }).children = next;
     }
   });
-}
-
-const SHIKI_LANGS = [
-  "bash",
-  "css",
-  "html",
-  "javascript",
-  "js",
-  "json",
-  "jsonc",
-  "jsx",
-  "markdown",
-  "md",
-  "mdx",
-  "shell",
-  "text",
-  "ts",
-  "tsx",
-  "typescript",
-  "yaml",
-] as const;
-
-let highlighterPromise: ReturnType<typeof createHighlighter> | null = null;
-
-async function getShikiHighlighter() {
-  if (!highlighterPromise) {
-    highlighterPromise = createHighlighter({
-      themes: [SHIKI_THEMES.light, SHIKI_THEMES.dark],
-      langs: [...SHIKI_LANGS],
-    });
-  }
-  return highlighterPromise;
 }
 
 /**
@@ -84,7 +49,7 @@ function rehypeShikiIcodeitPlugin() {
     stripInvalidHastChildren(tree);
 
     if (!run) {
-      const highlighter = await getShikiHighlighter();
+      const highlighter = await getIcodeitShikiHighlighter();
       run = rehypeShikiFromHighlighter(highlighter, {
         themes: {
           light: SHIKI_THEMES.light,

@@ -22,6 +22,74 @@ html.dark .shiki span {
   text-decoration: var(--shiki-dark-text-decoration) !important;
 }
 
+/**
+ * Restful API panel follows page theme (same dual-theme idea as prose fences).
+ */
+html:not(.dark) .mdx-restful-endpoint .shiki,
+html:not(.dark) .mdx-restful-endpoint .shiki span {
+  color: var(--shiki-light) !important;
+  background-color: var(--shiki-light-bg) !important;
+  font-style: var(--shiki-light-font-style) !important;
+  font-weight: var(--shiki-light-font-weight) !important;
+  text-decoration: var(--shiki-light-text-decoration) !important;
+}
+
+html.dark .mdx-restful-endpoint .shiki,
+html.dark .mdx-restful-endpoint .shiki span {
+  color: var(--shiki-dark) !important;
+  background-color: var(--shiki-dark-bg) !important;
+  font-style: var(--shiki-dark-font-style) !important;
+  font-weight: var(--shiki-dark-font-weight) !important;
+  text-decoration: var(--shiki-dark-text-decoration) !important;
+}
+
+.mdx-restful-endpoint pre.shiki,
+.mdx-restful-endpoint pre.shiki code,
+.mdx-restful-endpoint pre.shiki span {
+  font-family: var(--font-jetbrains-mono), ui-monospace, monospace;
+  font-feature-settings: "calt" 1, "liga" 1;
+}
+
+.mdx-restful-endpoint pre.shiki,
+.mdx-restful-endpoint pre.shiki span {
+  background-color: transparent !important;
+}
+
+.mdx-restful-endpoint :where(.shiki-code-root) {
+  margin-top: 0;
+  margin-bottom: 0;
+}
+
+.mdx-restful-endpoint :where(.shiki-code-root pre.shiki) {
+  margin: 0;
+  padding: 0;
+  overflow-x: auto;
+  border: none;
+  border-radius: 0;
+  box-shadow: none;
+  background-color: transparent !important;
+}
+
+.mdx-restful-endpoint :where(pre.shiki code) {
+  display: block;
+  width: max-content;
+  min-width: 100%;
+  padding: 1rem 1.25rem 1rem 0.875rem;
+  font-size: 0.875rem;
+  line-height: 1.65;
+  background: transparent !important;
+}
+
+.mdx-restful-endpoint :where(pre.shiki code .line) {
+  min-height: 1.65em;
+}
+
+.mdx-restful-endpoint :where(.mdx-json-details .shiki-code-root) {
+  margin-top: 0;
+  margin-bottom: 0;
+  border-radius: 0;
+}
+
 /* Prose code blocks: no fill on pre/tokens so body/hero background is visible. */
 .prose pre.shiki,
 .prose pre.shiki span {

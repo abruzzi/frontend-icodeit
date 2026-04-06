@@ -382,42 +382,44 @@ Behind the scenes, these push-style APIs line up with the **observer** idea: sub
 
 ### Read: board snapshot
 
-Picture the first load of the board page. A natural first contract is:
+Picture the first load of the board page. A natural first contract is a single read that returns enough to paint columns and cards in one round trip.
 
-`GET /api/boards/:boardId`
+<Restful
+  endpoint="GET /api/boards/:boardId"
+  description="Board snapshot for first paint: metadata, columns, and card rows aligned with your client model."
+>
+  <Response status={200}>
+  ```json show
+  {
+    "board": { "id": "board-1", "title": "Board 1", "version": 42 },
+    "columns": [
+      { "id": "col-1", "title": "Backlog", "order": 0 },
+      { "id": "col-2", "title": "In Progress", "order": 1 },
+      { "id": "col-3", "title": "Done", "order": 2 }
+    ],
+    "cards": [
+      { "id": "card-1", "columnId": "col-1", "position": 0, "title": "Setup project structure" },
+      { "id": "card-2", "columnId": "col-2", "position": 0, "title": "Install dependencies" },
+      { "id": "card-3", "columnId": "col-1", "position": 1, "title": "Configure ESLint & Prettier" }
+    ]
+  }
+  ```
+  </Response>
+  <Response status={404} label="Not found">
+  ```json show
+  {
+    "code": "BOARD_NOT_FOUND",
+    "message": "Board does not exist or you do not have access."
+  }
+  ```
+  </Response>
+</Restful>
 
 For **200**, the body should resemble what you already committed to in **Data modeling**. Returning a **nested** columns-with-cards snapshot early on is not a moral failure; it is often the fastest way to ship, as long as you know how you might evolve toward maps and ordered id lists later.
 
-```json show
-{
-  "board": { "id": "board-1", "title": "Board 1", "version": 42 },
-  "columns": [
-    { "id": "col-1", "title": "Backlog", "order": 0 },
-    { "id": "col-2", "title": "In Progress", "order": 1 },
-    { "id": "col-3", "title": "Done", "order": 2 }
-  ],
-  "cards": [
-    { "id": "card-1", "columnId": "col-1", "position": 0, "title": "Setup project structure" },
-    { "id": "card-2", "columnId": "col-2", "position": 0, "title": "Install dependencies" },
-    { "id": "card-3", "columnId": "col-1", "position": 1, "title": "Configure ESLint & Prettier" }
-  ]
-}
-```
+I would treat errors with the same care as loading and empty states in **Designing the UI**: decide what **timeouts**, **`5xx`**, **`429`**, missing resources, and validation failures look like in **JSON**, not only as bare status codes, so the client can retry or explain instead of showing a generic “something went wrong.” A stable **`code`** is worth more than a clever English `message` you will regret string-matching in six months. The **404** block in the reference above is the pattern—pair each status with a body the UI can branch on.
 
-I would treat errors with the same care as loading and empty states in **Designing the UI**: decide what **timeouts**, **5xx**, and validation failures look like in **JSON**, not only as bare status codes, so the client can retry or explain instead of showing a generic “something went wrong.” A stable **`code`** is worth more than a clever English `message` you will regret string-matching in six months.
-
-```json show
-{
-  "code": "BOARD_NOT_FOUND",
-  "message": "Board does not exist or you do not have access."
-}
-```
-
-Note that the error **body** should pair with the HTTP status—whether it is a generic `500`, a `429`, or something more specific—so the client can branch on a stable **`code`** instead of parsing English prose.
-
-For any read endpoint, plan beyond the **`200` + body** path: **`404`** when the resource is missing or hidden, **`429`** under throttle, **`5xx`** and **gateway timeouts** when dependencies fail—each with a shape the UI can branch on. 
-
-In an interview, showing that you think about those edge cases—not only `200`—is a strong signal. :smile:
+In an interview, showing that you think past **`200`**—including throttle and dependency failures—is a strong signal. :smile:
 
 ### Pagination and large columns
 
@@ -429,24 +431,27 @@ If you are somewhere under “a few dozen to low hundreds” of cards, **one rou
 
 A dedicated interactive note on pagination patterns and trade-offs is planned for the patterns section; until then, the sketch below stays focused on **how** infinite scroll fits a column.
 
-That said, in our particular case in a board application, **Cursor-based** pagination fits better than offset-based pagination as new items might keep landing **at the top** of a column while someone is paging. You might extend the board read with something shaped like:
+That said, in our particular case in a board application, **Cursor-based** pagination fits better than offset-based pagination as new items might keep landing **at the top** of a column while someone is paging. When **one column** can hold **thousands** of cards, I would seriously consider splitting reads behind a dedicated route:
 
-```json show
-{
-  "data": [
-    { "id": "card-100", "title": "…" },
-    { "id": "card-101", "title": "…" }
-  ],
-  "pageInfo": {
-    "endCursor": "eyJjIjoiLi4uIn0",
-    "hasNextPage": true
+<Restful
+  endpoint="GET /api/boards/:boardId/columns/:columnId/cards?cursor=eyJjIjoiLi4uIn0&limit=10"
+  description="Cursor-based page inside one column (infinite scroll / long backlogs)."
+>
+  <Response status={200}>
+  ```json show
+  {
+    "data": [
+      { "id": "card-100", "title": "…" },
+      { "id": "card-101", "title": "…" }
+    ],
+    "pageInfo": {
+      "endCursor": "eyJjIjoiLi4uIn0",
+      "hasNextPage": true
+    }
   }
-}
-```
-
-When **one column** can hold **thousands** of cards, I would seriously consider splitting reads:
-
-`GET /boards/:boardId/columns/:columnId/cards?cursor=eyJjIjoiLi4uIn0&limit=10`
+  ```
+  </Response>
+</Restful>
 
 As the user scrolls, you typically watch a **sentinel** node with `IntersectionObserver` (or a debounced scroll handler) so the next cursor-backed batch loads when the sentinel enters the column viewport.
 
@@ -508,23 +513,38 @@ And we want it to be:
 }
 ```
 
-A naive implementation might require updating 5 records in the database, even if the user only moved one card `PATCH /api/cards/card-5`.
+A naive implementation might require updating 5 records in the database, even if the user only moved one card:
 
-```json show
-{
-  "position": 2,
-  "cardId": "card-5",
-  "columnId": "col-1"
-}
-```
+<Restful
+  endpoint="PATCH /api/cards/:cardId"
+  description="Single-card position update; the server may still rewrite neighbouring rows."
+>
+  <Request>
+  ```json show
+  {
+    "position": 2,
+    "cardId": "card-5",
+    "columnId": "col-1"
+  }
+  ```
+  </Request>
+</Restful>
 
-And the backend then need to figure out what rows need to be updated with this move. We can add a new API endpoint `/api/columns/col-1/reorder`, and pass the full order of the IDs to the server side:
+The backend then decides which rows change for that move. Another style is to send the **full column order** in one shot:
 
-```json show
-{ 
-  "columnId": "col-1",
-  "cardOrder": ["card-1", "card-5", "card-2", "card-3", "card-4"] }
-```
+<Restful
+  endpoint="POST /api/columns/:columnId/reorder"
+  description="Replace ordering for one column with an explicit id list (mind last-write-wins under concurrency)."
+>
+  <Request>
+  ```json show
+  {
+    "columnId": "col-1",
+    "cardOrder": ["card-1", "card-5", "card-2", "card-3", "card-4"]
+  }
+  ```
+  </Request>
+</Restful>
 
 This is only an example to show how a seemingly simple gesture can imply a lot of server work. That applies to other application as well, these domain specific challenge are the critical part of the system design, the core algorithm, and when you do well it can make your application much more efficient that your competitors.
 
@@ -532,32 +552,31 @@ This is only an example to show how a seemingly simple gesture can imply a lot o
 
 The above resource based API works, but there are some limits with it. Either way the frontend can be quite complicated to maintain that order list-think of we have 200 cards in column "Testing". Another tricky scenario to think of is if User A moves a card to the top and User B moves a different card to the bottom at the same time, the person whose request arrives last will completely overwrite the other person's move.
 
-In comparasion, we could change the perspective a bit, instead of thinking the change as a resource, we could also think it as an operation, like a *command* in the Command Pattern.
+In comparison, we could change the perspective a bit, instead of thinking the change as a resource, we could also think it as an operation, like a *command* in the Command Pattern.
 
-You aren't telling the server what the state is; you are telling it what the user did. Meaning we can design the move (or other user action as a command that indicate the user intention)
+You aren't telling the server what the state is; you are telling it what the user did. Meaning we can design the move (or other user action) as a command that states **intent**—often with an **`operationId`** so retries stay idempotent, plus **`fromColumnId` / `toColumnId`** when the card crosses lanes. A tiny payload might be only `type`, `cardId`, and `afterCardId`; richer bodies look like this:
 
-```json show
-{ "type": "MOVE_CARD", "cardId": "card-5", "afterCardId": "card-1" }
-```
+<Restful
+  endpoint="POST /api/boards/:boardId/operations"
+  description="Append-only intents; server applies against current DB state and returns truth (version / patch)."
+>
+  <Request>
+  ```jsonc show
+  {
+    "operationId": "uuid-client-generated",
+    "type": "MOVE_CARD",
+    "cardId": "card-1",
+    "fromColumnId": "col-1",
+    "toColumnId": "col-2",
+    "afterCardId": "card-2"
+  }
+  ```
+  </Request>
+</Restful>
 
-In more realistic usage, we might also add a few more details like "operationId", or "fromColumnId" and "toColumnId" when it's a move cross two different columns: 
+By sending an **`operationId`**, you enable the server to be idempotent: if the client retries after a lost response, the server recognizes the ID and avoids double-applying the move. The **`afterCardId`** carries **intent**; the server is allowed to **adjust** if the neighbour card moved, and it should return enough **truth**—final order, **version**—that the client is not guessing in the dark.
 
-```jsonc show
-{
-  "operationId": "uuid-client-generated",
-  "type": "MOVE_CARD",
-  "cardId": "card-1",
-  "fromColumnId": "col-1",
-  "toColumnId": "col-2",
-  "afterCardId": "card-2"
-}
-```
-
-By sending an operationId, you enable the server to be idempotent: if the client retries a failed network request, the server recognizes the ID and ensures the move isn't processed twice. The **`afterCardId`** carries **intent**; the server is allowed to **adjust** if the neighbour card moved, and it should return enough **truth**—final order, **version**—that the client is not guessing in the dark.
-
-And in client side we can simply `POST /boards/:boardId/operations`, and then the server receives the "intent" and calculates the new position based on the current state of the database at that exact millisecond.
-
-When the client calls `POST /boards/:boardId/operations`, it enters a state of Optimistic Uncertainty. To provide a "snappy" experience, the UI moves the card immediately, but it must track this action as pending (via a local queue or status flag) until the server acknowledges it.
+When the client posts to that route, it enters a state of Optimistic Uncertainty. To provide a "snappy" experience, the UI moves the card immediately, but it must track this action as pending (via a local queue or status flag) until the server acknowledges it.
 
 On **Success (200 OK)**, the server returns the new `version` (or seq) of the board. To keep the client in sync, the response should include a minimal patch—the updated order array and any affected ranks—rather than a full, expensive board snapshot.
 

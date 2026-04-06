@@ -29,6 +29,11 @@ import { Highlight } from "./Highlight";
 import { MdxPre } from "./MdxPre";
 import { TestingRubric } from "./TestingRubric";
 import { Token } from "./Token";
+import {
+  Restful,
+  RestfulRequest,
+  RestfulResponse,
+} from "./restful-endpoint";
 import { WorkingInProgress } from "./WorkingInProgress";
 
 const wrap = withDemoErrorBoundary;
@@ -60,6 +65,10 @@ export const mdxComponents: MDXComponents = {
   Highlight: wrap(Highlight, "Highlight"),
   Token: wrap(Token, "Token"),
   WorkingInProgress: wrap(WorkingInProgress, "Working in progress notice"),
+  Restful: wrap(Restful, "REST endpoint"),
+  /** Async RSC: re-highlight fence bodies (nested MDX skips rehype-shiki). */
+  Request: RestfulRequest,
+  Response: RestfulResponse,
   pre: MdxPre,
   // Bullet lists: icon marker + `.mdx-icon-li-marker` offset in `globals.css` (uses `lh`, not `line-height: 1`).
   ul: ({ className, ...props }) => {
