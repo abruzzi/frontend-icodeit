@@ -6,15 +6,26 @@ description: >-
   Optimization), timeboxed timelines, clarifying questions, key challenges, and
   trade-off deep-dives. Use when the user asks for a frontend system design plan,
   mock interview structure, or outlines for apps like boards, streaming,
-  editors, feeds, or dashboards; or mentions CCDAO, steel thread, or iterative
-  narrowing in system design.
+  editors, feeds, dashboards, or infinite-scroll lists; or mentions CCDAO,
+  steel thread, or iterative narrowing in system design. Pair with
+  icodeit-technical-writing when the deliverable is a long MDX case study or
+  course module rather than a mock-interview outline.
 ---
 
 # Frontend system design outline (CCDAO)
 
 ## Goal
 
-Turn a vague prompt (e.g. “design a board app”, “design Netflix”) into an **actionable interview outline**: CCDAO sections, **time budget**, **questions to ask first**, **what makes this problem hard**, and **optimization / trade-off hooks**—without dumping generic theory.
+Turn a vague prompt (e.g. “design a board app”, “design Netflix”, “deep dive on a social feed”) into an **actionable interview outline**: CCDAO sections, **time budget**, **questions to ask first**, **what makes this problem hard**, and **optimization / trade-off hooks**—without dumping generic theory.
+
+## How this skill fits other icodeit skills
+
+| Deliverable | Primary skill |
+|-------------|---------------|
+| **Mock interview outline**, rubric, “what to say in 45 minutes” | **This skill (CCDAO)** |
+| **Long-form article / MDX case study** (tone, callouts, Restful panels, live demos, cross-links) | **`icodeit-technical-writing`** |
+
+**CCDAO** answers *what to cover and in what order* for a live or practice session. **`icodeit-technical-writing`** answers *how to write it* when publishing. Use **both** when the user wants an outline that will become a case study: keep CCDAO for the skeleton; apply the writing skill for section cross-refs, demos, and API path consistency.
 
 ## Defaults
 
@@ -28,9 +39,10 @@ Turn a vague prompt (e.g. “design a board app”, “design Netflix”) into a
 2. **Collect**: list **must-ask clarifying questions** (functional + cross-functional). Separate “blockers if unknown” vs “nice to confirm.”
 3. **Hypothesize the key challenge**: 2–4 bullets—what domain-specific difficulty will dominate (real-time, consistency, pagination at scale, media, collaboration, offline, permissions, etc.).
 4. **CCDAO body outline**: for each phase, give **specific** bullets tied to *this* prompt (not a generic lecture).
-5. **Timeline**: minute ranges per phase (use the standard budget below unless adjusted).
-6. **Optimization / trade-offs**: 4–8 bullets. Include **when** each matters and **alternatives** (e.g. OT vs CRDT for multi-user editors). Map at least one trade-off to the **actual prompt**.
-7. **Next depth targets**: point to **what to read/build next**—user’s own articles, course notes, or public resources—using titles and URLs when known; use Obsidian/wiki links only if the user’s vault is in workspace.
+5. **Optional — “article depth” add-on**: if the user is heading toward a **written** deep dive (not only interview prep), add a short **State & sync** block after API: client store shape, optimistic writes, **reconciliation** (out-of-order responses, idempotency keys), and **how sections cross-reference** each other (same terms in data, API, and UI).
+6. **Timeline**: minute ranges per phase (use the standard budget below unless adjusted).
+7. **Optimization / trade-offs**: 4–8 bullets. Include **when** each matters and **alternatives** (e.g. OT vs CRDT for multi-user editors). Map at least one trade-off to the **actual prompt**.
+8. **Next depth targets**: point to **what to read/build next**—user’s own articles, course notes, or public resources—using titles and URLs when known; use Obsidian/wiki links only if the user’s vault is in workspace.
 
 ## Standard 45-minute budget (from CCDAO intro)
 
@@ -103,6 +115,12 @@ Use this structure in the reply:
 - Collaboration / consistency (if multi-user): ...
 - Security (XSS, CSRF, tokens) if relevant: ...
 
+### (Optional) S — State & sync — for written deep dives / complex writes
+- Where **order** lives (server cursor vs client); **gaps** when items move or are deleted under concurrent load.
+- **Optimistic UI**: temp ids, rollback, duplicate suppression (`operationId` / idempotency).
+- **Live updates**: prepend vs reorder; how the client merges **SSE/WebSocket** events with paginated cache.
+- **Cross-links**: use the **same vocabulary** in Data, API, and State (e.g. “cursor”, “version”, “feed item id”).
+
 ## Suggested timeline ([N] minutes)
 | Phase | Time |
 |------|------|
@@ -146,11 +164,18 @@ Use these as **triggers** when the prompt matches; add others analogously.
 | Prompt flavor | Likely deep dives |
 |---------------|-------------------|
 | Collaborative doc / “Google Docs” | CRDT vs OT, presence, undo, conflict UX, offline |
-| Board (Trello/Kanban) | Optimistic UI, reorder + sync, permissions, activity feed |
+| Board (Trello/Kanban) | Optimistic UI, reorder + sync, sparse ordering / reindex, permissions, activity feed |
 | Streaming / “Netflix” | Video pipeline at high level, CDN, player state, continue watching, DRM (mention if relevant) |
-| Social feed | Ranking source, infinite scroll vs pages, virtualization, stale-while-revalidate |
+| **Feed / timeline / activity list** | **Ranking** (who sorts: server ML vs chronological vs blended); **cursor** pagination + tie-breakers; **dedupe** (reposts, shared entities); **real-time** insert vs full refetch; **virtualization** + scroll anchoring / restoration; **skeleton vs SWR**; moderation / tombstones; **read receipts** if in scope |
 | Typeahead / search | Debounce, cancel in-flight, indexing assumptions, highlighting |
 | Forms-heavy / wizards | Validation strategy, drafts, autosave, idempotency |
+
+### Feed / list — interview moves that score well
+
+- Name **one steel thread** first: e.g. “load first page → render → user scrolls → next cursor request” before discussing ranking.
+- Separate **read path** (pagination, cache, list virtualization) from **write path** (post, like, delete) and how each **invalidates** the other.
+- Call out **consistency under concurrent writes** (duplicate cursors, gaps, flicker) even if the answer is “eventual + manual refresh.”
+- For **infinite scroll**, tie to **memory bounds** and **scroll position** when new items arrive at the top (social) vs bottom (chat history).
 
 ## Iteration discipline (from “small steps”)
 

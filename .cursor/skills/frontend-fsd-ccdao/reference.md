@@ -42,6 +42,44 @@
 - **AuthN/Z**: Bearer vs cookie; **403** vs **404** for hidden resources; role checks on which mutations exist.
 - **Rate limits / resilience**: exponential backoff; dedupe in-flight GETs; cancel stale requests (search/typeahead).
 
+## Feed / timeline / activity list — deeper checklist
+
+Use for **social home timelines**, **notification feeds**, **activity streams**, or any **infinite list** where ordering and freshness dominate.
+
+### Collect (feed-specific)
+
+- Is the feed **strictly chronological**, **algorithmic**, or **blended**? Who owns the rank (service vs client sort of a small window)?
+- **Real-time**: must new posts appear **live** at the top, or is periodic refresh enough?
+- **Multiplicity**: one global feed vs per-user vs per-space; **following** graph implied?
+- **Content types**: text-only cards vs rich media (lazy thumbnails, aspect ratio, autoplay rules).
+
+### Data modeling (feed-specific)
+
+- **Item identity**: stable `postId` / `activityId`; dedupe when the same entity appears twice (reshare, cross-post).
+- **Ordering key**: `sortKey` / `(timestamp, id)` for stable ties; implications for **cursor** encoding.
+- **Embedded vs referenced author**: `AuthorSummary` on the card vs join on open; stale avatar display policy.
+- **Tombstones**: deleted or moderated items—remove from cache, show placeholder, or refetch page?
+
+### API design (feed-specific)
+
+- **Pagination**: cursor-based `nextCursor` (opaque) vs offset (usually bad under writes); document **possible duplicates** under concurrent inserts if honest.
+- **Prefetch**: next page when near end of list; cancel if user navigates away.
+- **Mutations that affect the feed**: like/unlike, delete—does the API return **patch hints** or does the client invalidate the list?
+- **Live channel**: SSE/WebSocket event types (`new_item`, `item_updated`); snapshot on reconnect vs gap-fill.
+
+### Optimization & UX (feed-specific)
+
+- **Virtualization**: windowed list; estimated row height vs measure; scroll jump when heights vary (images).
+- **Scroll anchoring**: new items **prepended** without losing the reader’s position (or explicit “new posts” bar).
+- **Loading UX**: skeleton first screen; **stale-while-revalidate** for return visits; empty vs error vs end-of-feed states.
+- **Backpressure**: slow network + fast scroll; cap in-flight page requests; debounce pull-to-refresh.
+
+### State & sync (written deep dives — pairs with CCDAO “optional S”)
+
+- Merge **server pages** with **optimistic** local posts; reconcile when `POST` returns canonical id.
+- **Out-of-order** responses: tie-break with request id or ignore stale page if cursor advanced.
+- Use the **same terms** in outline, API sketch, and state section (cursor, item id, version).
+
 ## Common trade-off grid (frontend system design)
 
 | Area | Typical tension | Interview talking points |
