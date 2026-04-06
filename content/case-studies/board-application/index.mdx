@@ -253,6 +253,12 @@ function Card({ data }) {
 
 On the other hand, a nested structure like this makes it harder to update a **particular** piece of data when the same entity is **copied** in more than one place. In the example above, both **card-2** and **card-3** are assigned to **Charlie Moore**, and Charlie’s profile (including `avatar_url`) appears twice in the tree. If the user changes their avatar on a profile screen, how do we bring the board back in sync? We can **refresh the whole board** and re-render everything, or we can **search the tree** and apply a precise update to every node that embeds that user—but either approach takes extra effort, and as the board grows it is easy to miss a nested copy or to do redundant work.
 
+### Stale object identity (“zombie card”)
+
+Flattening is not only about avoiding **duplicated embeds** (like the same `avatar_url` on two cards). Another failure mode appears when **two parts of the UI think they are editing the same card**, but a move uses **object spread** (`{ ...card }`) so the column now holds a **new object** while a detail panel or inspector still holds a **reference to the old one**. That old object is no longer in your React state tree for the board, yet mutating it (or binding a form to it) looks like it should work — classic **identity fork**.
+
+<BoardZombieCardIdentityProblemDemo />
+
 ### Normalized client state
 
 A better approach is to **flatten** the data into a format where we only need to update **one place** for a given entity, and every usage of that entity is **derived** from that single source of truth. References between entities are **ids**, not duplicated objects. In a database or in traditional backend design this is usually called **normalisation**; on the frontend you will see the same idea in write-ups about **normalized state** and client caches (for example Redux-style stores). A **normalised** snapshot that carries the same board might look like this:
@@ -316,13 +322,11 @@ Note how each kind of object has **its own** top-level section—`columns`, `car
 There is no duplicated user payload in this normalised shape: when we need to update the avatar for user `2`, we open the `users` section, update that one record, and we do **not** have to touch the `cards` entries except that they already point at the same id.
 </Callout>
 
-### Stale object identity (“zombie card”)
+The interactive issue view below runs the **same** gestures as the problem demo above — open the drawer from the card title, drag the grip between columns — but the client keeps a single **`cards[id]`** record and only moves **ids** between lanes, so the drawer and the board cannot drift apart.
 
-Flattening is not only about avoiding **duplicated embeds** (like the same `avatar_url` on two cards). Another failure mode appears when **two parts of the UI think they are editing the same card**, but a move uses **object spread** (`{ ...card }`) so the column now holds a **new object** while a detail panel or inspector still holds a **reference to the old one**. That old object is no longer in your React state tree for the board, yet mutating it (or binding a form to it) looks like it should work — classic **identity fork**.
+<BoardZombieCardIdentityFixDemo />
 
 This is not an argument that **nested** trees are always wrong: if every surface always **derives** from the latest state (for example by stable `id` and a single lookup), you stay consistent. The bug is real when **identity is split** — often after a clone — and something kept the **pre-fork** reference.
-
-<BoardZombieCardIdentityDemo />
 
 ### Server canonical model vs client view
 
@@ -600,32 +604,25 @@ Think of it as a small subsystem **under** the interface. It owns the **source o
 
 A familiar starting point is **React Context**: a provider holds a store value, descendants subscribe via hooks, and any change (someone moved a card, edited a title, or an assignee’s avatar arrived from the server) flows through context so the tree stays aligned.
 
-A context API for a **normalised** board might expose both **state** and **mutators** like this:
+A context API for a **normalised** board can mirror the same field names as the snapshot earlier: **`users`**, **`cards`**, **`columns`**, and **`columnIds`** — each card still references an assignee by **id** (`assignee: number | null` in the fixture, with `users` keyed by that id as a string).
 
 ```ts
-export type NormalizedBoard = {
-  usersById: Record<number, User>;
-  cardsById: Record<string, NormalizedCard>;
-  columnsById: Record<string, NormalizedColumn>;
-  columnOrder: string[];
-  selectedAssigneeIds: number[];
+type User = { id: string; name: string; avatar_url: string };
+type Card = { id: string; title: string; assignee: number | null };
+type Column = { id: string; title: string; cards: string[] };
+
+type NormalisedBoard = {
+  columnIds: string[];
+  columns: Record<string, Column>;
+  cards: Record<string, Card>;
+  users: Record<string, User>;
 };
 
-type CardFieldUpdates = Partial<{
-  title: string;
-  description: string;
-  assigneeId: number | undefined;
-}>;
-
 type BoardContextValue = {
-  state: NormalizedBoard;
-  /** Replace or merge after a snapshot from the server */
-  ingestBoard: (data: BoardPayload) => void;
-  ingestUsers: (users: User[]) => void;
+  state: NormalisedBoard;
+  ingestBoard: (snapshot: NormalisedBoard) => void;
   upsertUser: (user: User) => void;
-  updateCard: (cardId: string, updates: CardFieldUpdates) => void;
-  removeCard: (cardId: string) => void;
-  addCard: (columnId: string, card: { id: string; title: string }) => void;
+  updateCard: (cardId: string, patch: Partial<Pick<Card, "title" | "assignee">>) => void;
   moveCard: (
     cardId: string,
     fromColumnId: string,
@@ -635,31 +632,25 @@ type BoardContextValue = {
 };
 ```
 
-Keeping the board **normalised** in the client (maps by id, column order as id lists) avoids duplicating entities in nested trees—the **stale identity** problem we walked through with the zombie-card demo—and keeps avatars and assignee labels consistent everywhere.
+Keeping the board **normalised** in the client (maps by id, column order as id lists) avoids duplicating entities in nested trees—the **stale identity** problem we walked through with the zombie-card demos—and keeps avatars and assignee labels consistent everywhere.
 
 The important split is not “data vs UI” but **read shape vs write API**: `state` is what you render; `moveCard`, `upsertUser`, `updateCard`, and friends are what event handlers, drag-drop callbacks, and stream listeners invoke.
 
-A thin consumer might resolve the current card and assignee from the store, then route a picker through `upsertUser` + `updateCard`:
+A thin consumer might resolve the card and assignee from the same tables as the JSON example:
 
 ```ts
 function CardAssigneeField({ cardId }: { cardId: string }) {
   const { state, upsertUser, updateCard } = useBoardContext();
-  const card = state.cardsById[cardId];
+  const card = state.cards[cardId];
   const assignee =
-    card?.assigneeId != null ? state.usersById[card.assigneeId] ?? null : null;
+    card?.assignee != null ? state.users[String(card.assignee)] ?? null : null;
 
   function handleAssigneeChange(user: User | null) {
-    if (user) {
-      upsertUser(user);
-      updateCard(cardId, { assigneeId: user.id });
-    } else {
-      updateCard(cardId, { assigneeId: undefined });
-    }
+    if (user) upsertUser(user);
+    updateCard(cardId, { assignee: user ? Number(user.id) : null });
   }
 
-  return (
-    <UserSelect selected={assignee} onChange={handleAssigneeChange} />
-  );
+  return <UserSelect selected={assignee} onChange={handleAssigneeChange} />;
 }
 ```
 

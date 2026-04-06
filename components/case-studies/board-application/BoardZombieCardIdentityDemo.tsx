@@ -171,19 +171,6 @@ function ColumnDropZone({
   );
 }
 
-function BetweenDemosSeparator() {
-  return (
-    <div className="relative py-3" role="separator" aria-label="Versus normalized approach">
-      <div className="absolute inset-y-0 left-0 right-0 top-1/2 border-t border-slate-200/80 dark:border-slate-600/50" aria-hidden />
-      <div className="relative flex justify-center">
-        <span className="rounded-full border border-slate-200/90 bg-white px-3 py-1 text-[11px] font-semibold uppercase tracking-wide text-slate-500 shadow-sm dark:border-slate-600/60 dark:bg-slate-900/80 dark:text-slate-400">
-          vs normalized
-        </span>
-      </div>
-    </div>
-  );
-}
-
 function IssueDetailPanel({
   open,
   onClose,
@@ -565,38 +552,59 @@ function NormalizedPanel() {
   );
 }
 
+const pragmaticDndLink = (
+  <a
+    href="https://atlassian.design/components/pragmatic-drag-and-drop/"
+    className="font-medium text-brand underline-offset-2 hover:underline"
+    rel="noreferrer"
+    target="_blank"
+  >
+    Pragmatic drag and drop
+  </a>
+);
+
 /**
- * Jira-style mini flow: equal columns, optional right detail drawer, handle-driven column moves.
+ * Nested column state + ref capture: shows identity fork (“zombie” card) after a spread clone move.
+ * Pair with `BoardZombieCardIdentityFixDemo` after introducing normalised client state.
  */
-export function BoardZombieCardIdentityDemo() {
+export function BoardZombieCardIdentityProblemDemo() {
   return (
-    <figure className={ui.caseStudyDemoShell} aria-label="Zombie card identity demo">
+    <figure className={ui.caseStudyDemoShell} aria-label="Zombie card identity problem demo">
       <div className="border-b border-slate-200/80 px-4 py-3 dark:border-slate-600/50 sm:px-5">
         <figcaption className="text-sm font-semibold text-slate-900 dark:text-slate-50">
-          Stale object identity after a move
+          When the detail drawer edits a stale object
         </figcaption>
         <p className="mt-1 text-sm text-slate-600 dark:text-slate-400">
           If a detail view keeps a <strong>reference</strong> to a card object nested in column state, and the move
-          replaces that slot with <code className="text-xs">{`{ ...card }`}</code>, edits can target a{" "}
-          <strong>detached</strong> object while the board renders the clone — a &quot;zombie&quot; card. A normalized{" "}
-          <code className="text-xs">cards[id]</code> map avoids forking identity: you only move <strong>ids</strong>{" "}
-          between lanes. The layout below mimics a simple <strong>issue view</strong>: two equal columns,{" "}
-          <strong>click the title</strong> to open a drawer on the right, <strong>drag the grip</strong> to change status
-          columns — using the same{" "}
-          <a
-            href="https://atlassian.design/components/pragmatic-drag-and-drop/"
-            className="font-medium text-brand underline-offset-2 hover:underline"
-            rel="noreferrer"
-            target="_blank"
-          >
-            Pragmatic drag and drop
-          </a>{" "}
-          setup as the fixture board demo in this article.
+          replaces that slot with <code className="text-xs">{`{ ...card }`}</code>, typing in the drawer can update a{" "}
+          <strong>detached</strong> object while the board renders the clone — a &quot;zombie&quot; card. Two equal
+          columns, <strong>click the title</strong> to open the drawer, <strong>drag the grip</strong> to move between
+          lanes — same {pragmaticDndLink} setup as the other board demos in this article.
         </p>
       </div>
-      <div className="flex flex-col gap-2 p-4 sm:p-5">
+      <div className="p-4 sm:p-5">
         <NestedZombiePanel />
-        <BetweenDemosSeparator />
+      </div>
+    </figure>
+  );
+}
+
+/**
+ * Normalised map + stable id: same interaction as the problem demo, without forking identity.
+ */
+export function BoardZombieCardIdentityFixDemo() {
+  return (
+    <figure className={ui.caseStudyDemoShell} aria-label="Zombie card identity fix demo">
+      <div className="border-b border-slate-200/80 px-4 py-3 dark:border-slate-600/50 sm:px-5">
+        <figcaption className="text-sm font-semibold text-slate-900 dark:text-slate-50">
+          Same flow with a normalised <code className="text-xs">cards[id]</code> map
+        </figcaption>
+        <p className="mt-1 text-sm text-slate-600 dark:text-slate-400">
+          Keep one record per card id and only move <strong>ids</strong> between columns; the drawer always edits{" "}
+          <code className="text-xs">cards[id]</code>, so the lane and the panel stay aligned after a drag.
+        </p>
+      </div>
+      <div className="p-4 sm:p-5">
         <NormalizedPanel />
       </div>
     </figure>

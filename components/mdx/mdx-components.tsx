@@ -13,7 +13,10 @@ import { BoardNormalisationStepperDemo } from "@/components/case-studies/board-a
 import { BoardSparseGapDemo } from "@/components/case-studies/board-application/BoardSparseGapDemo";
 import { BoardSparseRebalanceDemo } from "@/components/case-studies/board-application/BoardSparseRebalanceDemo";
 import { BoardSseBroadcastDemo } from "@/components/case-studies/board-application/BoardSseBroadcastDemo";
-import { BoardZombieCardIdentityDemo } from "@/components/case-studies/board-application/BoardZombieCardIdentityDemo";
+import {
+  BoardZombieCardIdentityFixDemo,
+  BoardZombieCardIdentityProblemDemo,
+} from "@/components/case-studies/board-application/BoardZombieCardIdentityDemo";
 import { IntersectionPaginationDemo } from "@/components/case-studies/board-application/IntersectionPaginationDemo";
 import { CcdaoFlowDiagram } from "@/components/explainers/CcdaoFlowDiagram";
 import { FailureModeStepper } from "@/components/explainers/FailureModeStepper";
@@ -57,7 +60,11 @@ export const mdxComponents: MDXComponents = {
   BoardSparseGapDemo: wrap(BoardSparseGapDemo, "Sparse integer ranks demo"),
   BoardSparseRebalanceDemo: wrap(BoardSparseRebalanceDemo, "Sparse segment rebalance demo"),
   BoardSseBroadcastDemo: wrap(BoardSseBroadcastDemo, "Board live updates demo"),
-  BoardZombieCardIdentityDemo: wrap(BoardZombieCardIdentityDemo, "Zombie card identity demo"),
+  BoardZombieCardIdentityFixDemo: wrap(BoardZombieCardIdentityFixDemo, "Zombie card identity fix demo"),
+  BoardZombieCardIdentityProblemDemo: wrap(
+    BoardZombieCardIdentityProblemDemo,
+    "Zombie card identity problem demo",
+  ),
   IntersectionPaginationDemo: wrap(IntersectionPaginationDemo, "Intersection pagination demo"),
   CcdaoFlowDiagram: wrap(CcdaoFlowDiagram, "CCDAO flow diagram"),
   PaginationMotionDemo: wrap(PaginationMotionDemo, "Pagination motion demo"),
