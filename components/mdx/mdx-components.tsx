@@ -4,6 +4,7 @@ import type { CSSProperties } from "react";
 import { BoardCascadeReindexDemo } from "@/components/case-studies/board-application/BoardCascadeReindexDemo";
 import { BoardCommandLifecycleFlow } from "@/components/case-studies/board-application/BoardCommandLifecycleFlow";
 import { BoardDataModelDiagram } from "@/components/case-studies/board-application/BoardDataModelDiagram";
+import { BoardDndAccessibleDemo } from "@/components/case-studies/board-application/BoardDndAccessibleDemo";
 import { BoardDndDemo } from "@/components/case-studies/board-application/BoardDndDemo";
 import { BoardEmptyStateDemo } from "@/components/case-studies/board-application/BoardEmptyStateDemo";
 import { BoardLexRankDemo } from "@/components/case-studies/board-application/BoardLexRankDemo";
@@ -51,6 +52,7 @@ export const mdxComponents: MDXComponents = {
   BoardCascadeReindexDemo: wrap(BoardCascadeReindexDemo, "Cascade reindex demo"),
   BoardCommandLifecycleFlow: wrap(BoardCommandLifecycleFlow, "Command lifecycle flow"),
   BoardDataModelDiagram: wrap(BoardDataModelDiagram, "Board data model diagram"),
+  BoardDndAccessibleDemo: wrap(BoardDndAccessibleDemo, "Board accessible drag and drop demo"),
   BoardDndDemo: wrap(BoardDndDemo, "Board drag and drop demo"),
   BoardEmptyStateDemo: wrap(BoardEmptyStateDemo, "Board empty state demo"),
   BoardLexRankDemo: wrap(BoardLexRankDemo, "LexoRank ordering demo"),
