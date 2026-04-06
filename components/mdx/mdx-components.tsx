@@ -1,6 +1,7 @@
 import type { MDXComponents } from "mdx/types";
 import type { CSSProperties } from "react";
 
+import { BoardCommandLifecycleFlow } from "@/components/case-studies/board-application/BoardCommandLifecycleFlow";
 import { BoardCascadeReindexDemo } from "@/components/case-studies/board-application/BoardCascadeReindexDemo";
 import { BoardLexRankDemo } from "@/components/case-studies/board-application/BoardLexRankDemo";
 import { BoardSparseGapDemo } from "@/components/case-studies/board-application/BoardSparseGapDemo";
@@ -44,6 +45,7 @@ export const mdxComponents: MDXComponents = {
   CourseFaqSection: wrap(CourseFaqSection, "Course FAQ"),
   CoursePricingCompact: wrap(CoursePricingCompact, "Course pricing"),
   FsdeCaseStudyCourseCard: wrap(FsdeCaseStudyCourseCard, "Course promo card"),
+  BoardCommandLifecycleFlow: wrap(BoardCommandLifecycleFlow, "Command lifecycle flow"),
   BoardCascadeReindexDemo: wrap(BoardCascadeReindexDemo, "Cascade reindex demo"),
   BoardLexRankDemo: wrap(BoardLexRankDemo, "LexoRank ordering demo"),
   BoardSparseGapDemo: wrap(BoardSparseGapDemo, "Sparse integer ranks demo"),

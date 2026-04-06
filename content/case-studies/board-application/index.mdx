@@ -592,13 +592,13 @@ On **Conflict (409 Conflict)**, the server rejects the intent because the "world
 
 ## State management
 
-With data modeling we know how the data looks like, and with API design we know how the data should be fetched from server side. And that is the begining of the frontend data design - state management.
+Once **data modeling** has settled the shapes you render, and **API design** has settled how you fetch and mutate on the wire, the next slice of frontend architecture is **state management**: how the client holds a working copy of that data while the UI is open.
 
-You can think of frontend state management as a sub-system lives under the user interface, it has the source of truth of the current UI: what cards to show, which part of the UI is still pending, etc. And beside these state, there are also APIs - functions that can change the state (usually triggered by user interaction, it also can be system event, like a timer or SSE event listener).
+Think of it as a small subsystem **under** the interface. It owns the **source of truth** the UI reads: which cards exist, where they sit in column order, what is still optimistic or in-flight, and so on. Alongside that read model you expose **operations**—functions that transition state in response to gestures, timers, or inbound events (SSE, `EventSource`, focus refresh, etc.). The UI calls those operations; consumers re-render when the store updates.
 
-The simplest solution would be a React Context API, it holds a global store object, and the children components listen changes from the store, whenever something changed: a user moved card from column A to B, a user changed it's avatar, another user changed card title from their side, etc. All these change propogate to the children components for a re-render, so UI is consistent.
+A familiar starting point is **React Context**: a provider holds a store value, descendants subscribe via hooks, and any change (someone moved a card, edited a title, or an assignee’s avatar arrived from the server) flows through context so the tree stays aligned.
 
-A typical store implemented with React Context might look like this:
+A context API for a **normalised** board might expose both **state** and **mutators** like this:
 
 ```ts
 export type NormalizedBoard = {
@@ -609,60 +609,102 @@ export type NormalizedBoard = {
   selectedAssigneeIds: number[];
 };
 
-type BoardContextType = {
+type CardFieldUpdates = Partial<{
+  title: string;
+  description: string;
+  assigneeId: number | undefined;
+}>;
+
+type BoardContextValue = {
   state: NormalizedBoard;
+  /** Replace or merge after a snapshot from the server */
   ingestBoard: (data: BoardPayload) => void;
   ingestUsers: (users: User[]) => void;
   upsertUser: (user: User) => void;
-  updateCard: (
-    cardId: string,
-    updates: Partial<{
-      title: string;
-      description?: string;
-      assigneeId?: number;
-    }>,
-  ) => void;
+  updateCard: (cardId: string, updates: CardFieldUpdates) => void;
   removeCard: (cardId: string) => void;
   addCard: (columnId: string, card: { id: string; title: string }) => void;
-  moveCard: (
-    cardId: string,
-    fromColumnId: string,
-    toColumnId: string,
-    fromIndex: number,
-    toIndex: number,
-  ) => void;
+  moveCard: (cardId: string, toColumnId: string, afterCardId: string) => void;
 };
 ```
 
-We have used falttend version of the board data in frontend, so we can avoid the problem of duplication (the zombie card issue we discssed earlier) and inconsistent user avatars.
+Keeping the board **normalised** in the client (maps by id, column order as id lists) avoids duplicating entities in nested trees—the **stale identity** problem we walked through with the zombie-card demo—and keeps avatars and assignee labels consistent everywhere.
 
-Notice that we not ony have these normalised data, but also the APIs like `moveCard`, `upsertUser`, etc. And then we can call these functions inside user action handler or SSE event handler.
+The important split is not “data vs UI” but **read shape vs write API**: `state` is what you render; `moveCard`, `upsertUser`, `updateCard`, and friends are what event handlers, drag-drop callbacks, and stream listeners invoke.
+
+A thin consumer might resolve the current card and assignee from the store, then route a picker through `upsertUser` + `updateCard`:
 
 ```ts
-const Card = () => {
-    const { removeCard, updateCard, upsertUser, columns, moveCard } =
-    useBoardContext();
+function CardAssigneeField({ cardId }: { cardId: string }) {
+  const { state, upsertUser, updateCard } = useBoardContext();
+  const card = state.cardsById[cardId];
+  const assignee =
+    card?.assigneeId != null ? state.usersById[card.assigneeId] ?? null : null;
 
-    function handleAssignUser(user: User | null) {
-      // Update local state
-      if (user) {
-        upsertUser(user); // Ensure user is in our local state
-        updateCard(id, { assigneeId: user.id });
-      } else {
-        updateCard(id, { assigneeId: undefined });
-      }
+  function handleAssigneeChange(user: User | null) {
+    if (user) {
+      upsertUser(user);
+      updateCard(cardId, { assigneeId: user.id });
+    } else {
+      updateCard(cardId, { assigneeId: undefined });
     }
-  
+  }
+
   return (
-    <>
-          <UserSelect
-        selected={assignee ?? null}
-        handleChange={handleAssignUser}
-      />
-    </>
-  )
+    <UserSelect selected={assignee} onChange={handleAssigneeChange} />
+  );
 }
 ```
+
+You might implement that store with **Redux**, **Zustand**, **Jotai**, or plain React state—this article stays with **principles** rather than library shopping; a separate walkthrough can compare stacks another day.
+
+The harder part, once the shape and mutators exist, is **behaviour under the network**: overlapping requests, retries, and optimistic UI that must not stay wrong for long. A useful pattern is to treat the client as holding not only a **snapshot** of the board but also a **log of in-flight intents**—a **command queue** (or “pending operations” layer) that sits between gestures and the API.
+
+### Introducing the command queue
+
+On a busy board, a user is not firing isolated clicks; they produce a **stream of intents**—three quick moves, a rename, an assignee change. If each handler fires an `async` request and blindly applies whichever response returns last, **network reordering** can paint an old outcome on top of a newer one: the UI can snap back because a slow request finished after a fast one.
+
+A queue makes each intent a **discrete command** (id, type, payload, timestamps, status). The rendered state is then something like: **last acknowledged server truth**, plus **deterministic application of pending commands** on the client—so you can define rules for ordering (FIFO for the same resource, merge by **version** / **sequence**, or block until a prior command settles). The exact policy is a product and protocol choice; the point is that **responses are not applied naïvely by arrival time**.
+
+<Callout tone="note">
+**Command pattern (frontend):** package each user or system **intent** as an object with a stable identity, apply it to local state (often optimistically), enqueue it for the network, and track **pending → syncing → settled** (or **failed**) so retries, undo, and reconciliation stay explicit. It is the same *command* idea as in classic OOD—encapsulate an action as data—extended here with **durability against latency** and **ordering** relative to server truth.
+</Callout>
+
+That lines up with the **operation id** and idempotent **`POST .../operations`** idea from **API design**: the queue can reuse one logical id across retries so the server deduplicates instead of seeing a **retry storm** of duplicate side effects.
+
+### Rollback without guessing
+
+When an optimistic move fails, ad-hoc “put it back” code is easy to get wrong—you get **ghost cards** in the wrong column or half-updated order. A command object can carry an explicit **compensating update** for the client (or enough data to derive one): if the API rejects the move, the queue runs the inverse for **that** command instead of reconstructing state from memory.
+
+In practice, if the **server world has moved** (someone else deleted the anchor card, or a 409 returned new truth), a frozen inverse may be **invalid**. Then the right move is **reconciliation**: apply the server patch or snapshot from the error body / SSE, then **re-base** or drop pending commands that no longer apply. The queue gives you a single place to implement that policy instead of scattering special cases across handlers.
+
+### Framing: snapshot plus pending log
+
+One compact mental model is **“UI as a transaction log”**: the screen shows the result of **base state + pending operations**, not only a mutable blob. **Undo**, **retry**, and **optimistic updates** become properties of how commands **enter**, **apply**, **sync**, and **settle**—not three unrelated features.
+
+A coarse lifecycle runs **Capture → Apply → Buffer → Sync → Settle → Reconcile**. The diagram below lays the same steps out as a left-to-right pipeline (pan and zoom if it feels tight on a narrow viewport).
+
+<BoardCommandLifecycleFlow />
+
+A command can be as simple as a typed object like below, note there is a `undo` to record what need to be rollback if the server fails. 
+
+```ts
+type MoveCardCommand = {
+  id: string;
+  type: "MOVE_CARD";
+  operationId: string;
+  payload: { cardId: string; toColumnId: string; afterCardId: string | null };
+  /** For client-side rollback if the API fails before server truth arrives */
+  undo: { cardId: string; toColumnId: string; afterCardId: string | null };
+  status: "pending" | "syncing" | "failed" | "settled";
+};
+```
+
+Production systems often persist pending commands (IndexedDB, `localStorage`) so a refresh mid-flight does not silently drop user intent—that is another step up in complexity worth mentioning only when you need **offline** or **crash recovery**.
+
+### Redux and “actions”
+
+**Redux** (and similar) already centralise updates through **actions** and **reducers**. The gap, in many codebases, is not the word “action” but the missing pieces: a **first-class pending queue**, **per-command lifecycle**, **retry policy**, and **explicit undo / reconcile** paths. You can still implement the queue **inside** a Redux middleware or alongside it—the architecture is about **separation of intent from network timing**, not which hook you use to subscribe.
 
 ## Optimization strategies
 
