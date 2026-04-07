@@ -29,9 +29,17 @@ export type RelatedRef = {
 
 export type TestingLevel = "unit" | "integration" | "e2e";
 
+/** Rubric column — drives `Token` colour in `TestingRubricTable`. */
+export type RubricCategory =
+  | "functional"
+  | "state"
+  | "realtime"
+  | "a11y"
+  | "visual";
+
 export type RubricItem = {
   id: string;
-  category: "functional" | "a11y";
+  category: RubricCategory;
   level: TestingLevel;
   requirement: string;
   doneWhen: string;

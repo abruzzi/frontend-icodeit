@@ -1,27 +1,31 @@
 ---
-title: "Board Application Architecture"
+title: "Board Application: Frontend Architecture"
 summary: >
-  A deep frontend walkthrough of a kanban-style board—cards in columns, moves, and multi-user
-  sync—using a steel thread from fixture data and faithful UI through client-side ordering and
-  persistence before layering on realtime and conflict behavior. The core model is normalized
-  entities with ordered card ids per column and idempotent move operations at the API boundary;
-  the guide also stresses what to observe in production (duplicate applies, out-of-order updates,
-  optimistic rollbacks) and why keyboard- and screen-reader-first flows matter as much as
-  drag-and-drop polish.
-lastEdited: "2026-04-03"
+  A long-form frontend case study built around a kanban board: nested versus normalised data,
+  API sketches (REST snapshot reads, intent-shaped moves, idempotency and 409 reconciliation),
+  client replica and command-queue thinking, ordering trade-offs from dense integers through
+  LexoRank-style strings, SSE as a transport example, local Pragmatic drag-and-drop demos plus a
+  separate accessibility demo (keyboard path, menu, live region), reliability failure modes, and
+  an end-of-article testing rubric. Interactives are mostly browser-local teaching aids—no
+  shipped backend walkthrough—and the piece does not compare state-management or data-fetching
+  libraries; it stays at shapes, contracts, and how things fail under concurrency and bad
+  networks.
+lastEdited: "2026-04-07"
 kind: "case-study"
 status: "published"
 scenario: "board-app"
-tags: ["performance", "reliability", "testing", "state-management", "a11y"]
+tags:
+  ["performance", "reliability", "testing", "state-management", "a11y", "real-time"]
 patternRefs:
   - slug: "lexorank-card-ordering"
-    reason: "Fractional ranks for per-column card order at scale."
+    reason: "Companion pattern for the ordering section (gaps, rebalance, LexoRank-style strings); page is still a stub alongside this case study."
 quickTake:
-  - "Steel thread: fixture JSON → correct UI → moves in client state → then persist for one user before realtime and conflicts."
-  - "A board is still: ordered card ids per column + normalized records + idempotent move operations when the server is involved."
+  - "Reasonable slice to ship first: fixture → working UI → client moves → persist for one user → then realtime and conflicts; the article widens that spine with local demos and design detail."
+  - "Normalised entity maps plus ordered card ids per column; stable operationId (or equivalent) on write intents when a server is involved."
+  - "Out of scope here: picking Redux vs Zustand, TanStack Query vs SWR—patterns are meant to map onto any stack."
 productionNotes:
-  - "Make card moves observable: duplicate applies, updates that land out of order, and frequent optimistic rollbacks usually mean idempotency or your delivery contract is wrong—not one-off bugs."
-  - "Plan keyboard and screen-reader flows before drag-and-drop polish; pointer-only boards are a common accessibility dead end."
+  - "Repeated duplicate moves, odd ordering, or constant optimistic rollbacks usually point to idempotency, event ordering, or version checks—not isolated UI defects."
+  - "Treat an accessible move path (menu/keyboard) as part of v1 alongside drag; pointer-only flows leave many users stuck."
 testingRubricId: "realtime-collaboration-core"
 ---
 
@@ -42,8 +46,6 @@ Let's **start with something we can touch.** The widget below shows **columns** 
 <Callout tone="note">
 This demo does not call an API. Later sections cover idempotent **move** operations and reconciling on ack or rollback—see **API design** and **Data modeling**.
 </Callout>
-
-<FsdeCaseStudyCourseCard />
 
 From here on, it helps to split what you're building into two buckets: **functionality** (the features users see) and **cross-functional** requirements (how the system behaves under pressure).
 
@@ -109,6 +111,8 @@ Again, there isn't a right or wrong split here—but the goal stays the same:
 The rest of the article lines up with the [**CCDAO**](https://www.youtube.com/watch?v=ojFsLG4TkUA) lens—**C**ollect constraints, **C**omponent structure, **D**ata modeling, **A**PI design, **O**ptimization—so each block maps to how you might walk the problem in a design review. **Data modeling** and **API design** go deepest from **step 3** onward.
 </Callout>
 
+<FsdeCaseStudyCourseCard />
+
 ## Designing the UI
 
 For most frontend engineers, UI is the easiest place to start because it’s concrete and close to what we do every day. So let’s begin with the board page and sketch the **happy path** first: the board has a few columns, each column already has some cards, and the initial fetch succeeds.
@@ -154,7 +158,7 @@ When there are no cards yet, no columns yet, or no results for a search—what s
 As a senior engineer, it’s important to think beyond the happy path: slow networks, backend errors, and the user’s “first time here” journey.
 </Callout>
 
-## Data modeling (deep dive)
+## Data modeling
 
 Once we have a solid picture of the UI—what we are including, how it loads, and which edge states we actually own—we can reason much more clearly about <Highlight variant="underline3">data modeling</Highlight>. The question becomes: what shape stays correct when cards move, assignees change, and events arrive out of order?
 
@@ -634,7 +638,9 @@ type BoardContextValue = {
 
 Keeping the board **normalised** in the client (maps by id, column order as id lists) avoids duplicating entities in nested trees—the **stale identity** problem we walked through with the zombie-card demos—and keeps avatars and assignee labels consistent everywhere.
 
+<Callout tone="note">
 The important split is not “data vs UI” but **read shape vs write API**: `state` is what you render; `moveCard`, `upsertUser`, `updateCard`, and friends are what event handlers, drag-drop callbacks, and stream listeners invoke.
+</Callout>
 
 A thin consumer might resolve the card and assignee from the same tables as the JSON example:
 
@@ -700,9 +706,9 @@ type MoveCardCommand = {
 
 Production systems often persist pending commands (IndexedDB, `localStorage`) so a refresh mid-flight does not silently drop user intent—that is another step up in complexity worth mentioning only when you need **offline** or **crash recovery**.
 
-### Redux and “actions”
-
+<Callout note="aside">
 **Redux** (and similar) already centralise updates through **actions** and **reducers**. The gap, in many codebases, is not the word “action” but the missing pieces: a **first-class pending queue**, **per-command lifecycle**, **retry policy**, and **explicit undo / reconcile** paths. You can still implement the queue **inside** a Redux middleware or alongside it—the architecture is about **separation of intent from network timing**, not which hook you use to subscribe.
+</Callout>
 
 ## Optimization strategies
 
@@ -740,7 +746,9 @@ Integers, even spaced out, still live in a **finite** space per gap. Another ste
 
 The interactive demo below uses **[`@dalet-oss/lexorank`](https://www.npmjs.com/package/@dalet-oss/lexorank)**—an open-source **LexoRank-style** TypeScript implementation (fork of the older `lexorank-ts` project). It follows the same **idea** as Jira’s approach (lexicographic keys, `between` / `genNext`-style operations); it is **not** Atlassian’s shipping binary, so treat it as **educational**, not a compatibility guarantee.
 
+<Callout tone="aside">
 For contrast, **other products chose different encodings** for the same underlying problem (ordered sequences under concurrency). Figma, for example, describes **fractional indexing** with arbitrary-precision fractions kept as strings—see [Realtime editing of ordered sequences](https://www.figma.com/blog/realtime-editing-of-ordered-sequences/). Same goal—cheap inserts, sortable keys—**different algorithm and string shape**. [Rocicorp’s `fractional-indexing`](https://www.npmjs.com/package/fractional-indexing) (Greenspan’s [Observable note](https://observablehq.com/@dgreensp/implementing-fractional-indexing)) is another popular string-key generator in that family.
+</Callout>
 
 In the demo, starter ranks are labelled **`a`–`e`**; the real stored values look like **`0|…:`** (bucket, body, sentinel). After you subdivide, the full string is shown.
 
@@ -767,6 +775,12 @@ From a system perspective this is not a party trick—it is **write amplificatio
 - **LexoRank-style strings** (this demo: **`@dalet-oss/lexorank`**) — more logic in client and server, but **most moves stay O(1) writes** and rebalance is comparatively rare. **Other** string-key schemes (e.g. **fractional indexing** in [Figma’s write-up](https://www.figma.com/blog/realtime-editing-of-ordered-sequences/)) trade different details on interleaving, key length, and implementation cost.
 
 The trade-off is familiar: **simpler storage** versus **ranking machinery** in exchange for **scalability** when lists and collaboration grow.
+
+## Performance, reliability, and accessibility
+
+### Performance
+
+**Work in progress.** This walkthrough does not yet cover board-specific **frontend performance** in depth—virtualising long columns and cards, keeping **drag and drop** smooth under load, reconciling **realtime** updates without excess re-renders, **batching** or **debouncing** expensive work, and how you **measure** (frame time, interaction to next paint, long tasks). The **ordering** discussion earlier is the closest we get to scalability on the **write path**; a fuller performance section will land here in a later revision.
 
 ### Accessibility
 
@@ -814,61 +828,29 @@ After a menu action, we also want to mirror the visual update for screen readers
 </div>
 ```
 
-
-
 <BoardDndAccessibleDemo />
 
 Without focus and names, **Tab** skips your cards. Without a **menu** wired to **`moveCard`**, keyboard users have no reliable parallel path. Without a **live region**, the DOM updates silently for screen reader users.
 
-<WorkingInProgress
-  href="https://juntao.substack.com/"
-  actionLabel="Follow the issue"
-  description="We’re still validating examples for this part."
->
+### Reliability
 
-## Performance, reliability, and accessibility
+Once you have **optimistic UI** and a **command queue**, reliability stops being only “show an error toast.” The board is a **replica**: the user should either see **truth**, see **explicit pending** state, or be nudged to **recover**—not get stuck believing a move landed when it did not. The patterns below are the ones that tend to separate a polished product from a demo; they line up with **`operationId`**, **`409`**, and **version** from **API design** and **State management**.
 
-### Deep dive: Realtime bursts & state reconciliation
+#### When the UI moves but the server never did
 
-**Why:** On a collaborative board, if several people are moving cards at once, the frontend can **jitter**: it tries to apply every WebSocket message as it lands—sometimes many per second—and the DOM never gets a stable frame.
+**Ghost moves** happen when the client paints a new column for a card, then the request **fails silently**, **times out**, or the tab goes away before an ack. The user thinks the work is filed; the backlog on the server still says otherwise. A practical response is a **pending timeout**: if no success arrives within a bounded window (often on the order of **5–10 seconds**, tuned to your p95), **snap the card back** to its pre-move position and offer **Retry**—toast or inline—so intent is not lost. Retries must reuse the **same** **`operationId`** where the protocol allows **idempotency**; minting a **new** key for the same gesture is how duplicate cards slip in.
 
-**Recommendation — requestAnimationFrame (rAF) batching:** The UI does **not** have to paint on every inbound message. Instead, **gather** updates in a short-lived buffer (per column, per board, or keyed by concern) and **flush once per visual tick** inside **`requestAnimationFrame`**. That way multiple logical updates collapse into **one layout pass** for that frame, which cuts **layout thrash** and makes motion feel calm. Combine that with **deduping** by `operationId` (or equivalent) so retries and duplicates do not double-apply the same intent.
+#### Competing moves on the same card
 
-### Brief: Drag performance
+Two people (or two tabs) can issue moves that **look** compatible locally—same destination column, same rough intent—while the server has already committed a different order. Treat the **server as the serializing authority**: the first commit wins; the loser should receive something like **`409 Conflict`** with **enough body** to **reconcile** (current column order, version, or a patch), not a generic “something went wrong.” The client’s job is to **merge that truth** into the replica and drop or **re-base** optimistic commands that no longer apply, rather than guessing from stale local order.
 
-Senior engineers usually already know **`transform: translate3d`** (compositor-friendly) versus animating **`top` / `left`** (layout). Keep this section short: profile first, then optimize. For the mechanics of read/write interleaving, see Web.dev on [**layout thrashing**](https://web.dev/articles/avoid-large-complex-layouts-and-layout-thrashing/); for motion-library ergonomics and performance notes, see [**Framer Motion** documentation](https://www.framer.com/motion/).
+#### Retries and duplicate side effects
 
-### Brief: Keyboard & accessibility
+Networks **retry**. Users **double-click**. If each attempt sends a **fresh** idempotency key, the server may apply the **same** move twice. The fix is boring and important: one stable **`operationId`** (or equivalent) **per user gesture**, with **server-side dedupe** so duplicates collapse to a single effect. That is the same contract we sketched for **`POST .../operations`**; reliability here is mostly **not forgetting** it under load.
 
-**Why:** Boards are **notoriously hard** for screen readers and keyboard-only users. Treating “make drag accessible” as the primary plan often yields fragile UX.
+#### Long disconnects and “patch stacking”
 
-**Recommendation:** Prefer the **move menu / same mutation path** pattern spelled out under **Optimization strategies → Accessibility** above—focusable cards, headless menu, live region, **`operationId`** discipline on retries (**never** mint a new id for the **same** user gesture). Pair with **exponential backoff** on **5xx** / network errors so keyboard-driven moves fail as gracefully as pointer-driven ones.
-
-## Trade-offs (when you evolve past the first slice)
-
-| Tension | One side | Other side | When the “other” wins |
-| ------- | -------- | ---------- | --------------------- |
-| Conflict handling | Server-normalized order after each move | Operational transform on shared fields | Multiple users edit **the same card body** concurrently |
-| Transport | Poll + refetch | WebSocket push | Sub-second multi-user updates |
-| Optimism | Wait for server | Optimistic + rollback | Drag-and-drop UX expectations |
-| Column size | Load all cards | Paginate in column | Very large backlogs |
-| **Data fetching** | **Thin records** — IDs + minimal metadata | **Fat records** — full card body, labels, avatars | **Offline-first** apps or **low-latency** column paint where fewer round-trips beat slim payloads |
-
-## Common failure modes (expert section)
-
-- **Ghost moves** — The UI shows a move, but the server never persisted it.  
-  **Solution:** A **pending timeout**. If the operation is not **acked** within a bounded window (e.g. **5–10 seconds**), **snap the card back** to its pre-move position and surface a **Retry** toast (or inline action). Pair with **idempotency** on `operationId` so a retry does not create duplicates.
-
-- **The “double-jump” bug** — Two users move the **same** card to the **same** column at nearly the same time.  
-  **Solution:** The **server is the serializing authority**. The first operation to commit wins; the second should get a **`409 Conflict`** (or equivalent) carrying **authoritative board state** so the client **reconciles** local UI instead of guessing.
-
-- **Duplicate cards after a retry** — Same gesture retried with a **new** idempotency key.  
-  **Solution:** Stable **`operationId`** per user gesture + **server-side dedupe** on that key.
-
-- **Corrupt order after tab sleep** — A classic **senior-level** failure: the laptop sleeps, the **WebSocket** drops, hours pass, and local state is **stale** while the user still sees an old board.  
-  **Solution — resync on reconnect:** When the socket is healthy again, the client must not only **listen** for new events. It should ask: **“What is the current `version` / `seq`?”** If the server is more than **`X` revisions** ahead (your threshold is product-specific), **discard** the local replica for that scope and **refetch** the affected column or full board—then replay or drop queued ops under a clear policy. **Patch stacking forever** without a version check is how order silently diverges.
-
-- **Accessibility gaps** — Treat **keyboard + screen reader** paths as **v1**, not a polish pass after launch.
+A harder class of bug shows up after the **laptop sleeps**, the **WebSocket** drops for a long time, or the user returns to a tab that kept **applying local optimism** while the world moved on. The UI can look fine while **`version` / `seq`** on the server is far ahead. When the channel is healthy again, the client should not only **subscribe** to new events—it should **compare** revision counters (or equivalent). If the gap exceeds a product-specific threshold, **refetch** the board or affected columns and **reconcile** the pending queue explicitly. **Stacking patches forever** without ever checking **version** is how column order **silently diverges** from production; senior interviews love this failure mode because it is subtle until it is catastrophic.
 
 <Callout tone="aside">
 In a board application, treat the **client as a database cache**. Your local state layer (Redux, Zustand, TanStack Query’s cache, etc.) is not just a bag of UI flags—it is a **replica** of the server’s truth. Every operation—**pending**, **succeeded**, or **failed**—is a **transaction** against that replica; reconciliation and retries should preserve that mental model.
@@ -876,7 +858,27 @@ In a board application, treat the **client as a database cache**. Your local sta
 
 ## Testing
 
+In real-world applications, things could **go wrong easily by accident**: a refactor of column rendering, a tweak to the event reducer, or a “small” API change can reorder cards, drop moves, or fork identity—and you may not notice until a user reports it. **Automated tests** are the cheapest way to keep **existing behaviour** stable while you change code: they fail when a regression slips in, instead of shipping it to production first.
+
+They also **shorten the loop** when something *does* go wrong. A failing test gives you a **reproducible** path (inputs → expected state or DOM); fixing the bug and keeping the test **locks** the fix so the same class of defect is harder to reintroduce. That matters twice over in an **agent-assisted** workflow: generated diffs are fast to produce but easy to get subtly wrong—tests are a **ground truth** you can run on every change without re-reading the whole patch by hand.
+
+<Callout tone="essentials">
+For **system design**, the connection is straightforward: the decisions you argue for—**idempotent** moves, **versioned** snapshots, **SSE** vs poll, **LexoRank** vs integers—are only as real as the code that honours them. Tests turn those claims into **checkable behaviour** (“given this event order, the client model looks like this”), which is how you de-risk a design when you move from the whiteboard to implementation—or when an interviewer asks how you would **verify** your approach.
+</Callout>
+
+The table below is a **compact checklist** for this kind of surface: what to cover at **unit**, **integration**, and **e2e** depth, grouped by **concern**. It is not a substitute for your team’s full QA strategy; it is a **starting point** you can map to Jest, Vitest, Playwright, or whatever you already run.
+
 <TestingRubric rubricId="realtime-collaboration-core" />
+
+## Summary
+
+This walkthrough keeps one **kanban board** as a **through-line**: the same product shape carries **collecting requirements** (including loading, errors, and empty states), **data modeling** (nested snapshots versus **normalised** maps and ordered id lists), **API design** (REST-shaped reads, intentful writes, **`operationId`** and **`409`**), **state management** as a **replica** plus a **command queue** and **reconciliation**, **optimisation** (especially **ordering** at scale—integers, gaps, LexoRank-style strings), **accessibility** (keyboard paths and menus next to drag), and **reliability** when the network and tabs misbehave. That is **steel-thread-like**—one concrete use case crossing real boundaries—but it is **not** the strict **[steel thread](https://www.rubick.com/steel-threads/)** from the literature: a **shipped** thinnest slice, end to end. Most of what you clicked through here is **local-only** and **pedagogical**; the article **widens** the spine on purpose. When you implement, the slice worth **shipping first** is still the sequence from the intro: **fixture → faithful UI → moves in client state → persistence for one user → then realtime and conflicts**—then grow from there. The **testing checklist** ties these themes to **unit**, **integration**, and **e2e** expectations without dictating a single tool.
+
+**What we did not optimise for here:** picking a **state-management library** (Redux, Zustand, Jotai, signals, etc.) or a **data-fetching** stack (TanStack Query, SWR, Relay, hand-rolled fetch). Those choices matter in real teams, but they change more often than the **patterns** above; the article stays at the level of **shapes**, **contracts**, and **failure behaviour** so you can map them onto whichever stack you use.
+
+**What that implies:** the goal is not to ship “the board article’s architecture,” but to recognise **recurring decisions** in **scalable, collaborative frontends**—where **truth** lives, how **moves** are identified and retried, how **order** is stored cheaply, and how **everyone** (pointer, keyboard, screen reader) can complete the same job. When you interview or design a new surface, you can reuse this **checklist mindset** even when the widgets are not cards and columns.
+
+<FsdeCaseStudyCourseCard />
 
 ## Further reading
 
@@ -886,6 +888,6 @@ In a board application, treat the **client as a database cache**. Your local sta
 - **Local-first & CRDTs** — If you outgrow “apply operations in order” and want **automatic merging** and offline edits, explore [**Automerge**](https://automerge.org/) and [**Yjs**](https://yjs.dev/) as representative **CRDT** stacks (different trade-offs than OT or server-serialized moves).
 - **Pragmatic drag and drop (this walkthrough’s stack)** — The board demos use Atlassian’s [**Pragmatic drag and drop**](https://atlassian.design/components/pragmatic-drag-and-drop/) ([`@atlaskit/pragmatic-drag-and-drop`](https://www.npmjs.com/package/@atlaskit/pragmatic-drag-and-drop), [GitHub](https://github.com/atlassian/pragmatic-drag-and-drop)). For **accessibility**, their docs are explicit that **pointer drag alone is not enough**: pair it with visible controls (**buttons**, **menus**) that achieve the **same outcomes**, then **confirm what happened** and keep the user unblocked—see [**Accessibility guidelines**](https://atlassian.design/components/pragmatic-drag-and-drop/accessibility-guidelines) and the broader [**Design guidelines**](https://atlassian.design/components/pragmatic-drag-and-drop/design-guidelines) for how they expect experiences to be structured.
 
+<Callout tone="aside">
 As this series grows, **optimistic UI**, **realtime transport**, and **a11y for dynamic UIs** will get dedicated pattern pages tied back to this board walkthrough.
-
-</WorkingInProgress>
+</Callout>

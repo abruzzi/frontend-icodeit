@@ -1,10 +1,11 @@
 import type { RubricItem } from "./types";
 
-export const TESTING_A11Y_RUBRICS: Record<string, RubricItem[]> = {
+/** Shared end-of-article rubrics: functional, state, realtime, a11y, and visual/e2e rows. */
+export const TESTING_RUBRICS: Record<string, RubricItem[]> = {
   "dynamic-list-core": [
     {
       id: "core-unit-state",
-      category: "functional",
+      category: "state",
       level: "unit",
       requirement: "State transitions handle loading, success, empty, and error.",
       doneWhen: "Reducer/state machine tests cover all transitions.",
@@ -33,32 +34,67 @@ export const TESTING_A11Y_RUBRICS: Record<string, RubricItem[]> = {
   ],
   "realtime-collaboration-core": [
     {
-      id: "rtc-unit-ordering",
+      id: "rtc-unit-rendering",
       category: "functional",
       level: "unit",
-      requirement: "Incoming events respect sequence and dedupe semantics.",
-      doneWhen: "Out-of-order, duplicate, and missing event tests are all covered.",
+      requirement:
+        "Board (or list) rendering from the client model: columns, ordered cards, empty column, assignee/avatar slots.",
+      doneWhen:
+        "Tests pin representative output (components or view-model) for a fixture shaped like your snapshot / normalised store.",
+    },
+    {
+      id: "rtc-unit-state",
+      category: "state",
+      level: "unit",
+      requirement:
+        "State layer applies moves, optimistic updates, rollbacks, and dedupes by stable intent id (`operationId` or equivalent).",
+      doneWhen:
+        "Pure reducers, command appliers, or queue reducers are covered for success, failed ack, retry-with-same-id, and duplicate event.",
+    },
+    {
+      id: "rtc-unit-events",
+      category: "realtime",
+      level: "unit",
+      requirement:
+        "Inbound event reducer respects ordering, dedupe, and gaps (SSE/WebSocket fan-out, rAF batching if you batch).",
+      doneWhen:
+        "Tests feed out-of-order, duplicate, and missing events; resulting client model matches a single source of truth.",
+    },
+    {
+      id: "rtc-int-wire",
+      category: "functional",
+      level: "integration",
+      requirement:
+        "HTTP + JSON path: snapshot ingest, `POST .../operations`, idempotency header/body, and error payloads (`409`, validation).",
+      doneWhen:
+        "Contract or MSW-style tests prove the client maps responses without shape drift and surfaces failures to the queue/UI.",
     },
     {
       id: "rtc-int-reconnect",
-      category: "functional",
+      category: "realtime",
       level: "integration",
-      requirement: "Reconnect path correctly hydrates snapshot and applies deltas.",
-      doneWhen: "Reconnect test proves no duplicate rows or missing updates.",
+      requirement:
+        "After disconnect or long idle: reconnect uses `version` / `seq` (or refetch) so local order cannot diverge silently.",
+      doneWhen:
+        "Simulated reconnect proves no duplicate cards, no missing moves, and queued ops reconcile or drop under a clear policy.",
     },
     {
-      id: "rtc-int-live-region",
+      id: "rtc-int-a11y",
       category: "a11y",
       level: "integration",
-      requirement: "Live updates are announced without overwhelming screen readers.",
-      doneWhen: "Announcement batching and wording pass manual SR checks.",
+      requirement:
+        "Parallel to pointer drag: keyboard/menu moves, focus visibility, and `aria-live` announcements that match optimistic moves.",
+      doneWhen:
+        "Automated checks where practical (roles, labels); manual screen-reader pass for timing and wording of status updates.",
     },
     {
-      id: "rtc-e2e-focus",
-      category: "a11y",
+      id: "rtc-e2e-visual",
+      category: "visual",
       level: "e2e",
-      requirement: "Focus remains stable when real-time updates occur.",
-      doneWhen: "Keyboard-only user can continue primary task uninterrupted.",
+      requirement:
+        "Critical paths under Playwright (or similar): e.g. drag move, menu move, loading skeleton → board paint, error banner.",
+      doneWhen:
+        "Visual regression or screenshot baselines in CI stay green for agreed flows; failures triaged as product or flake.",
     },
   ],
   "typeahead-core": [

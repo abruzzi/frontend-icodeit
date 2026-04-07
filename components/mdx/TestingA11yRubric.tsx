@@ -1,4 +1,4 @@
-import { TESTING_A11Y_RUBRICS } from "@/lib/content/rubrics";
+import { TESTING_RUBRICS } from "@/lib/content/rubrics";
 import type { RubricItem } from "@/lib/content/types";
 
 import { TestingRubricTable } from "./testing-rubric-table";
@@ -10,13 +10,13 @@ type TestingA11yRubricProps = {
 };
 
 export function TestingA11yRubric({
-  title = "Testing + Accessibility Rubric",
+  title = "Testing strategy",
   items = [],
   rubricId,
 }: TestingA11yRubricProps) {
   const resolvedItems =
-    rubricId && TESTING_A11Y_RUBRICS[rubricId]
-      ? TESTING_A11Y_RUBRICS[rubricId]
+    rubricId && TESTING_RUBRICS[rubricId]
+      ? TESTING_RUBRICS[rubricId]
       : items;
 
   return (

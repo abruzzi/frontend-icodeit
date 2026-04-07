@@ -9,7 +9,7 @@ This repository uses frontmatter-driven references to connect case studies and p
 - Case studies declare outbound pattern links in `patternRefs`.
 - Patterns can declare curated backlinks in `usedIn`.
 - Backlinks are also inferred automatically by scanning case-study `patternRefs`.
-- Articles can reference a shared testing + a11y rubric via `testingRubricId` in frontmatter (rendered with the MDX `TestingRubric` component).
+- Articles can reference a shared **testing strategy** rubric via `testingRubricId` in frontmatter (rendered with the MDX `TestingRubric` component; data in `lib/content/rubrics.ts`).
 
 ## Bidirectional related-content rendering
 
@@ -35,9 +35,9 @@ Registered in `components/mdx/mdx-components.tsx` (import names match JSX tags i
 
 **Also in the repo (not necessarily wired in MDX):** `ProtocolComparison` (tabs), `FailureModeWalkthrough` (alternate failure-mode presentation). Add them to `mdx-components.tsx` if you need them in content.
 
-## Testing + accessibility rubric
+## Testing strategy rubric
 
-- **`TestingRubric`** (MDX): requires `rubricId`; wraps content in `ui.explainerCard` and shows a message if the id is missing from `lib/content/rubrics.ts`.
-- **`TestingA11yRubric`** (programmatic / optional MDX registration): supports `rubricId` or inline `items`, optional `title`; lighter wrapper (section + heading).
+- **`TestingRubric`** (MDX): requires `rubricId`; wraps content in `ui.explainerCard` and shows a message if the id is missing from `TESTING_RUBRICS` in `lib/content/rubrics.ts`.
+- **`TestingA11yRubric`** (programmatic / optional MDX registration): supports `rubricId` or inline `items`, optional `title`; lighter wrapper (section + heading). Name is historical; it reads the same preset map as `TestingRubric`.
 
-Shared presets live in `lib/content/rubrics.ts` (for example `dynamic-list-core`).
+Shared presets live in `lib/content/rubrics.ts` (for example `dynamic-list-core`, `realtime-collaboration-core`).
