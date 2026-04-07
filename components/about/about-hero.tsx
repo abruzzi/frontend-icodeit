@@ -16,16 +16,15 @@ import { ui } from "@/lib/ui";
 const ICODEIT_MAIN = "https://www.icodeit.com.au/";
 const YOUTUBE = "https://www.youtube.com/@icodeit.juntao";
 
-const STATS = [
-  { label: "Engineering since", value: "2008" },
-  { label: "YouTube", value: "11k+ subs" },
-  { label: "Also writes at", value: "martinfowler.com" },
-] as const;
+const collagePanel =
+  "flex min-h-[5.5rem] flex-1 flex-col justify-center rounded-2xl bg-white/70 px-5 py-4 shadow-sm shadow-slate-900/[0.04] backdrop-blur-sm dark:bg-slate-900/50 sm:min-h-[6.5rem] sm:px-6";
 
 export function AboutHero() {
   return (
     <header className={ui.courseHeroY}>
-      <div className={ui.courseHeroCard}>
+      <div
+        className={`${ui.courseHeroCard} border-0 shadow-none ring-0 dark:border-0 dark:shadow-none dark:ring-0`}
+      >
         <div
           className="pointer-events-none absolute inset-0 z-0 overflow-hidden rounded-3xl"
           aria-hidden
@@ -58,134 +57,150 @@ export function AboutHero() {
         <div className="relative z-10 overflow-visible">
           <p className={ui.courseEyebrow}>About</p>
 
-          <motion.div
-            className="mt-2 space-y-5 sm:mt-3"
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{
-              type: "spring",
-              stiffness: 180,
-              damping: 28,
-              delay: 0.06,
-            }}
-          >
-            <h1 id="about-heading" className={ui.courseDisplayTitle}>
-              Juntao Qiu
-            </h1>
-            <p className={ui.courseLead}>
-              Engineer, educator, creator — helping developers{" "}
-              <strong className="font-semibold text-slate-800 dark:text-slate-100">
-                design and build software
-              </strong>{" "}
-              by breaking complexity into structure and guiding the process with
-              intention, even when{" "}
-              <Highlight variant="underline3">AI is involved</Highlight>.
-            </p>
-            <p className={`${ui.courseLead} !mt-4 max-w-3xl`}>
-              I focus on frontend system design: maintainable React, data and
-              API shape, performance, and the trade-offs that show up in real
-              products and senior interviews.
-            </p>
-          </motion.div>
+          <div className="mt-6 grid gap-8 lg:mt-8 lg:grid-cols-12 lg:gap-10 lg:items-start">
+            {/* Collage column — tall portrait + editorial feel */}
+            <motion.div
+              className="lg:col-span-5"
+              initial={{ opacity: 0, y: 16 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{
+                type: "spring",
+                stiffness: 180,
+                damping: 28,
+                delay: 0.05,
+              }}
+            >
+              <div className="mx-auto max-w-[16rem] lg:mx-0 lg:max-w-none">
+                <div className="aspect-[3/4] overflow-hidden rounded-2xl">
+                  <Image
+                    src="/assets/juntao.qiu.avatar.webp"
+                    alt="Juntao Qiu"
+                    width={480}
+                    height={640}
+                    className="h-full w-full object-cover"
+                    priority
+                  />
+                </div>
+                <p className="mt-3 text-center text-xs text-slate-500 dark:text-slate-400 lg:text-left">
+                  Juntao Qiu · I Code It
+                </p>
+              </div>
+            </motion.div>
 
-          <motion.ul
-            className="mt-8 flex flex-wrap gap-2.5 sm:mt-9"
-            initial={{ opacity: 0, y: 12 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{
-              type: "spring",
-              stiffness: 200,
-              damping: 28,
-              delay: 0.18,
-            }}
-            aria-label="Quick facts"
-          >
-            {STATS.map((s) => (
-              <li
-                key={s.label}
-                className="inline-flex items-baseline gap-2 rounded-full border border-slate-300/80 bg-white/60 px-4 py-2 text-sm backdrop-blur-sm dark:border-slate-600/70 dark:bg-slate-950/40"
+            {/* Headline + collage strips + copy */}
+            <div className="min-w-0 space-y-6 lg:col-span-7">
+              <motion.div
+                className="flex flex-col gap-3 sm:flex-row sm:gap-4"
+                initial={{ opacity: 0, y: 14 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{
+                  type: "spring",
+                  stiffness: 180,
+                  damping: 28,
+                  delay: 0.1,
+                }}
               >
-                <span className="text-slate-500 dark:text-slate-400">
-                  {s.label}
-                </span>
-                <span className="font-semibold text-slate-900 dark:text-slate-50">
-                  {s.value}
-                </span>
-              </li>
-            ))}
-          </motion.ul>
+                <div
+                  className={`${collagePanel} bg-gradient-to-br from-slate-100/90 to-white/80 dark:from-slate-800/80 dark:to-slate-900/60`}
+                >
+                  <p className="text-xs font-bold uppercase tracking-[0.16em] text-slate-500 dark:text-slate-400">
+                    Arc
+                  </p>
+                  <p className="mt-1 font-heading text-sm font-bold text-slate-900 dark:text-slate-50 sm:text-base">
+                    Consulting → product → solo
+                  </p>
+                </div>
+                <div
+                  className={`${collagePanel} bg-gradient-to-br from-palette-azure/12 to-white/80 dark:from-palette-azure/15 dark:to-slate-900/60`}
+                >
+                  <p className="text-xs font-bold uppercase tracking-[0.16em] text-slate-500 dark:text-slate-400">
+                    Focus
+                  </p>
+                  <p className="mt-1 font-heading text-sm font-bold text-slate-900 dark:text-slate-50 sm:text-base">
+                    Frontend system design
+                  </p>
+                </div>
+              </motion.div>
+
+              <motion.div
+                className="space-y-4 sm:space-y-5"
+                initial={{ opacity: 0, y: 18 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{
+                  type: "spring",
+                  stiffness: 180,
+                  damping: 28,
+                  delay: 0.14,
+                }}
+              >
+                <p className="text-lg font-medium text-slate-600 dark:text-slate-300 sm:text-xl">
+                  Welcome, I am Juntao — Engineer, Educator, Creator.
+                </p>
+                <h1 id="about-heading" className={ui.courseDisplayTitle}>
+                  Helping developers design and build software
+                </h1>
+                <p className={ui.courseLead}>
+                  By breaking complexity into structure and guiding the building
+                  process with intention — even when{" "}
+                  <Highlight variant="underline3">AI is involved</Highlight>.
+                </p>
+                <p className={`${ui.courseLead} !mt-4 max-w-2xl !text-lg sm:!text-xl`}>
+                  This frontend site is where that mission gets concrete — case
+                  studies, patterns, and a hands-on course — alongside{" "}
+                  <a
+                    href={ICODEIT_MAIN}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="font-medium text-brand underline-offset-2 hover:underline"
+                  >
+                    icodeit.com.au
+                  </a>{" "}
+                  for posts, tutorials, and books.
+                </p>
+              </motion.div>
+
+              <motion.div
+                className="flex flex-wrap items-center gap-3 pt-1"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ delay: 0.22, duration: 0.45 }}
+              >
+                <a
+                  href={ICODEIT_MAIN}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center justify-center rounded-full bg-slate-900 px-7 py-3.5 text-base font-semibold text-white shadow-lg shadow-slate-900/30 transition-transform hover:scale-[1.02] active:scale-[0.99] dark:bg-white dark:text-slate-900 dark:shadow-[0_0_0_1px_rgb(255_255_255/0.08),0_8px_40px_-4px_rgb(255_255_255/0.35)]"
+                >
+                  icodeit.com.au
+                </a>
+                <Link
+                  href={routes.courseFrontendSystemDesignEssentials}
+                  className="inline-flex items-center justify-center rounded-full border border-slate-300/90 bg-white/70 px-7 py-3.5 text-base font-semibold text-slate-800 backdrop-blur-sm transition-colors hover:border-palette-azure/50 hover:bg-white/95 dark:border-slate-500/80 dark:bg-slate-950/40 dark:text-slate-100 dark:hover:border-palette-azure/50 dark:hover:bg-slate-900/60"
+                >
+                  Course on this site
+                </Link>
+                <a
+                  href={YOUTUBE}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center justify-center rounded-full border border-slate-300/90 px-7 py-3.5 text-base font-semibold text-slate-700 transition-colors hover:border-palette-azure/60 hover:text-palette-azure dark:border-slate-500/80 dark:text-slate-200 dark:hover:border-palette-azure/50 dark:hover:text-palette-azure"
+                >
+                  YouTube
+                </a>
+              </motion.div>
+            </div>
+          </div>
 
           <motion.div
-            className="mt-8 flex items-center gap-3 sm:mt-9"
-            initial={{ opacity: 0, y: 12 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{
-              type: "spring",
-              stiffness: 200,
-              damping: 28,
-              delay: 0.22,
-            }}
-          >
-            <div className="size-14 shrink-0 overflow-hidden rounded-2xl ring-1 ring-slate-900/10 dark:ring-white/10 sm:size-[4.25rem]">
-              <Image
-                src="/assets/juntao.qiu.avatar.webp"
-                alt="Juntao Qiu"
-                width={136}
-                height={136}
-                className="h-full w-full object-cover"
-                priority
-              />
-            </div>
-            <div>
-              <p className="text-base font-medium text-slate-800 dark:text-slate-100 sm:text-[1.05rem]">
-                Juntao Qiu
-              </p>
-              <p className="text-sm text-slate-500 dark:text-slate-400">
-                I Code It · Solo builder
-              </p>
-            </div>
-          </motion.div>
-
-          <motion.div
-            className="mt-10 flex flex-wrap items-center gap-3 sm:mt-12 md:mt-14"
+            className="mt-12 flex justify-center sm:mt-14 md:mt-16"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
-            transition={{ delay: 0.32, duration: 0.5 }}
+            transition={{ delay: 0.45 }}
           >
             <a
-              href={ICODEIT_MAIN}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-flex items-center justify-center rounded-full bg-slate-900 px-7 py-3.5 text-base font-semibold text-white shadow-lg shadow-slate-900/30 transition-transform hover:scale-[1.02] active:scale-[0.99] dark:bg-white dark:text-slate-900 dark:shadow-[0_0_0_1px_rgb(255_255_255/0.08),0_8px_40px_-4px_rgb(255_255_255/0.35)]"
-            >
-              icodeit.com.au
-            </a>
-            <Link
-              href={routes.courseFrontendSystemDesignEssentials}
-              className="inline-flex items-center justify-center rounded-full border border-slate-300/90 bg-white/70 px-7 py-3.5 text-base font-semibold text-slate-800 backdrop-blur-sm transition-colors hover:border-palette-azure/50 hover:bg-white/95 dark:border-slate-500/80 dark:bg-slate-950/40 dark:text-slate-100 dark:hover:border-palette-azure/50 dark:hover:bg-slate-900/60"
-            >
-              Course on this site
-            </Link>
-            <a
-              href={YOUTUBE}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-flex items-center justify-center rounded-full border border-slate-300/90 px-7 py-3.5 text-base font-semibold text-slate-700 transition-colors hover:border-palette-azure/60 hover:text-palette-azure dark:border-slate-500/80 dark:text-slate-200 dark:hover:border-palette-azure/50 dark:hover:text-palette-azure"
-            >
-              YouTube
-            </a>
-          </motion.div>
-
-          <motion.div
-            className="mt-14 flex justify-center sm:mt-16 md:mt-20"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ delay: 0.5 }}
-          >
-            <a
-              href="#about-story"
+              href="#about-quote"
               className="inline-flex items-center justify-center rounded-full border border-slate-300/90 text-slate-600 transition-colors hover:border-palette-azure/60 hover:text-palette-azure dark:border-slate-500/80 dark:text-slate-400 dark:hover:border-palette-azure/50 dark:hover:text-palette-azure"
-              aria-label="Scroll to story"
+              aria-label="Scroll to featured quote"
             >
               <span className="flex h-10 w-10 items-center justify-center">
                 <motion.span
