@@ -19,6 +19,7 @@ const X = "https://x.com/JuntaoQiu";
 
 const FOOTER_LINKS = {
   explore: [
+    { label: "About", href: routes.about },
     { label: "Case studies", href: routes.caseStudiesIndex },
     { label: "Patterns", href: routes.patternsIndex },
     { label: "Learning paths", href: routes.learningPaths },

@@ -3,6 +3,7 @@
  */
 export const routes = {
   home: "/",
+  about: "/about",
   caseStudiesIndex: "/case-studies",
   caseStudy: (slug: string) => `/case-studies/${slug}`,
   patternsIndex: "/patterns",

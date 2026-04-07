@@ -11,6 +11,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
 
   const staticRoutes = [
     routes.home,
+    routes.about,
     routes.caseStudiesIndex,
     routes.patternsIndex,
     routes.learningPaths,
