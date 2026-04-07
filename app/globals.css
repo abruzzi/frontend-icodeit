@@ -153,6 +153,101 @@
   margin-top: 0;
 }
 
+/* MDX heading permalinks: `rehype-slug` + `rehype-autolink-headings` in `lib/content/mdx.tsx`. */
+.prose .mdx-heading-anchor {
+  margin-inline-start: 0.3em;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  vertical-align: middle;
+  min-width: 1.35em;
+  min-height: 1.35em;
+  margin-block: -0.1em;
+  padding: 0.12em 0.28em;
+  border-radius: 0.35rem;
+  text-decoration: none !important;
+  color: rgb(100 116 139 / 0.55);
+  opacity: 0.28;
+  transition:
+    opacity 0.2s ease,
+    color 0.2s ease,
+    background-color 0.2s ease,
+    box-shadow 0.2s ease;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .prose .mdx-heading-anchor {
+    transition-duration: 0.01ms;
+  }
+}
+
+.dark .prose .mdx-heading-anchor {
+  color: rgb(148 163 184 / 0.5);
+  opacity: 0.32;
+}
+
+.prose .mdx-heading-anchor::before {
+  content: "#";
+  font-family: var(--font-jetbrains-mono), ui-monospace, monospace;
+  font-size: 0.58em;
+  font-weight: 700;
+  line-height: 1;
+  letter-spacing: -0.04em;
+  position: relative;
+  top: 0.04em;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .prose .mdx-heading-anchor {
+    opacity: 0;
+  }
+
+  .prose
+    :is(h1, h2, h3, h4, h5, h6).mdx-heading-with-anchor:hover
+    .mdx-heading-anchor,
+  .prose
+    :is(h1, h2, h3, h4, h5, h6).mdx-heading-with-anchor:focus-within
+    .mdx-heading-anchor,
+  .prose .mdx-heading-anchor:hover {
+    opacity: 1;
+    color: rgb(14 165 233 / 0.85);
+  }
+
+  .dark
+    .prose
+    :is(h1, h2, h3, h4, h5, h6).mdx-heading-with-anchor:hover
+    .mdx-heading-anchor,
+  .dark
+    .prose
+    :is(h1, h2, h3, h4, h5, h6).mdx-heading-with-anchor:focus-within
+    .mdx-heading-anchor,
+  .dark .prose .mdx-heading-anchor:hover {
+    color: rgb(125 211 252 / 0.9);
+  }
+}
+
+.prose .mdx-heading-anchor:hover {
+  background-color: rgb(14 165 233 / 0.08);
+  box-shadow: 0 0 0 1px rgb(14 165 233 / 0.12);
+}
+
+.dark .prose .mdx-heading-anchor:hover {
+  background-color: rgb(56 189 248 / 0.1);
+  box-shadow: 0 0 0 1px rgb(125 211 252 / 0.14);
+}
+
+.prose .mdx-heading-anchor:focus-visible {
+  opacity: 1 !important;
+  outline: 2px solid rgb(14 165 233 / 0.55);
+  outline-offset: 2px;
+  color: rgb(14 165 233 / 0.95);
+}
+
+.dark .prose .mdx-heading-anchor:focus-visible {
+  outline-color: rgb(56 189 248 / 0.55);
+  color: rgb(125 211 252 / 0.95);
+}
+
 /* CTA links: subtle “alive” icon motion (home + index cards). */
 @keyframes cta-icon-breathe {
   0%,

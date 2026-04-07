@@ -95,7 +95,21 @@ export async function renderMdx(
         remarkPlugins: [remarkGfm],
         rehypePlugins: [
           rehypeSlug,
-          [rehypeAutolinkHeadings, { behavior: "append" }],
+          [
+            rehypeAutolinkHeadings,
+            {
+              behavior: "append",
+              headingProperties: {
+                className: ["mdx-heading-with-anchor"],
+              },
+              properties: {
+                className: ["mdx-heading-anchor"],
+                ariaLabel: "Link to this section",
+                title: "Permalink to this section",
+              },
+              content: () => [],
+            },
+          ],
           rehypeShikiIcodeitPlugin as import("unified").Pluggable,
         ],
       },
