@@ -109,7 +109,7 @@ When the article already covers data, API, and state, a **performance** subsecti
 
 ## Article-level checklist
 
-- [ ] **Front matter** — `title`, `summary`, `lastEdited`, `tags`, `kind` where applicable.
+- [ ] **Front matter** — `title`, `summary`, `lastEdited`, `tags`, `kind` where applicable. For **case studies**, optional **`pageSummary`** holds the longer dek (article page + meta); **`summary`** stays short for index cards.
 - [ ] **Terminology** — One spelling for **normalised/normalized** in prose; **API paths** consistent across fences, Restful, and demos.
 - [ ] **Cross-references** — Zombie card, **operationId**, **409**, command queue — **same terms** in data modeling, API, and state sections.
 - [ ] **Typecheck** — `npx tsc --noEmit` after MDX-adjacent component changes.

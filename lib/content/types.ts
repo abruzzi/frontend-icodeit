@@ -57,6 +57,8 @@ export type BaseFrontmatter = {
 
 export type CaseStudyFrontmatter = BaseFrontmatter & {
   kind: "case-study";
+  /** Longer dek under the title on the case study page and in meta; listing cards use {@link BaseFrontmatter.summary}. */
+  pageSummary?: string;
   scenario: string;
   patternRefs: RelatedRef[];
   quickTake: string[];

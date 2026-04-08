@@ -23,26 +23,34 @@ type Props = {
   params: { slug: string };
 };
 
+function caseStudyMetaDescription(fm: {
+  summary: string;
+  pageSummary?: string;
+}): string {
+  return fm.pageSummary ?? fm.summary;
+}
+
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const entry = getEntrySource("case-studies", params.slug);
   if (!entry || entry.frontmatter.kind !== "case-study") {
     return {};
   }
+  const description = caseStudyMetaDescription(entry.frontmatter);
   return {
     title: entry.frontmatter.title,
-    description: entry.frontmatter.summary,
+    description,
     alternates: { canonical: routes.caseStudy(params.slug) },
     openGraph: {
       type: "article",
       url: routes.caseStudy(params.slug),
       title: entry.frontmatter.title,
-      description: entry.frontmatter.summary,
+      description,
       images: [{ url: "/assets/juntao.qiu.avatar.webp" }],
     },
     twitter: {
       card: "summary_large_image",
       title: entry.frontmatter.title,
-      description: entry.frontmatter.summary,
+      description,
       images: ["/assets/juntao.qiu.avatar.webp"],
     },
   };
@@ -84,7 +92,7 @@ export default async function CaseStudyDetailPage({ params }: Props) {
       <article className={ui.section}>
         <h1 className={ui.pageTitle}>{entry.frontmatter.title}</h1>
         <p className="text-pretty text-[0.95rem] leading-relaxed text-slate-600 sm:text-base italic dark:text-slate-400">
-          {entry.frontmatter.summary}
+          {caseStudyMetaDescription(entry.frontmatter)}
         </p>
         <ArticleShareFooter
           lastEdited={entry.frontmatter.lastEdited}

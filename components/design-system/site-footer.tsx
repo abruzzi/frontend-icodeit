@@ -11,6 +11,7 @@ import {
 import { routes } from "@/lib/routes";
 
 const MAIN_SITE = "https://www.icodeit.com.au/";
+const MAIN_SITE_COURSES = "https://www.icodeit.com.au/courses";
 const SUBSTACK = "https://juntao.substack.com/";
 const YOUTUBE = "https://www.youtube.com/@icodeit.juntao";
 const GITHUB = "https://github.com/abruzzi";
@@ -25,7 +26,7 @@ const FOOTER_LINKS = {
     { label: "Learning paths", href: routes.learningPaths },
   ],
   products: [
-    { label: "Course (WIP)", href: routes.courseFrontendSystemDesignEssentials },
+    { label: "Courses", href: MAIN_SITE_COURSES, external: true },
     { label: "Books", href: `${MAIN_SITE}books`, external: true },
     { label: "Tutorials", href: `${MAIN_SITE}tutorials`, external: true },
     { label: "Posts", href: `${MAIN_SITE}posts`, external: true },
