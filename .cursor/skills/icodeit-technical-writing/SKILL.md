@@ -93,6 +93,18 @@ Long case studies often follow: **Collect / UI** → **Data modeling** → **API
 - **Read-only** pipelines: `nodesDraggable={false}`, pan/zoom enabled, short caption + optional **ordered list** under the canvas for accessibility and print.
 - Reuse **shared chrome** (`board-demo-shared`, `ui.caseStudyDemoShell`) for visual consistency with other case studies.
 
+### Performance slice in a long case study (optional but common)
+
+When the article already covers data, API, and state, a **performance** subsection often lands after **optimisation** (ordering, hot paths) or beside **reliability**. A workable arc:
+
+1. **Code-splitting first** — Heavy UI (details panel, power tools) in a **dynamic `import()`** chunk; baseline = smaller initial bundle, pay only on commit (e.g. click).
+2. **Preload on intent** — Optional **second layer** (hover/focus/route prefetch), not a substitute for splitting; a **small static figure** or two-step callout can explain ordering without a noisy timeline.
+3. **Perceived performance** — Cross-link to **Loading / skeletons** in **Collect / UI**; same pattern for **initial shell** and **lazy panel** (honest: still waiting on network/chunk).
+4. **Scope hook** — **Aside** for virtualisation, pagination, caching, admin-only bundles: “not this article’s steel thread” + link to **[case studies index](/case-studies)** or a dedicated piece.
+5. **Front matter** — Extend **`summary`** when you add this thread so the blurb matches the body.
+
+**MDX hygiene:** `<Callout>` only accepts **`tone`** (`note`, `aside`, `essentials`, …) — never invent props like `note="aside"`.
+
 ---
 
 ## Article-level checklist

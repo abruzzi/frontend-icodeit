@@ -8,6 +8,8 @@ import { BoardDndAccessibleDemo } from "@/components/case-studies/board-applicat
 import { BoardDndDemo } from "@/components/case-studies/board-application/BoardDndDemo";
 import { BoardEmptyStateDemo } from "@/components/case-studies/board-application/BoardEmptyStateDemo";
 import { BoardLexRankDemo } from "@/components/case-studies/board-application/BoardLexRankDemo";
+import { BoardLazyCardDetailsDemo } from "@/components/case-studies/board-application/BoardLazyCardDetailsDemo";
+import { BoardLazyCardDetailsFlowDiagram } from "@/components/case-studies/board-application/BoardLazyCardDetailsFlowDiagram";
 import { BoardLoadingSkeletonDemo } from "@/components/case-studies/board-application/BoardLoadingSkeletonDemo";
 import { BoardNetworkFailureDemo } from "@/components/case-studies/board-application/BoardNetworkFailureDemo";
 import { BoardNormalisationStepperDemo } from "@/components/case-studies/board-application/BoardNormalisationStepperDemo";
@@ -56,6 +58,11 @@ export const mdxComponents: MDXComponents = {
   BoardDndDemo: wrap(BoardDndDemo, "Board drag and drop demo"),
   BoardEmptyStateDemo: wrap(BoardEmptyStateDemo, "Board empty state demo"),
   BoardLexRankDemo: wrap(BoardLexRankDemo, "LexoRank ordering demo"),
+  BoardLazyCardDetailsDemo: wrap(BoardLazyCardDetailsDemo, "Lazy card details demo"),
+  BoardLazyCardDetailsFlowDiagram: wrap(
+    BoardLazyCardDetailsFlowDiagram,
+    "Lazy card details flow diagram",
+  ),
   BoardLoadingSkeletonDemo: wrap(BoardLoadingSkeletonDemo, "Board loading skeleton demo"),
   BoardNetworkFailureDemo: wrap(BoardNetworkFailureDemo, "Board network failure demo"),
   BoardNormalisationStepperDemo: wrap(BoardNormalisationStepperDemo, "Board normalisation demo"),

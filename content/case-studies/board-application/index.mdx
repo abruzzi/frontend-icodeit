@@ -4,13 +4,14 @@ summary: >
   A long-form frontend case study built around a kanban board: nested versus normalised data,
   API sketches (REST snapshot reads, intent-shaped moves, idempotency and 409 reconciliation),
   client replica and command-queue thinking, ordering trade-offs from dense integers through
-  LexoRank-style strings, SSE as a transport example, local Pragmatic drag-and-drop demos plus a
-  separate accessibility demo (keyboard path, menu, live region), reliability failure modes, and
-  an end-of-article testing rubric. Interactives are mostly browser-local teaching aids—no
-  shipped backend walkthrough—and the piece does not compare state-management or data-fetching
-  libraries; it stays at shapes, contracts, and how things fail under concurrency and bad
-  networks.
-lastEdited: "2026-04-07"
+  LexoRank-style strings, SSE as a transport example, a performance slice on code-splitting and
+  lazy card details (plus perceived performance and where virtualisation and caching belong),
+  local Pragmatic drag-and-drop demos plus a separate accessibility demo (keyboard path, menu,
+  live region), reliability failure modes, and an end-of-article testing rubric. Interactives are
+  mostly browser-local teaching aids—no shipped backend walkthrough—and the piece does not compare
+  state-management or data-fetching libraries; it stays at shapes, contracts, and how things fail
+  under concurrency and bad networks.
+lastEdited: "2026-04-08"
 kind: "case-study"
 status: "published"
 scenario: "board-app"
@@ -437,7 +438,7 @@ For **200**, the body should resemble what you already committed to in **Data mo
 
 I would treat errors with the same care as loading and empty states in **Designing the UI**: decide what **timeouts**, **`5xx`**, **`429`**, missing resources, and validation failures look like in **JSON**, not only as bare status codes, so the client can retry or explain instead of showing a generic “something went wrong.” A stable **`code`** is worth more than a clever English `message` you will regret string-matching in six months. The **404** block in the reference above is the pattern—pair each status with a body the UI can branch on.
 
-In an interview, showing that you think past **`200`**—including throttle and dependency failures—is a strong signal. :smile:
+In an interview, showing that you think past **`200`**—including throttle and dependency failures—is a strong signal.
 
 ### Pagination and large columns
 
@@ -564,7 +565,7 @@ The backend then decides which rows change for that move. Another style is to se
   </Request>
 </Restful>
 
-This is only an example to show how a seemingly simple gesture can imply a lot of server work. That applies to other application as well, these domain specific challenge are the critical part of the system design, the core algorithm, and when you do well it can make your application much more efficient that your competitors.
+This is only an example to show how a seemingly simple gesture can imply a lot of server work. The same idea applies to other domains too: these domain-specific challenges are often the core of system design and good algorithms can make your product materially more efficient than a naive approach.
 
 ### Moves as operations
 
@@ -706,13 +707,13 @@ type MoveCardCommand = {
 
 Production systems often persist pending commands (IndexedDB, `localStorage`) so a refresh mid-flight does not silently drop user intent—that is another step up in complexity worth mentioning only when you need **offline** or **crash recovery**.
 
-<Callout note="aside">
+<Callout tone="aside">
 **Redux** (and similar) already centralise updates through **actions** and **reducers**. The gap, in many codebases, is not the word “action” but the missing pieces: a **first-class pending queue**, **per-command lifecycle**, **retry policy**, and **explicit undo / reconcile** paths. You can still implement the queue **inside** a Redux middleware or alongside it—the architecture is about **separation of intent from network timing**, not which hook you use to subscribe.
 </Callout>
 
 ## Optimization strategies
 
-Optimisation on a board is a wide topic; **ordering** is the piece that usually becomes expensive first. We already touched moves and positions in **API design**—here we zoom in on *how* you store order so one drag does not rewrite half the database. After that, we cover **accessibility**: the same moves should work for **keyboard** and **assistive technology**, not only the pointer.
+Optimisation on a board is a wide topic; **ordering** is the piece that usually becomes expensive first. We already touched moves and positions in **API design**—here we zoom in on *how* you store order so one drag does not rewrite half the database. **Accessibility** for the same moves (keyboard, menus, screen readers) sits with **performance and reliability** in the next major section—this block stays focused on **rank representation** and the demos below.
 
 If you have shipped drag-and-drop before—Kanban like Jira or Trello, a playlist, or a sortable list in React—the gesture feels trivial: drag, drop, the UI updates. Persistence is where the real question appears: **how do you store positions efficiently when the list gets large?**
 
@@ -778,15 +779,44 @@ The trade-off is familiar: **simpler storage** versus **ranking machinery** in e
 
 ## Performance, reliability, and accessibility
 
+This section picks up **cross-cutting** concerns: shipping less JavaScript up front, how loading states *feel*, pointer-independent moves, and what breaks when the network or tabs lie to you. **Ordering** and **rank keys** stayed in **Optimisation strategies** above.
+
 ### Performance
 
-<WorkingInProgress
-  href="https://juntao.substack.com/"
-  actionLabel="Follow the issue"
-  description="We’re still validating examples for this part."
->
-**Work in progress.** This walkthrough does not yet cover board-specific **frontend performance** in depth—virtualising long columns and cards, keeping **drag and drop** smooth under load, reconciling **realtime** updates without excess re-renders, **batching** or **debouncing** expensive work, and how you **measure** (frame time, interaction to next paint, long tasks). The **ordering** discussion earlier is the closest we get to scalability on the **write path**; a fuller performance section will land here in a later revision.
-</WorkingInProgress>
+One practical performance pattern for a board is to **avoid shipping heavy “card detail” UI** in the initial bundle.
+The board surface is read-mostly and list-heavy; the detail view is often form-heavy (comments, activity, attachments,
+rich inputs). That makes it a good candidate for **code splitting** and **lazy loading**: fetch the snapshot and render
+cards fast, then load the details UI only when the user opens a card.
+
+**Preload on hover (or focus)** is a natural *next* step after that: same lazy chunk, but you start fetching it when the user shows intent — not instead of splitting.
+
+<BoardLazyCardDetailsFlowDiagram />
+
+<BoardLazyCardDetailsDemo />
+
+<Callout tone="essentials">
+Other board-sized opportunities for code splitting and on-demand loading:
+
+- **“Power tools” panel**: keep advanced filters, bulk actions, export, and reporting in separate chunks until the user opens them.
+- **Drag-and-drop mode**: ship a lightweight list UI first; only load the DnD library and adapters when drag mode is enabled.
+- **Virtualisation on scale**: lazy-load list machinery when you add windowing; scope note in the **aside** below.
+- **Permission-gated admin surfaces**: never ship audit log / permissions editors to viewers.
+- **“Bundle story” overlay**: a teaching/debug panel that lists newly loaded scripts after a click (so the article can *prove* what loaded).
+</Callout>
+
+### Perceived performance
+
+**Actual** performance (smaller bundles, fewer round trips, cheaper work per frame) is only half of what users experience. **Perceived** performance is the other half: does the UI *look* like it is keeping up—structure in place, motion purposeful, wait states explained—while data and code still arrive?
+
+That is why the **loading skeleton** in [Designing the UI → Loading](#loading) belongs in the same story as code-splitting above. We sketched the board shell before the snapshot lands so the first paint is not an empty void; the same idea shows up again when a **lazy-loaded** details panel opens: a short skeleton (or placeholder) bridges the gap until the chunk and data are ready. One pattern, two places: **initial board load** and **on-demand heavy UI**.
+
+Treat perceived performance as a first-class requirement in reviews: if a feature is “fast enough” on your machine but still *feels* broken on a slow network, the product story is incomplete.
+
+<Callout tone="aside">
+**Virtualisation, pagination, caching, and friends** — list **virtualisation** (windowing columns or feeds), **cursor-based pagination** (we sketched reads for huge lanes in **API design**), **client-side caching** (SWR-style staleness, normalised stores, prefetch), and related read-path tricks are core tools for frontend performance at scale. On many *board-shaped* products you can ship a long way with a snapshot, code-splitting, and deliberate loading states first; those heavier techniques become unavoidable when columns turn into **thousands** of cards or the surface behaves more like a **timeline or inbox** than a compact kanban.
+
+This walkthrough stays intentionally bounded so it does not become a single “god article.” Deeper treatment of those patterns belongs in **other case studies** (and pattern pages) on the site — browse the [case studies index](/case-studies) as they land — while this board piece keeps its spine on **shape, contracts, collaboration, and ordering**.
+</Callout>
 
 ### Accessibility
 
@@ -878,7 +908,7 @@ The table below is a **compact checklist** for this kind of surface: what to cov
 
 ## Summary
 
-This walkthrough keeps one **kanban board** as a **through-line**: the same product shape carries **collecting requirements** (including loading, errors, and empty states), **data modeling** (nested snapshots versus **normalised** maps and ordered id lists), **API design** (REST-shaped reads, intentful writes, **`operationId`** and **`409`**), **state management** as a **replica** plus a **command queue** and **reconciliation**, **optimisation** (especially **ordering** at scale—integers, gaps, LexoRank-style strings), **accessibility** (keyboard paths and menus next to drag), and **reliability** when the network and tabs misbehave. That is **steel-thread-like**—one concrete use case crossing real boundaries—but it is **not** the strict **[steel thread](https://www.rubick.com/steel-threads/)** from the literature: a **shipped** thinnest slice, end to end. Most of what you clicked through here is **local-only** and **pedagogical**; the article **widens** the spine on purpose. When you implement, the slice worth **shipping first** is still the sequence from the intro: **fixture → faithful UI → moves in client state → persistence for one user → then realtime and conflicts**—then grow from there. The **testing checklist** ties these themes to **unit**, **integration**, and **e2e** expectations without dictating a single tool.
+This walkthrough keeps one **kanban board** as a **through-line**: the same product shape carries **collecting requirements** (including loading, errors, and empty states), **data modeling** (nested snapshots versus **normalised** maps and ordered id lists), **API design** (REST-shaped reads, intentful writes, **`operationId`** and **`409`**), **state management** as a **replica** plus a **command queue** and **reconciliation**, **optimisation** (especially **ordering** at scale—integers, gaps, LexoRank-style strings), **performance** (code-splitting, lazy details, perceived speed, and where heavier read-path tools belong), **accessibility** (keyboard paths and menus next to drag), and **reliability** when the network and tabs misbehave. That is **steel-thread-like**—one concrete use case crossing real boundaries—but it is **not** the strict **[steel thread](https://www.rubick.com/steel-threads/)** from the literature: a **shipped** thinnest slice, end to end. Most of what you clicked through here is **local-only** and **pedagogical**; the article **widens** the spine on purpose. When you implement, the slice worth **shipping first** is still the sequence from the intro: **fixture → faithful UI → moves in client state → persistence for one user → then realtime and conflicts**—then grow from there. The **testing checklist** ties these themes to **unit**, **integration**, and **e2e** expectations without dictating a single tool.
 
 **What we did not optimise for here:** picking a **state-management library** (Redux, Zustand, Jotai, signals, etc.) or a **data-fetching** stack (TanStack Query, SWR, Relay, hand-rolled fetch). Those choices matter in real teams, but they change more often than the **patterns** above; the article stays at the level of **shapes**, **contracts**, and **failure behaviour** so you can map them onto whichever stack you use.
 
